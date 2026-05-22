@@ -13,11 +13,36 @@ interface Scan {
   created_at: string;
 }
 
-function getScoreColor(score: number) {
-  if (score >= 75) return { text: "text-[#00ff87]", border: "border-[#00ff87]/20" };
-  if (score >= 60) return { text: "text-yellow-400", border: "border-yellow-400/20" };
-  if (score >= 40) return { text: "text-orange-400", border: "border-orange-400/20" };
-  return { text: "text-red-400", border: "border-red-400/20" };
+function getScoreStyle(score: number) {
+  if (score >= 75) return { color: "#00c853", bg: "bg-green-50", text: "text-green-600", border: "border-green-100" };
+  if (score >= 60) return { color: "#ffd600", bg: "bg-yellow-50", text: "text-yellow-600", border: "border-yellow-100" };
+  if (score >= 40) return { color: "#ff6d00", bg: "bg-orange-50", text: "text-orange-600", border: "border-orange-100" };
+  return { color: "#d50000", bg: "bg-red-50", text: "text-red-600", border: "border-red-100" };
+}
+
+function ScoreBadge({ score, verdict }: { score: number; verdict: string }) {
+  const style = getScoreStyle(score);
+  const radius = 20;
+  const circumference = 2 * Math.PI * radius;
+  const progress = (score / 100) * circumference;
+
+  return (
+    <div className="flex flex-col items-center gap-1">
+      <div className="relative w-14 h-14">
+        <svg className="w-full h-full -rotate-90" viewBox="0 0 48 48">
+          <circle cx="24" cy="24" r={radius} fill="none" stroke="#f0f0f0" strokeWidth="4" />
+          <circle cx="24" cy="24" r={radius} fill="none" stroke={style.color} strokeWidth="4"
+            strokeDasharray={`${progress} ${circumference}`} strokeLinecap="round" />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-sm font-black" style={{ color: style.color }}>{score}</span>
+        </div>
+      </div>
+      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${style.bg} ${style.text}`}>
+        {verdict}
+      </span>
+    </div>
+  );
 }
 
 function timeAgo(dateStr: string): string {
@@ -37,13 +62,13 @@ export default function HistoryPage() {
 
   useEffect(() => {
     async function loadHistory() {
-      const { data, error } = await supabase
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id || "00000000-0000-0000-0000-000000000000";
+      const { data } = await supabase
         .from("scans")
         .select("*")
+        .eq("user_id", userId)
         .order("created_at", { ascending: false });
-
-      console.log("Data:", data);
-      console.log("Error:", error);
       setScans(data || []);
       setLoading(false);
     }
@@ -51,66 +76,87 @@ export default function HistoryPage() {
   }, []);
 
   const avgScore = scans.length ? Math.round(scans.reduce((a, s) => a + s.health_score, 0) / scans.length) : 0;
-  const unhealthy = scans.filter(s => s.verdict === "Unhealthy").length;
-  const healthy = scans.filter(s => s.verdict === "Healthy").length;
+  const unhealthy = scans.filter(s => s.verdict === "Poor").length;
+  const healthy = scans.filter(s => s.verdict === "Excellent").length;
+  const scoreStyle = getScoreStyle(avgScore);
 
   return (
-    <main className="min-h-screen bg-[#0a0f0a] text-white">
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-[#00ff87] opacity-[0.04] blur-[120px] rounded-full" />
-      </div>
-
-      <nav className="relative z-10 flex items-center justify-between px-8 py-5 border-b border-white/5">
-        <a href="/" className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#00ff87] to-[#00c853] flex items-center justify-center">
-            <span className="text-black font-black text-xs">N</span>
-          </div>
-          <span className="font-bold tracking-tight">Nutri<span className="text-[#00ff87]">Scan</span> AI</span>
-        </a>
-        <a href="/scan" className="text-sm bg-[#00ff87] text-black font-bold px-4 py-2 rounded-full hover:bg-[#69ff47] transition-colors">
-          + New Scan
-        </a>
+    <main className="min-h-screen bg-[#f8f9fa] pb-24">
+      {/* Navbar */}
+      <nav className="bg-white border-b border-gray-100 sticky top-0 z-40">
+        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
+          <a href="/" className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#00ff87] to-[#00c853] flex items-center justify-center shadow-sm">
+              <span className="text-black font-black text-xs">N</span>
+            </div>
+            <span className="font-black text-gray-900 tracking-tight">NutriScan</span>
+          </a>
+          <a href="/scan" className="text-sm bg-[#00c853] text-white font-semibold px-4 py-2 rounded-full hover:bg-[#00b548] transition-colors shadow-sm">
+            + New Scan
+          </a>
+        </div>
       </nav>
 
-      <div className="relative z-10 max-w-3xl mx-auto px-6 py-12">
-        <div className="mb-10">
-          <h1 className="text-4xl font-black tracking-tighter mb-2">
-            Your Scan <span className="text-[#00ff87]">History</span>
-          </h1>
-          <p className="text-white/40 text-sm">Every product you've analyzed, in one place.</p>
+      <div className="max-w-2xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="mb-6">
+          <h1 className="text-3xl font-black text-gray-900 tracking-tight">Scan History</h1>
+          <p className="text-gray-400 text-sm mt-1">Every product you've analyzed</p>
         </div>
 
         {/* Loading */}
         {loading && (
           <div className="text-center py-20">
-            <div className="w-10 h-10 rounded-full border-2 border-[#00ff87]/20 border-t-[#00ff87] animate-spin mx-auto mb-4" />
-            <p className="text-white/30 text-sm">Loading your history...</p>
+            <div className="w-10 h-10 rounded-full border-gray-100 border-t-[#00c853] animate-spin mx-auto mb-4" style={{ borderWidth: 3, borderStyle: "solid" }} />
+            <p className="text-gray-400 text-sm">Loading your history...</p>
           </div>
         )}
 
         {/* Stats */}
         {!loading && scans.length > 0 && (
-          <div className="grid grid-cols-3 gap-4 mb-8">
-            {[
-              { label: "Total Scans", value: scans.length, color: "text-white" },
-              { label: "Avg Health Score", value: avgScore, color: avgScore >= 60 ? "text-[#00ff87]" : "text-red-400" },
-              { label: "Unhealthy Found", value: unhealthy, color: "text-red-400" },
-            ].map((stat) => (
-              <div key={stat.label} className="bg-white/[0.02] border border-white/8 rounded-2xl p-5 text-center">
-                <div className={`text-3xl font-black ${stat.color}`}>{stat.value}</div>
-                <div className="text-xs text-white/30 mt-1">{stat.label}</div>
+          <div className="grid grid-cols-3 gap-3 mb-6">
+            <div className="bg-white rounded-2xl p-4 text-center shadow-sm border border-gray-100">
+              <div className="text-3xl font-black text-gray-900">{scans.length}</div>
+              <div className="text-xs text-gray-400 font-medium mt-1">Total Scans</div>
+            </div>
+            <div className="bg-white rounded-2xl p-4 text-center shadow-sm border border-gray-100">
+              <div className={`text-3xl font-black ${scoreStyle.text}`}>{avgScore}</div>
+              <div className="text-xs text-gray-400 font-medium mt-1">Avg Score</div>
+            </div>
+            <div className="bg-white rounded-2xl p-4 text-center shadow-sm border border-gray-100">
+              <div className="text-3xl font-black text-red-500">{unhealthy}</div>
+              <div className="text-xs text-gray-400 font-medium mt-1">Poor Rated</div>
+            </div>
+          </div>
+        )}
+
+        {/* Overall health summary */}
+        {!loading && scans.length > 0 && (
+          <div className={`bg-white rounded-2xl p-5 mb-6 shadow-sm border ${scoreStyle.border}`}>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold mb-1">Your Diet Score</p>
+                <p className="text-2xl font-black text-gray-900">
+                  {avgScore >= 75 ? "Eating Well! 🥗" : avgScore >= 60 ? "Room to Improve 🙂" : avgScore >= 40 ? "Needs Attention ⚠️" : "Poor Diet 🚨"}
+                </p>
+                <p className="text-sm text-gray-400 mt-1">
+                  {healthy} excellent · {unhealthy} poor · {scans.length - healthy - unhealthy} moderate
+                </p>
               </div>
-            ))}
+              <div className="text-5xl">
+                {avgScore >= 75 ? "🥗" : avgScore >= 60 ? "🙂" : avgScore >= 40 ? "⚠️" : "🚨"}
+              </div>
+            </div>
           </div>
         )}
 
         {/* Empty state */}
         {!loading && scans.length === 0 && (
-          <div className="text-center py-20 border border-white/5 rounded-2xl bg-white/[0.02]">
-            <div className="text-4xl mb-4">📦</div>
-            <h3 className="font-bold mb-2">No scans yet</h3>
-            <p className="text-white/30 text-sm mb-6">Start scanning food products to build your history</p>
-            <a href="/scan" className="bg-[#00ff87] text-black font-bold px-6 py-3 rounded-full text-sm hover:bg-[#69ff47] transition-colors">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
+            <div className="text-5xl mb-4">📦</div>
+            <h3 className="font-bold text-gray-800 mb-2">No scans yet</h3>
+            <p className="text-gray-400 text-sm mb-6">Start scanning food products to track your nutrition</p>
+            <a href="/scan" className="bg-[#00c853] text-white font-bold px-6 py-3 rounded-full text-sm hover:bg-[#00b548] transition-colors">
               Scan Your First Product →
             </a>
           </div>
@@ -119,38 +165,50 @@ export default function HistoryPage() {
         {/* Scan list */}
         {!loading && scans.length > 0 && (
           <div className="space-y-3">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-xs text-white/30 uppercase tracking-widest">{scans.length} Products Scanned</span>
-              <span className="text-xs text-white/20">{healthy} healthy · {unhealthy} unhealthy</span>
-            </div>
-            {scans.map((scan) => {
-              const colors = getScoreColor(scan.health_score);
-              return (
-                <div key={scan.id} className="flex items-center gap-4 bg-white/[0.02] border border-white/8 hover:border-white/15 rounded-2xl p-4 transition-all">
-                  <div className="w-14 h-14 rounded-xl bg-white/5 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                    {scan.image_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={scan.image_url} alt={scan.product_name} className="w-full h-full object-contain" />
-                    ) : (
-                      <span className="text-2xl">📦</span>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-sm truncate">{scan.product_name || "Unknown Product"}</h3>
-                    <p className="text-xs text-white/30 mt-0.5 font-mono">{scan.barcode}</p>
-                    <p className="text-xs text-white/20 mt-1">{timeAgo(scan.created_at)}</p>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <div className={`text-2xl font-black ${colors.text}`}>{scan.health_score}</div>
-                    <div className={`text-xs mt-1 px-2 py-0.5 rounded-full border ${colors.border} ${colors.text}`}>
-                      {scan.verdict}
-                    </div>
-                  </div>
+            <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold px-1">{scans.length} Products Scanned</p>
+            {scans.map((scan) => (
+              <div key={scan.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex items-center gap-4 hover:shadow-md transition-shadow">
+                {/* Image */}
+                <div className="w-14 h-14 rounded-xl bg-gray-50 flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-100">
+                  {scan.image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={scan.image_url} alt={scan.product_name} className="w-full h-full object-contain p-1" />
+                  ) : (
+                    <span className="text-2xl">📦</span>
+                  )}
                 </div>
-              );
-            })}
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-gray-900 text-sm truncate">{scan.product_name || "Unknown Product"}</h3>
+                  <p className="text-xs text-gray-400 mt-0.5 font-mono">{scan.barcode}</p>
+                  <p className="text-xs text-gray-300 mt-1">{timeAgo(scan.created_at)}</p>
+                </div>
+
+                {/* Score */}
+                <ScoreBadge score={scan.health_score} verdict={scan.verdict} />
+              </div>
+            ))}
           </div>
         )}
+      </div>
+
+      {/* Bottom nav */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-6 py-3 flex items-center justify-around md:hidden z-40">
+        <a href="/" className="flex flex-col items-center gap-1 text-gray-400">
+          <span className="text-xl">🏠</span>
+          <span className="text-xs font-medium">Home</span>
+        </a>
+        <a href="/scan" className="flex flex-col items-center gap-1">
+          <div className="w-12 h-12 bg-[#00c853] rounded-full flex items-center justify-center shadow-lg -mt-6">
+            <span className="text-xl">📷</span>
+          </div>
+          <span className="text-xs font-medium text-[#00c853]">Scan</span>
+        </a>
+        <a href="/history" className="flex flex-col items-center gap-1 text-[#00c853]">
+          <span className="text-xl">📋</span>
+          <span className="text-xs font-medium">History</span>
+        </a>
       </div>
     </main>
   );
