@@ -14,10 +14,10 @@ interface Scan {
 }
 
 function getScoreStyle(score: number) {
-  if (score >= 75) return { color: "#00c853", bg: "bg-green-50", text: "text-green-600", border: "border-green-100" };
-  if (score >= 60) return { color: "#ffd600", bg: "bg-yellow-50", text: "text-yellow-600", border: "border-yellow-100" };
-  if (score >= 40) return { color: "#ff6d00", bg: "bg-orange-50", text: "text-orange-600", border: "border-orange-100" };
-  return { color: "#d50000", bg: "bg-red-50", text: "text-red-600", border: "border-red-100" };
+  if (score >= 75) return { color: "#16a34a", bg: "#f0fdf4" };
+  if (score >= 60) return { color: "#d97706", bg: "#fffbeb" };
+  if (score >= 40) return { color: "#ea580c", bg: "#fff7ed" };
+  return { color: "#dc2626", bg: "#fef2f2" };
 }
 
 function ScoreBadge({ score, verdict }: { score: number; verdict: string }) {
@@ -25,12 +25,11 @@ function ScoreBadge({ score, verdict }: { score: number; verdict: string }) {
   const radius = 20;
   const circumference = 2 * Math.PI * radius;
   const progress = (score / 100) * circumference;
-
   return (
     <div className="flex flex-col items-center gap-1">
       <div className="relative w-14 h-14">
         <svg className="w-full h-full -rotate-90" viewBox="0 0 48 48">
-          <circle cx="24" cy="24" r={radius} fill="none" stroke="#f0f0f0" strokeWidth="4" />
+          <circle cx="24" cy="24" r={radius} fill="none" stroke="#f1f5f9" strokeWidth="4" />
           <circle cx="24" cy="24" r={radius} fill="none" stroke={style.color} strokeWidth="4"
             strokeDasharray={`${progress} ${circumference}`} strokeLinecap="round" />
         </svg>
@@ -38,7 +37,7 @@ function ScoreBadge({ score, verdict }: { score: number; verdict: string }) {
           <span className="text-sm font-black" style={{ color: style.color }}>{score}</span>
         </div>
       </div>
-      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${style.bg} ${style.text}`}>
+      <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: style.bg, color: style.color }}>
         {verdict}
       </span>
     </div>
@@ -65,8 +64,7 @@ export default function HistoryPage() {
       const { data: { session } } = await supabase.auth.getSession();
       const userId = session?.user?.id || "00000000-0000-0000-0000-000000000000";
       const { data } = await supabase
-        .from("scans")
-        .select("*")
+        .from("scans").select("*")
         .eq("user_id", userId)
         .order("created_at", { ascending: false });
       setScans(data || []);
@@ -78,27 +76,25 @@ export default function HistoryPage() {
   const avgScore = scans.length ? Math.round(scans.reduce((a, s) => a + s.health_score, 0) / scans.length) : 0;
   const unhealthy = scans.filter(s => s.verdict === "Poor").length;
   const healthy = scans.filter(s => s.verdict === "Excellent").length;
-  const scoreStyle = getScoreStyle(avgScore);
 
   return (
-    <main className="min-h-screen bg-[#f8f9fa] pb-24">
+    <main className="min-h-screen pb-24" style={{ background: "#fff7ed" }}>
       {/* Navbar */}
-      <nav className="bg-white border-b border-gray-100 sticky top-0 z-40">
+      <nav className="bg-white border-b sticky top-0 z-40" style={{ borderColor: "#fed7aa" }}>
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
           <a href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#00ff87] to-[#00c853] flex items-center justify-center shadow-sm">
-              <span className="text-black font-black text-xs">N</span>
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm" style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}>
+              <span className="text-white font-black text-sm">N</span>
             </div>
-            <span className="font-black text-gray-900 tracking-tight">NutriScan</span>
+            <span className="font-black text-gray-900 text-lg tracking-tight">NutriScan</span>
           </a>
-          <a href="/scan" className="text-sm bg-[#00c853] text-white font-semibold px-4 py-2 rounded-full hover:bg-[#00b548] transition-colors shadow-sm">
+          <a href="/scan" className="text-sm font-bold px-4 py-2 rounded-full text-white shadow-sm" style={{ background: "#f97316" }}>
             + New Scan
           </a>
         </div>
       </nav>
 
       <div className="max-w-2xl mx-auto px-4 py-8">
-        {/* Header */}
         <div className="mb-6">
           <h1 className="text-3xl font-black text-gray-900 tracking-tight">Scan History</h1>
           <p className="text-gray-400 text-sm mt-1">Every product you've analyzed</p>
@@ -107,7 +103,7 @@ export default function HistoryPage() {
         {/* Loading */}
         {loading && (
           <div className="text-center py-20">
-            <div className="w-10 h-10 rounded-full border-gray-100 border-t-[#00c853] animate-spin mx-auto mb-4" style={{ borderWidth: 3, borderStyle: "solid" }} />
+            <div className="w-10 h-10 rounded-full mx-auto mb-4 animate-spin" style={{ border: "3px solid #fed7aa", borderTopColor: "#f97316" }} />
             <p className="text-gray-400 text-sm">Loading your history...</p>
           </div>
         )}
@@ -115,27 +111,25 @@ export default function HistoryPage() {
         {/* Stats */}
         {!loading && scans.length > 0 && (
           <div className="grid grid-cols-3 gap-3 mb-6">
-            <div className="bg-white rounded-2xl p-4 text-center shadow-sm border border-gray-100">
-              <div className="text-3xl font-black text-gray-900">{scans.length}</div>
-              <div className="text-xs text-gray-400 font-medium mt-1">Total Scans</div>
-            </div>
-            <div className="bg-white rounded-2xl p-4 text-center shadow-sm border border-gray-100">
-              <div className={`text-3xl font-black ${scoreStyle.text}`}>{avgScore}</div>
-              <div className="text-xs text-gray-400 font-medium mt-1">Avg Score</div>
-            </div>
-            <div className="bg-white rounded-2xl p-4 text-center shadow-sm border border-gray-100">
-              <div className="text-3xl font-black text-red-500">{unhealthy}</div>
-              <div className="text-xs text-gray-400 font-medium mt-1">Poor Rated</div>
-            </div>
+            {[
+              { label: "Total Scans", value: scans.length, color: "#111827" },
+              { label: "Avg Score", value: avgScore, color: avgScore >= 60 ? "#16a34a" : "#dc2626" },
+              { label: "Poor Rated", value: unhealthy, color: "#dc2626" },
+            ].map((stat) => (
+              <div key={stat.label} className="bg-white rounded-2xl p-4 text-center border shadow-sm" style={{ borderColor: "#fed7aa" }}>
+                <div className="text-3xl font-black" style={{ color: stat.color }}>{stat.value}</div>
+                <div className="text-xs text-gray-400 font-medium mt-1">{stat.label}</div>
+              </div>
+            ))}
           </div>
         )}
 
-        {/* Overall health summary */}
+        {/* Diet summary */}
         {!loading && scans.length > 0 && (
-          <div className={`bg-white rounded-2xl p-5 mb-6 shadow-sm border ${scoreStyle.border}`}>
+          <div className="bg-white rounded-2xl p-5 mb-6 border shadow-sm" style={{ borderColor: "#fed7aa" }}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold mb-1">Your Diet Score</p>
+                <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">Your Diet Score</p>
                 <p className="text-2xl font-black text-gray-900">
                   {avgScore >= 75 ? "Eating Well! 🥗" : avgScore >= 60 ? "Room to Improve 🙂" : avgScore >= 40 ? "Needs Attention ⚠️" : "Poor Diet 🚨"}
                 </p>
@@ -143,20 +137,18 @@ export default function HistoryPage() {
                   {healthy} excellent · {unhealthy} poor · {scans.length - healthy - unhealthy} moderate
                 </p>
               </div>
-              <div className="text-5xl">
-                {avgScore >= 75 ? "🥗" : avgScore >= 60 ? "🙂" : avgScore >= 40 ? "⚠️" : "🚨"}
-              </div>
+              <div className="text-5xl">{avgScore >= 75 ? "🥗" : avgScore >= 60 ? "🙂" : avgScore >= 40 ? "⚠️" : "🚨"}</div>
             </div>
           </div>
         )}
 
         {/* Empty state */}
         {!loading && scans.length === 0 && (
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-12 text-center">
+          <div className="bg-white rounded-3xl border p-12 text-center shadow-sm" style={{ borderColor: "#fed7aa" }}>
             <div className="text-5xl mb-4">📦</div>
             <h3 className="font-bold text-gray-800 mb-2">No scans yet</h3>
             <p className="text-gray-400 text-sm mb-6">Start scanning food products to track your nutrition</p>
-            <a href="/scan" className="bg-[#00c853] text-white font-bold px-6 py-3 rounded-full text-sm hover:bg-[#00b548] transition-colors">
+            <a href="/scan" className="font-bold px-6 py-3 rounded-full text-white text-sm" style={{ background: "#f97316" }}>
               Scan Your First Product →
             </a>
           </div>
@@ -165,11 +157,10 @@ export default function HistoryPage() {
         {/* Scan list */}
         {!loading && scans.length > 0 && (
           <div className="space-y-3">
-            <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold px-1">{scans.length} Products Scanned</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-gray-400 px-1">{scans.length} Products Scanned</p>
             {scans.map((scan) => (
-              <div key={scan.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 flex items-center gap-4 hover:shadow-md transition-shadow">
-                {/* Image */}
-                <div className="w-14 h-14 rounded-xl bg-gray-50 flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-100">
+              <div key={scan.id} className="bg-white rounded-2xl border p-4 flex items-center gap-4 hover:shadow-md transition-shadow" style={{ borderColor: "#fed7aa" }}>
+                <div className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden border" style={{ background: "#fff7ed", borderColor: "#fed7aa" }}>
                   {scan.image_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={scan.image_url} alt={scan.product_name} className="w-full h-full object-contain p-1" />
@@ -177,15 +168,11 @@ export default function HistoryPage() {
                     <span className="text-2xl">📦</span>
                   )}
                 </div>
-
-                {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-gray-900 text-sm truncate">{scan.product_name || "Unknown Product"}</h3>
+                  <h3 className="font-bold text-gray-900 text-sm truncate">{scan.product_name || "Unknown"}</h3>
                   <p className="text-xs text-gray-400 mt-0.5 font-mono">{scan.barcode}</p>
                   <p className="text-xs text-gray-300 mt-1">{timeAgo(scan.created_at)}</p>
                 </div>
-
-                {/* Score */}
                 <ScoreBadge score={scan.health_score} verdict={scan.verdict} />
               </div>
             ))}
@@ -194,18 +181,18 @@ export default function HistoryPage() {
       </div>
 
       {/* Bottom nav */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-6 py-3 flex items-center justify-around md:hidden z-40">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t px-6 py-3 flex items-center justify-around md:hidden z-40" style={{ borderColor: "#fed7aa" }}>
         <a href="/" className="flex flex-col items-center gap-1 text-gray-400">
           <span className="text-xl">🏠</span>
           <span className="text-xs font-medium">Home</span>
         </a>
         <a href="/scan" className="flex flex-col items-center gap-1">
-          <div className="w-12 h-12 bg-[#00c853] rounded-full flex items-center justify-center shadow-lg -mt-6">
+          <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg -mt-6" style={{ background: "#f97316" }}>
             <span className="text-xl">📷</span>
           </div>
-          <span className="text-xs font-medium text-[#00c853]">Scan</span>
+          <span className="text-xs font-medium" style={{ color: "#f97316" }}>Scan</span>
         </a>
-        <a href="/history" className="flex flex-col items-center gap-1 text-[#00c853]">
+        <a href="/history" className="flex flex-col items-center gap-1" style={{ color: "#f97316" }}>
           <span className="text-xl">📋</span>
           <span className="text-xs font-medium">History</span>
         </a>
