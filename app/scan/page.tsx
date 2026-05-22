@@ -194,7 +194,7 @@ export default function ScanPage() {
               onKeyDown={(e) => e.key === "Enter" && handleScan()}
               placeholder="e.g. 0038000845581"
               className="flex-1 rounded-2xl px-4 py-3 text-sm font-mono text-gray-800 focus:outline-none focus:ring-2 border"
-              style={{ background: "#fff7ed", borderColor: "#fed7aa", focusRingColor: "#f97316" }}
+              style={{ background: "#fff7ed", borderColor: "#fed7aa" }}
             />
             <button onClick={() => setShowCamera(true)}
               className="px-4 py-3 rounded-2xl border text-gray-500 hover:bg-orange-50 transition-all text-lg"
