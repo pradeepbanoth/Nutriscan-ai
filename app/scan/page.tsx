@@ -364,7 +364,14 @@ export default function ScanPage() {
 
       {showCamera && (
         <BarcodeScanner
-          onScan={(code) => { setBarcode(code); setShowCamera(false); setTimeout(() => handleScan(), 100); }}
+          onScan={(code) => { 
+  setBarcode(code); 
+  setShowCamera(false); 
+  setTimeout(() => {
+    setBarcode(code);
+    handleScan();
+  }, 300); 
+}}
           onClose={() => setShowCamera(false)}
         />
       )}
