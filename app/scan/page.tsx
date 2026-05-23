@@ -165,9 +165,9 @@ export default function ScanPage() {
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
           <a href="/" className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm" style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}>
-              <span className="text-white font-black text-sm">N</span>
+              <span className="text-white font-black text-sm">D</span>
             </div>
-            <span className="font-black text-gray-900 text-lg tracking-tight">NutriScan</span>
+            <span className="font-black text-gray-900 text-lg tracking-tight">dantey</span>
           </a>
           <div className="flex items-center gap-3">
             <a href="/history" className="text-sm text-gray-500 hover:text-gray-800 font-medium transition-colors">History</a>

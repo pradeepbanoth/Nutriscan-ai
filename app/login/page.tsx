@@ -43,10 +43,10 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <a href="/" className="inline-flex items-center gap-3 mb-6">
             <div className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-md" style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}>
-              <span className="text-white font-black text-lg">N</span>
+              <span className="text-white font-black text-lg">D</span>
             </div>
             <span className="font-black text-gray-900 text-2xl tracking-tight">
-              NutriScan <span style={{ color: "#f97316" }}>AI</span>
+              dantey <span style={{ color: "#f97316" }}>AI</span>
             </span>
           </a>
           <h1 className="text-3xl font-black text-gray-900 tracking-tight mb-2">

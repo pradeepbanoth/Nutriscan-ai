@@ -7,9 +7,9 @@ export default function PrivacyPage() {
         <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
           <a href="/" className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}>
-              <span className="text-white font-black text-sm">N</span>
+              <span className="text-white font-black text-sm">D</span>
             </div>
-            <span className="font-black text-gray-900 text-lg">NutriScan <span style={{ color: "#f97316" }}>AI</span></span>
+            <span className="font-black text-gray-900 text-lg">dantey <span style={{ color: "#f97316" }}>AI</span></span>
           </a>
           <a href="/" className="text-sm text-gray-500 hover:text-gray-900">← Back</a>
         </div>
@@ -17,11 +17,11 @@ export default function PrivacyPage() {
 
       <div className="max-w-3xl mx-auto px-6 py-16">
         <h1 className="text-4xl font-black text-gray-900 mb-2">Privacy Policy</h1>
-        <p className="text-gray-400 text-sm mb-10">Last updated: May 2025 · NutriScan AI by Pradeep Banoth</p>
+        <p className="text-gray-400 text-sm mb-10">Last updated: May 2025 · DANTEY AI by Pradeep Banoth</p>
 
         <div className="bg-white rounded-3xl border shadow-sm p-8 space-y-8" style={{ borderColor: "#fed7aa" }}>
           <div className="p-4 rounded-2xl text-sm text-gray-600 leading-relaxed" style={{ background: "#fff7ed" }}>
-            NutriScan AI is a free food scanning app. We take your privacy seriously and collect only what is necessary to provide our service.
+            DANTEY AI is a free food scanning app. We take your privacy seriously and collect only what is necessary to provide our service.
           </div>
 
           {[

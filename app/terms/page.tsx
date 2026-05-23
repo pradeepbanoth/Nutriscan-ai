@@ -7,9 +7,9 @@ export default function TermsPage() {
         <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
           <a href="/" className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}>
-              <span className="text-white font-black text-sm">N</span>
+              <span className="text-white font-black text-sm">D</span>
             </div>
-            <span className="font-black text-gray-900 text-lg">NutriScan <span style={{ color: "#f97316" }}>AI</span></span>
+            <span className="font-black text-gray-900 text-lg">dantey <span style={{ color: "#f97316" }}>AI</span></span>
           </a>
           <a href="/" className="text-sm text-gray-500 hover:text-gray-900">← Back</a>
         </div>
@@ -17,18 +17,18 @@ export default function TermsPage() {
 
       <div className="max-w-3xl mx-auto px-6 py-16">
         <h1 className="text-4xl font-black text-gray-900 mb-2">Terms of Service</h1>
-        <p className="text-gray-400 text-sm mb-10">Last updated: May 2025 · NutriScan AI by Pradeep Banoth</p>
+        <p className="text-gray-400 text-sm mb-10">Last updated: May 2025 · DANTEY AI by Pradeep Banoth</p>
 
         <div className="bg-white rounded-3xl border shadow-sm p-8 space-y-8" style={{ borderColor: "#fed7aa" }}>
           <div className="p-4 rounded-2xl text-sm text-gray-600 leading-relaxed" style={{ background: "#fff7ed" }}>
-            By using NutriScan AI, you agree to these terms. NutriScan AI is currently a free service built and operated by Pradeep Banoth, Telangana, India.
+            By using DANTEY AI, you agree to these terms. DANTEY AI is currently a free service built and operated by Pradeep Banoth, Telangana, India.
           </div>
 
           {[
             {
               title: "Using the app",
               items: [
-                "You must be at least 10 years old to use NutriScan AI.",
+                "You must be at least 10 years old to use DANTEY AI.",
                 "You are responsible for keeping your account credentials secure.",
                 "You must not misuse, hack, or attempt to damage the service.",
                 "You must not use the app for any illegal purpose.",
@@ -37,7 +37,7 @@ export default function TermsPage() {
             {
               title: "Health disclaimer",
               items: [
-                "NutriScan AI is NOT a medical app and does NOT provide medical advice.",
+                "DANTEY AI is NOT a medical app and does NOT provide medical advice.",
                 "All health scores and AI analysis are for general informational purposes only.",
                 "Do not make medical or dietary decisions based solely on our analysis.",
                 "Always consult a qualified doctor or nutritionist for health decisions.",
@@ -63,7 +63,7 @@ export default function TermsPage() {
             {
               title: "Limitation of liability",
               items: [
-                "NutriScan AI is provided as-is without warranties of any kind.",
+                "DANTEY AI is provided as-is without warranties of any kind.",
                 "We are not liable for any damages resulting from use of the app.",
                 "We are not responsible for decisions made based on our AI analysis.",
               ]

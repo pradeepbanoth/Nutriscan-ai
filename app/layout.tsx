@@ -10,27 +10,27 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: "NutriScan AI — Know What You're Eating",
-    template: "%s | NutriScan AI",
+    default: "DANTEY AI — Know What You're Eating",
+    template: "%s | DANTEY AI",
   },
   description: "Scan any packaged food and get instant AI health analysis — ingredients, additives, nutrition score, and personalized recommendations in seconds.",
   keywords: ["food scanner", "nutrition analysis", "healthy eating", "barcode scanner", "food health score", "ingredient checker", "AI nutrition", "food additives"],
   authors: [{ name: "Pradeep Banoth" }],
   creator: "Pradeep Banoth",
-  metadataBase: new URL("https://nutriscan-ai-orpin.vercel.app"),
+  metadataBase: new URL("https://dantey-ai-orpin.vercel.app"),
   openGraph: {
     type: "website",
     locale: "en_IN",
-    url: "https://nutriscan-ai-orpin.vercel.app",
-    title: "NutriScan AI — Know What You're Eating",
+    url: "https://dantey-ai-orpin.vercel.app",
+    title: "DANTEY AI — Know What You're Eating",
     description: "Scan any packaged food and get instant AI health analysis — ingredients, additives, nutrition score, and personalized recommendations in seconds.",
-    siteName: "NutriScan AI",
+    siteName: "DANTEY AI",
   },
   twitter: {
     card: "summary_large_image",
-    title: "NutriScan AI — Know What You're Eating",
+    title: "DANTEY AI — Know What You're Eating",
     description: "Scan any packaged food and get instant AI health analysis in seconds.",
-    creator: "@nutriscanai",
+    creator: "@danteyai",
   },
   robots: {
     index: true,
