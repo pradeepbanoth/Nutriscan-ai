@@ -134,8 +134,34 @@ export default function ScanPage() {
     if (!barcode.trim()) { setError("Please enter a barcode number."); return; }
     setError(""); setLoading(true); setResult(null); setSaved(false);
     try {
-      const res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode.trim()}.json`);
-      const data = await res.json();
+      // Try OpenFoodFacts world database first
+let res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode.trim()}.json`);
+let data = await res.json();
+
+// If not found, try India specific database
+if (data.status === 0 || !data.product) {
+  res = await fetch(`https://in.openfoodfacts.org/api/v0/product/${barcode.trim()}.json`);
+  data = await res.json();
+}
+
+// If still not found, try UPC Item DB
+if (data.status === 0 || !data.product) {
+  const upcRes = await fetch(`https://api.upcitemdb.com/prod/trial/lookup?upc=${barcode.trim()}`);
+  const upcData = await upcRes.json();
+  if (upcData.items && upcData.items.length > 0) {
+    const item = upcData.items[0];
+    data = {
+      status: 1,
+      product: {
+        product_name: item.title,
+        brands: item.brand,
+        image_url: item.images?.[0] || "",
+        ingredients_text: item.description || "",
+        nutriments: {},
+      }
+    };
+  }
+}
       if (data.status === 0 || !data.product) {
         setResult({ found: false });
       } else {
