@@ -173,8 +173,8 @@ export default function Home() {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-400">
           <div>© 2025 NutriScan AI. All rights reserved.</div>
           <div className="flex gap-6">
-            <a href="#" className="hover:text-gray-700 transition-colors">Privacy</a>
-            <a href="#" className="hover:text-gray-700 transition-colors">Terms</a>
+            <a href="/privacy" className="hover:text-gray-700 transition-colors">Privacy</a>
+<a href="/terms" className="hover:text-gray-700 transition-colors">Terms</a>
             <a href="#" className="hover:text-gray-700 transition-colors">Contact</a>
           </div>
         </div>

@@ -9,8 +9,37 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "NutriScan AI — Know What You're Eating",
-  description: "Scan any packaged food and get instant AI health analysis — ingredients, additives, nutrition score, and personalized recommendations.",
+  title: {
+    default: "NutriScan AI — Know What You're Eating",
+    template: "%s | NutriScan AI",
+  },
+  description: "Scan any packaged food and get instant AI health analysis — ingredients, additives, nutrition score, and personalized recommendations in seconds.",
+  keywords: ["food scanner", "nutrition analysis", "healthy eating", "barcode scanner", "food health score", "ingredient checker", "AI nutrition", "food additives"],
+  authors: [{ name: "Pradeep Banoth" }],
+  creator: "Pradeep Banoth",
+  metadataBase: new URL("https://nutriscan-ai-orpin.vercel.app"),
+  openGraph: {
+    type: "website",
+    locale: "en_IN",
+    url: "https://nutriscan-ai-orpin.vercel.app",
+    title: "NutriScan AI — Know What You're Eating",
+    description: "Scan any packaged food and get instant AI health analysis — ingredients, additives, nutrition score, and personalized recommendations in seconds.",
+    siteName: "NutriScan AI",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "NutriScan AI — Know What You're Eating",
+    description: "Scan any packaged food and get instant AI health analysis in seconds.",
+    creator: "@nutriscanai",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+    },
+  },
 };
 
 export default function RootLayout({
@@ -27,10 +56,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body
-        className="min-h-full flex flex-col"
-        style={{ fontFamily: "var(--font-inter), system-ui, sans-serif" }}
-      >
+      <body className="min-h-full flex flex-col" style={{ fontFamily: "var(--font-inter), system-ui, sans-serif" }}>
         {children}
       </body>
     </html>
