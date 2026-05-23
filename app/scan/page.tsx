@@ -134,18 +134,12 @@ export default function ScanPage() {
     if (!barcode.trim()) { setError("Please enter a barcode number."); return; }
     setError(""); setLoading(true); setResult(null); setSaved(false);
     try {
-      // Try OpenFoodFacts world database first
-let res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode.trim()}.json`);
+      let res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode.trim()}.json`);
 let data = await res.json();
 
-// If not found, try India specific database
 if (data.status === 0 || !data.product) {
   res = await fetch(`https://in.openfoodfacts.org/api/v0/product/${barcode.trim()}.json`);
   data = await res.json();
-}
-
-    };
-  }
 }
       if (data.status === 0 || !data.product) {
         setResult({ found: false });
@@ -176,9 +170,9 @@ if (data.status === 0 || !data.product) {
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
           <a href="/" className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm" style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}>
-              <span className="text-white font-black text-sm">D</span>
+              <span className="text-white font-black text-sm">N</span>
             </div>
-            <span className="font-black text-gray-900 text-lg tracking-tight">dantey</span>
+            <span className="font-black text-gray-900 text-lg tracking-tight">NutriScan</span>
           </a>
           <div className="flex items-center gap-3">
             <a href="/history" className="text-sm text-gray-500 hover:text-gray-800 font-medium transition-colors">History</a>
@@ -205,7 +199,7 @@ if (data.status === 0 || !data.product) {
               onKeyDown={(e) => e.key === "Enter" && handleScan()}
               placeholder="e.g. 0038000845581"
               className="flex-1 rounded-2xl px-4 py-3 text-sm font-mono text-gray-800 focus:outline-none focus:ring-2 border"
-              style={{ background: "#fff7ed", borderColor: "#fed7aa" }}
+              style={{ background: "#fff7ed", borderColor: "#fed7aa", focusRingColor: "#f97316" }}
             />
             <button onClick={() => setShowCamera(true)}
               className="px-4 py-3 rounded-2xl border text-gray-500 hover:bg-orange-50 transition-all text-lg"
@@ -375,14 +369,7 @@ if (data.status === 0 || !data.product) {
 
       {showCamera && (
         <BarcodeScanner
-          onScan={(code) => { 
-  setBarcode(code); 
-  setShowCamera(false); 
-  setTimeout(() => {
-    setBarcode(code);
-    handleScan();
-  }, 300); 
-}}
+          onScan={(code) => { setBarcode(code); setShowCamera(false); setTimeout(() => handleScan(), 100); }}
           onClose={() => setShowCamera(false)}
         />
       )}
