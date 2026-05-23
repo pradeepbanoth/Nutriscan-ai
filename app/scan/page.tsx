@@ -144,21 +144,6 @@ if (data.status === 0 || !data.product) {
   data = await res.json();
 }
 
-// If still not found, try UPC Item DB
-if (data.status === 0 || !data.product) {
-  const upcRes = await fetch(`https://api.upcitemdb.com/prod/trial/lookup?upc=${barcode.trim()}`);
-  const upcData = await upcRes.json();
-  if (upcData.items && upcData.items.length > 0) {
-    const item = upcData.items[0];
-    data = {
-      status: 1,
-      product: {
-        product_name: item.title,
-        brands: item.brand,
-        image_url: item.images?.[0] || "",
-        ingredients_text: item.description || "",
-        nutriments: {},
-      }
     };
   }
 }
