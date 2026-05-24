@@ -131,42 +131,38 @@ export default function ScanPage() {
   const [showCamera, setShowCamera] = useState(false);
 
   async function handleScan() {
+  const cleanBarcode = barcode.trim().replace(/[^0-9]/g, "");
+  if (!cleanBarcode) { setError("Please enter a valid barcode number."); return; }
+  if (cleanBarcode.length < 8 || cleanBarcode.length > 14) { setError("Barcode must be 8-14 digits."); return; }
+  setError(""); setLoading(true); setResult(null); setSaved(false);
+  try {
     let res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${cleanBarcode}.json`);
-let data = await res.json();
+    let data = await res.json();
 
-if (data.status === 0 || !data.product) {
-  res = await fetch(`https://in.openfoodfacts.org/api/v0/product/${cleanBarcode}.json`);
-  data = await res.json();
-}
-    setError(""); setLoading(true); setResult(null); setSaved(false);
-    try {
+    if (data.status === 0 || !data.product) {
       res = await fetch(`https://in.openfoodfacts.org/api/v0/product/${cleanBarcode}.json`);
-let data = await res.json();
+      data = await res.json();
+    }
 
-if (data.status === 0 || !data.product) {
-  res = await fetch(`https://in.openfoodfacts.org/api/v0/product/${barcode.trim()}.json`);
-  data = await res.json();
+    if (data.status === 0 || !data.product) {
+      setResult({ found: false });
+    } else {
+      const product: ProductData = data.product;
+      const { score, verdict, warnings } = calculateHealthScore(product);
+      setResult({ found: true, product, healthScore: score, verdict, warnings });
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id || "00000000-0000-0000-0000-000000000000";
+      const { error: saveError } = await supabase.from("scans").insert({
+        user_id: userId, product_name: product.product_name || "Unknown",
+        barcode: cleanBarcode, health_score: score, verdict, image_url: product.image_url || "",
+      });
+      if (!saveError) setSaved(true);
+    }
+  } catch (err) {
+    console.error(err);
+    setError("Network error. Please check your connection.");
+  } finally { setLoading(false); }
 }
-      if (data.status === 0 || !data.product) {
-        setResult({ found: false });
-      } else {
-        const product: ProductData = data.product;
-        const { score, verdict, warnings } = calculateHealthScore(product);
-        setResult({ found: true, product, healthScore: score, verdict, warnings });
-        const { data: { session } } = await supabase.auth.getSession();
-        const userId = session?.user?.id || "00000000-0000-0000-0000-000000000000";
-        const { error: saveError } = await supabase.from("scans").insert({
-          user_id: userId, product_name: product.product_name || "Unknown",
-          barcode: barcode.trim(), health_score: score, verdict, image_url: product.image_url || "",
-        });
-        if (!saveError) setSaved(true);
-      }
-    } catch (err) {
-      console.error(err);
-      setError("Network error. Please check your connection.");
-    } finally { setLoading(false); }
-  }
-
   const n = result?.product?.nutriments || {};
 
   return (
