@@ -131,9 +131,13 @@ export default function ScanPage() {
   const [showCamera, setShowCamera] = useState(false);
 
   async function handleScan() {
-    const cleanBarcode = barcode.trim().replace(/[^0-9]/g, "");
-if (!cleanBarcode) { setError("Please enter a valid barcode number."); return; }
-if (cleanBarcode.length < 8 || cleanBarcode.length > 14) { setError("Barcode must be 8-14 digits."); return; }
+    let res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${cleanBarcode}.json`);
+let data = await res.json();
+
+if (data.status === 0 || !data.product) {
+  res = await fetch(`https://in.openfoodfacts.org/api/v0/product/${cleanBarcode}.json`);
+  data = await res.json();
+}
     setError(""); setLoading(true); setResult(null); setSaved(false);
     try {
       res = await fetch(`https://in.openfoodfacts.org/api/v0/product/${cleanBarcode}.json`);
