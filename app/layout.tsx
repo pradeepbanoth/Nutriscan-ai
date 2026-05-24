@@ -43,6 +43,8 @@ creator: "DANTEY AI",
   verification: {
     google: "oX05GxtLTymWRqGhzESU9-Nryc0XlfGSjmQQj2-4UPg",
   },
+  manifest: "/manifest.json",
+themeColor: "#f97316",
 };
 
 export default function RootLayout({

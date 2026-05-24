@@ -1,0 +1,21 @@
+{
+  "name": "DANTEY AI",
+  "short_name": "DANTEY",
+  "description": "Scan any food and get instant AI health analysis",
+  "start_url": "/scan",
+  "display": "standalone",
+  "background_color": "#fff7ed",
+  "theme_color": "#f97316",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

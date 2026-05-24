@@ -340,11 +340,26 @@ if (data.status === 0 || !data.product) {
               )}
             </div>
 
-            <button onClick={() => { setResult(null); setBarcode(""); setSaved(false); }}
-              className="w-full py-4 bg-white rounded-2xl border text-gray-400 hover:text-gray-700 transition-all text-sm font-medium"
-              style={{ borderColor: "#fed7aa" }}>
-              ← Scan Another Product
-            </button>
+        <div className="flex gap-3">
+  <button onClick={() => { setResult(null); setBarcode(""); setSaved(false); }}
+    className="flex-1 py-4 bg-white rounded-2xl border text-gray-400 hover:text-gray-700 transition-all text-sm font-medium"
+    style={{ borderColor: "#fed7aa" }}>
+    ← Scan Another
+  </button>
+  <button
+    onClick={() => {
+      const text = `I scanned ${result?.product?.product_name || "a product"} and it scored ${result?.healthScore}/100 (${result?.verdict}) on DANTEY AI! 🔍 Check your food: https://dantey-ai-orpin.vercel.app`;
+      if (navigator.share) {
+        navigator.share({ title: "DANTEY AI", text });
+      } else {
+        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+      }
+    }}
+    className="flex-1 py-4 rounded-2xl text-white text-sm font-bold transition-all"
+    style={{ background: "#f97316" }}>
+    Share Result 📤
+  </button>
+</div>
           </div>
         )}
       </div>
