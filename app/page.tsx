@@ -171,11 +171,11 @@ export default function Home() {
       {/* Footer */}
       <footer className="relative z-10 border-t py-8 px-6" style={{ borderColor: "#fed7aa" }}>
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-400">
-          <div>© 2025 DANTEY AI. All rights reserved.</div>
+          <div>© 2026 DANTEY AI. All rights reserved.</div>
           <div className="flex gap-6">
             <a href="/privacy" className="hover:text-gray-700 transition-colors">Privacy</a>
 <a href="/terms" className="hover:text-gray-700 transition-colors">Terms</a>
-            <a href="#" className="hover:text-gray-700 transition-colors">Contact</a>
+           <a href="mailto:banothpradeep0203@gmail.com" className="hover:text-gray-700 transition-colors">Contact</a>
           </div>
         </div>
       </footer>

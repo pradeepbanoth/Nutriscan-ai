@@ -15,8 +15,8 @@ export const metadata: Metadata = {
   },
   description: "Scan any packaged food and get instant AI health analysis — ingredients, additives, nutrition score, and personalized recommendations in seconds.",
   keywords: ["food scanner", "nutrition analysis", "healthy eating", "barcode scanner", "food health score", "ingredient checker", "AI nutrition", "food additives"],
-  authors: [{ name: "Pradeep Banoth" }],
-  creator: "Pradeep Banoth",
+  authors: [{ name: "DANTEY AI" }],
+creator: "DANTEY AI",
   metadataBase: new URL("https://dantey-ai-orpin.vercel.app"),
   openGraph: {
     type: "website",
