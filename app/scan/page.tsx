@@ -131,10 +131,12 @@ export default function ScanPage() {
   const [showCamera, setShowCamera] = useState(false);
 
   async function handleScan() {
-    if (!barcode.trim()) { setError("Please enter a barcode number."); return; }
+    const cleanBarcode = barcode.trim().replace(/[^0-9]/g, "");
+if (!cleanBarcode) { setError("Please enter a valid barcode number."); return; }
+if (cleanBarcode.length < 8 || cleanBarcode.length > 14) { setError("Barcode must be 8-14 digits."); return; }
     setError(""); setLoading(true); setResult(null); setSaved(false);
     try {
-      let res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode.trim()}.json`);
+      res = await fetch(`https://in.openfoodfacts.org/api/v0/product/${cleanBarcode}.json`);
 let data = await res.json();
 
 if (data.status === 0 || !data.product) {
@@ -222,11 +224,33 @@ if (data.status === 0 || !data.product) {
 
         {/* Loading */}
         {loading && (
-          <div className="text-center py-20">
-            <div className="w-12 h-12 rounded-full mx-auto mb-4 animate-spin" style={{ border: "3px solid #fed7aa", borderTopColor: "#f97316" }} />
-            <p className="text-gray-400 text-sm">Analyzing product...</p>
-          </div>
-        )}
+  <div className="space-y-4">
+    {/* Product skeleton */}
+    <div className="bg-white rounded-3xl border overflow-hidden animate-pulse" style={{ borderColor: "#fed7aa" }}>
+      <div className="h-2" style={{ background: "#fed7aa" }} />
+      <div className="p-5 flex items-center gap-4">
+        <div className="w-20 h-20 rounded-2xl" style={{ background: "#f1f5f9" }} />
+        <div className="flex-1 space-y-2">
+          <div className="h-5 rounded-full w-3/4" style={{ background: "#f1f5f9" }} />
+          <div className="h-3 rounded-full w-1/2" style={{ background: "#f1f5f9" }} />
+          <div className="h-6 rounded-full w-1/3" style={{ background: "#f1f5f9" }} />
+        </div>
+      </div>
+    </div>
+    {/* Score skeleton */}
+    <div className="bg-white rounded-3xl border p-6 flex flex-col items-center animate-pulse" style={{ borderColor: "#fed7aa" }}>
+      <div className="w-36 h-36 rounded-full" style={{ background: "#f1f5f9" }} />
+      <div className="h-8 w-24 rounded-full mt-4" style={{ background: "#f1f5f9" }} />
+    </div>
+    {/* Analysis skeleton */}
+    <div className="bg-white rounded-3xl border p-5 animate-pulse space-y-3" style={{ borderColor: "#fed7aa" }}>
+      <div className="h-4 rounded-full w-1/4" style={{ background: "#f1f5f9" }} />
+      <div className="h-3 rounded-full w-full" style={{ background: "#f1f5f9" }} />
+      <div className="h-3 rounded-full w-5/6" style={{ background: "#f1f5f9" }} />
+      <div className="h-3 rounded-full w-4/6" style={{ background: "#f1f5f9" }} />
+    </div>
+  </div>
+)}
 
         {/* Not found */}
         {result && !result.found && (
