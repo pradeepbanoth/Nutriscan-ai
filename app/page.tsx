@@ -21,7 +21,7 @@ export default function Home() {
             </span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-500">
-            <a href="#" className="hover:text-gray-900 transition-colors">How it Works</a>
+            <a href="/independence" className="hover:text-gray-900 transition-colors">How it Works</a>
             <a href="#" className="hover:text-gray-900 transition-colors">Features</a>
             <a href="#" className="hover:text-gray-900 transition-colors">Pricing</a>
           </div>
