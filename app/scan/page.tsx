@@ -23,6 +23,7 @@ interface ProductData {
   nutriscore_grade?: string;
   nova_group?: number;
   nutriments?: NutrimentData;
+  categories?: string;
 }
 
 interface ScanResult {
@@ -63,7 +64,7 @@ function calculateHealthScore(product: ProductData): { score: number; verdict: s
   return { score, verdict, warnings };
 }
 
-function generateAIExplanation(product: ProductData, score: number, warnings: string[]): string[] {
+function generateAIExplanation(product: ProductData, score: number): string[] {
   const n = product.nutriments || {};
   const name = product.product_name || "This product";
   const paragraphs: string[] = [];
@@ -77,10 +78,25 @@ function generateAIExplanation(product: ProductData, score: number, warnings: st
   if (product.nova_group === 4) paragraphs.push(`🏭 Ultra-processed (NOVA 4) — linked to obesity and poor metabolic health.`);
   if ((n.fiber_100g ?? 0) > 5) paragraphs.push(`✅ Good fiber content (${n.fiber_100g}g/100g) — supports digestive health.`);
   if ((n.proteins_100g ?? 0) > 15) paragraphs.push(`✅ High protein (${n.proteins_100g}g/100g) — supports muscle maintenance.`);
-  if (score < 50) paragraphs.push(`💡 Look for alternatives with simpler ingredients and NOVA 1-2 classification.`);
+  if (score < 50) paragraphs.push(`💡 Consider switching to whole food alternatives with simpler ingredients.`);
   else if (score < 75) paragraphs.push(`💡 Acceptable in moderation — balance with whole foods daily.`);
   else paragraphs.push(`💡 A solid nutritional choice!`);
   return paragraphs;
+}
+
+function getHealthierTips(product: ProductData, score: number): string[] {
+  const n = product.nutriments || {};
+  const tips: string[] = [];
+
+  if ((n.sugars_100g ?? 0) > 10) tips.push("Choose products with less than 5g of sugar per 100g");
+  if ((n["saturated-fat_100g"] ?? 0) > 5) tips.push("Look for products with less than 3g saturated fat per 100g");
+  if ((n.sodium_100g ?? 0) > 0.5) tips.push("Pick low-sodium options with less than 400mg sodium per 100g");
+  if (product.nova_group === 4) tips.push("Choose NOVA 1 or 2 classified products — minimally processed");
+  if (score < 50) tips.push("Look for products with fewer than 5 ingredients on the label");
+  tips.push("Pick products where first ingredient is a whole food (oats, rice, wheat)");
+  tips.push("Avoid products with artificial colors, preservatives or sweeteners");
+
+  return tips.slice(0, 4);
 }
 
 function ScoreRing({ score, verdict }: { score: number; verdict: string }) {
@@ -131,50 +147,51 @@ export default function ScanPage() {
   const [showCamera, setShowCamera] = useState(false);
 
   async function handleScan() {
-  const cleanBarcode = barcode.trim().replace(/[^0-9]/g, "");
-  if (!cleanBarcode) { setError("Please enter a valid barcode number."); return; }
-  if (cleanBarcode.length < 8 || cleanBarcode.length > 14) { setError("Barcode must be 8-14 digits."); return; }
-  setError(""); setLoading(true); setResult(null); setSaved(false);
-  try {
-    let res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${cleanBarcode}.json`);
-    let data = await res.json();
+    const cleanBarcode = barcode.trim().replace(/[^0-9]/g, "");
+    if (!cleanBarcode) { setError("Please enter a valid barcode number."); return; }
+    if (cleanBarcode.length < 8 || cleanBarcode.length > 14) { setError("Barcode must be 8-14 digits."); return; }
+    setError(""); setLoading(true); setResult(null); setSaved(false);
+    try {
+      let res = await fetch(`https://world.openfoodfacts.org/api/v0/product/${cleanBarcode}.json`);
+      let data = await res.json();
 
-    if (data.status === 0 || !data.product) {
-      res = await fetch(`https://in.openfoodfacts.org/api/v0/product/${cleanBarcode}.json`);
-      data = await res.json();
-    }
+      if (data.status === 0 || !data.product) {
+        res = await fetch(`https://in.openfoodfacts.org/api/v0/product/${cleanBarcode}.json`);
+        data = await res.json();
+      }
 
-    if (data.status === 0 || !data.product) {
-      setResult({ found: false });
-    } else {
-      const product: ProductData = data.product;
-      const { score, verdict, warnings } = calculateHealthScore(product);
-      setResult({ found: true, product, healthScore: score, verdict, warnings });
-      const { data: { session } } = await supabase.auth.getSession();
-      const userId = session?.user?.id || "00000000-0000-0000-0000-000000000000";
-      const { error: saveError } = await supabase.from("scans").insert({
-        user_id: userId, product_name: product.product_name || "Unknown",
-        barcode: cleanBarcode, health_score: score, verdict, image_url: product.image_url || "",
-      });
-      if (!saveError) setSaved(true);
-    }
-  } catch (err) {
-    console.error(err);
-    setError("Network error. Please check your connection.");
-  } finally { setLoading(false); }
-}
+      if (data.status === 0 || !data.product) {
+        setResult({ found: false });
+      } else {
+        const product: ProductData = data.product;
+        const { score, verdict, warnings } = calculateHealthScore(product);
+        setResult({ found: true, product, healthScore: score, verdict, warnings });
+        const { data: { session } } = await supabase.auth.getSession();
+        const userId = session?.user?.id || "00000000-0000-0000-0000-000000000000";
+        const { error: saveError } = await supabase.from("scans").insert({
+          user_id: userId, product_name: product.product_name || "Unknown",
+          barcode: cleanBarcode, health_score: score, verdict, image_url: product.image_url || "",
+        });
+        if (!saveError) setSaved(true);
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Network error. Please check your connection.");
+    } finally { setLoading(false); }
+  }
+
   const n = result?.product?.nutriments || {};
 
   return (
-    <main className="min-h-screen" style={{ background: "#fff7ed" }}>
+    <main className="min-h-screen pb-24" style={{ background: "#fff7ed" }}>
       {/* Navbar */}
-      <nav style={{ background: "#fff", borderBottom: "1px solid #fed7aa" }} className="sticky top-0 z-40">
+      <nav className="bg-white border-b sticky top-0 z-40" style={{ borderColor: "#fed7aa" }}>
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
           <a href="/" className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm" style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}>
-              <span className="text-white font-black text-sm">N</span>
+              <span className="text-white font-black text-sm">D</span>
             </div>
-            <span className="font-black text-gray-900 text-lg tracking-tight">NutriScan</span>
+            <span className="font-black text-gray-900 text-lg tracking-tight">DANTEY <span style={{ color: "#f97316" }}>AI</span></span>
           </a>
           <div className="flex items-center gap-3">
             <a href="/history" className="text-sm text-gray-500 hover:text-gray-800 font-medium transition-colors">History</a>
@@ -200,7 +217,7 @@ export default function ScanPage() {
               onChange={(e) => setBarcode(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleScan()}
               placeholder="e.g. 0038000845581"
-              className="flex-1 rounded-2xl px-4 py-3 text-sm font-mono text-gray-800 focus:outline-none focus:ring-2 border"
+              className="flex-1 rounded-2xl px-4 py-3 text-sm font-mono text-gray-800 focus:outline-none border"
               style={{ background: "#fff7ed", borderColor: "#fed7aa" }}
             />
             <button onClick={() => setShowCamera(true)}
@@ -215,49 +232,59 @@ export default function ScanPage() {
           {error && <p className="text-red-500 text-xs mt-2">{error}</p>}
           <div className="mt-3 flex flex-wrap gap-2 items-center">
             <span className="text-xs text-gray-400">Try:</span>
-            {[{ label: "Corn Flakes", code: "0038000845581" }, { label: "Nutella", code: "3017620422003" }, { label: "Coca-Cola", code: "5449000000996" }].map((ex) => (
+            {[
+              { label: "Corn Flakes", code: "0038000845581" },
+              { label: "Nutella", code: "3017620422003" },
+              { label: "Coca-Cola", code: "5449000000996" },
+            ].map((ex) => (
               <button key={ex.code} onClick={() => setBarcode(ex.code)}
                 className="text-xs font-semibold hover:underline" style={{ color: "#f97316" }}>{ex.label}</button>
             ))}
           </div>
         </div>
 
-        {/* Loading */}
+        {/* Loading Skeleton */}
         {loading && (
-  <div className="space-y-4">
-    {/* Product skeleton */}
-    <div className="bg-white rounded-3xl border overflow-hidden animate-pulse" style={{ borderColor: "#fed7aa" }}>
-      <div className="h-2" style={{ background: "#fed7aa" }} />
-      <div className="p-5 flex items-center gap-4">
-        <div className="w-20 h-20 rounded-2xl" style={{ background: "#f1f5f9" }} />
-        <div className="flex-1 space-y-2">
-          <div className="h-5 rounded-full w-3/4" style={{ background: "#f1f5f9" }} />
-          <div className="h-3 rounded-full w-1/2" style={{ background: "#f1f5f9" }} />
-          <div className="h-6 rounded-full w-1/3" style={{ background: "#f1f5f9" }} />
-        </div>
-      </div>
-    </div>
-    {/* Score skeleton */}
-    <div className="bg-white rounded-3xl border p-6 flex flex-col items-center animate-pulse" style={{ borderColor: "#fed7aa" }}>
-      <div className="w-36 h-36 rounded-full" style={{ background: "#f1f5f9" }} />
-      <div className="h-8 w-24 rounded-full mt-4" style={{ background: "#f1f5f9" }} />
-    </div>
-    {/* Analysis skeleton */}
-    <div className="bg-white rounded-3xl border p-5 animate-pulse space-y-3" style={{ borderColor: "#fed7aa" }}>
-      <div className="h-4 rounded-full w-1/4" style={{ background: "#f1f5f9" }} />
-      <div className="h-3 rounded-full w-full" style={{ background: "#f1f5f9" }} />
-      <div className="h-3 rounded-full w-5/6" style={{ background: "#f1f5f9" }} />
-      <div className="h-3 rounded-full w-4/6" style={{ background: "#f1f5f9" }} />
-    </div>
-  </div>
-)}
+          <div className="space-y-4">
+            <div className="bg-white rounded-3xl border overflow-hidden animate-pulse" style={{ borderColor: "#fed7aa" }}>
+              <div className="h-2" style={{ background: "#fed7aa" }} />
+              <div className="p-5 flex items-center gap-4">
+                <div className="w-20 h-20 rounded-2xl" style={{ background: "#f1f5f9" }} />
+                <div className="flex-1 space-y-2">
+                  <div className="h-5 rounded-full w-3/4" style={{ background: "#f1f5f9" }} />
+                  <div className="h-3 rounded-full w-1/2" style={{ background: "#f1f5f9" }} />
+                  <div className="h-6 rounded-full w-1/3" style={{ background: "#f1f5f9" }} />
+                </div>
+              </div>
+            </div>
+            <div className="bg-white rounded-3xl border p-6 flex flex-col items-center animate-pulse" style={{ borderColor: "#fed7aa" }}>
+              <div className="w-36 h-36 rounded-full" style={{ background: "#f1f5f9" }} />
+              <div className="h-8 w-24 rounded-full mt-4" style={{ background: "#f1f5f9" }} />
+            </div>
+            <div className="bg-white rounded-3xl border p-5 animate-pulse space-y-3" style={{ borderColor: "#fed7aa" }}>
+              <div className="h-4 rounded-full w-1/4" style={{ background: "#f1f5f9" }} />
+              <div className="h-3 rounded-full w-full" style={{ background: "#f1f5f9" }} />
+              <div className="h-3 rounded-full w-5/6" style={{ background: "#f1f5f9" }} />
+            </div>
+          </div>
+        )}
 
         {/* Not found */}
         {result && !result.found && (
           <div className="bg-white rounded-3xl border p-10 text-center" style={{ borderColor: "#fed7aa" }}>
             <div className="text-5xl mb-4">🔍</div>
             <h3 className="font-bold text-gray-800 mb-2">Product Not Found</h3>
-            <p className="text-gray-400 text-sm">This barcode isn't in our database. Try another product.</p>
+            <p className="text-gray-400 text-sm mb-4">This barcode is not in our database yet.</p>
+            <div className="rounded-2xl p-4 text-left" style={{ background: "#fff7ed" }}>
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Tips while shopping:</p>
+              <ul className="space-y-1.5">
+                {["Check Nutri-Score label on the packaging", "Look for NOVA 1-2 products", "Choose products with fewer than 5 ingredients", "Avoid products with artificial colors or preservatives"].map((tip, i) => (
+                  <li key={i} className="flex items-center gap-2 text-xs text-gray-600">
+                    <span style={{ color: "#f97316" }}>•</span>{tip}
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         )}
 
@@ -272,10 +299,7 @@ export default function ScanPage() {
 
             {/* Product card */}
             <div className="bg-white rounded-3xl border overflow-hidden" style={{ borderColor: "#fed7aa" }}>
-              {/* Orange header strip */}
               <div className="h-2" style={{ background: "linear-gradient(90deg, #f97316, #ea580c)" }} />
-
-              {/* Product info */}
               <div className="p-5 flex items-center gap-4 border-b" style={{ borderColor: "#fff7ed" }}>
                 {result.product.image_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -297,7 +321,7 @@ export default function ScanPage() {
                 </div>
               </div>
 
-              {/* Score ring */}
+              {/* Score */}
               <div className="p-6 flex flex-col items-center border-b" style={{ borderColor: "#fff7ed" }}>
                 <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-4">Health Score</p>
                 <ScoreRing score={result.healthScore!} verdict={result.verdict!} />
@@ -325,7 +349,7 @@ export default function ScanPage() {
                   <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "#f97316" }}>AI Analysis</p>
                 </div>
                 <div className="space-y-2">
-                  {generateAIExplanation(result.product, result.healthScore!, result.warnings!).map((p, i) => (
+                  {generateAIExplanation(result.product, result.healthScore!).map((p, i) => (
                     <p key={i} className="text-sm text-gray-600 leading-relaxed">{p}</p>
                   ))}
                 </div>
@@ -364,31 +388,66 @@ export default function ScanPage() {
               )}
             </div>
 
-        <div className="flex gap-3">
-  <button onClick={() => { setResult(null); setBarcode(""); setSaved(false); }}
-    className="flex-1 py-4 bg-white rounded-2xl border text-gray-400 hover:text-gray-700 transition-all text-sm font-medium"
-    style={{ borderColor: "#fed7aa" }}>
-    ← Scan Another
-  </button>
-  <button
-    onClick={() => {
-      const text = `I scanned ${result?.product?.product_name || "a product"} and it scored ${result?.healthScore}/100 (${result?.verdict}) on DANTEY AI! 🔍 Check your food: https://dantey-ai-orpin.vercel.app`;
-      if (navigator.share) {
-        navigator.share({ title: "DANTEY AI", text });
-      } else {
-        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
-      }
-    }}
-    className="flex-1 py-4 rounded-2xl text-white text-sm font-bold transition-all"
-    style={{ background: "#f97316" }}>
-    Share Result 📤
-  </button>
-</div>
+            {/* Healthier Alternatives */}
+            {result.healthScore! < 65 && (
+              <div className="bg-white rounded-3xl border overflow-hidden" style={{ borderColor: "#bbf7d0" }}>
+                <div className="h-2" style={{ background: "linear-gradient(90deg, #16a34a, #22c55e)" }} />
+                <div className="p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center text-sm" style={{ background: "#f0fdf4" }}>💚</div>
+                    <h3 className="text-sm font-black text-gray-900">Healthier Alternatives</h3>
+                    <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold ml-auto">Better choices</span>
+                  </div>
+                  <div className="rounded-2xl p-4 border mb-3" style={{ background: "#f0fdf4", borderColor: "#bbf7d0" }}>
+                    <p className="text-xs font-bold text-green-700 uppercase tracking-widest mb-3">What to look for instead</p>
+                    <ul className="space-y-2">
+                      {getHealthierTips(result.product, result.healthScore!).map((tip, j) => (
+                        <li key={j} className="flex items-start gap-2 text-xs text-gray-600">
+                          <span className="text-green-500 mt-0.5 flex-shrink-0 font-bold">✓</span>
+                          {tip}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <a
+                    href={`https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(result.product?.product_name?.split(" ")[0] || "healthy")}&nutrigrade=a&action=process`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl border text-sm font-bold transition-all"
+                    style={{ borderColor: "#16a34a", color: "#16a34a" }}
+                  >
+                    🔍 Find healthier alternatives →
+                  </a>
+                </div>
+              </div>
+            )}
+
+            {/* Share + Scan Another */}
+            <div className="flex gap-3">
+              <button onClick={() => { setResult(null); setBarcode(""); setSaved(false); }}
+                className="flex-1 py-4 bg-white rounded-2xl border text-gray-400 hover:text-gray-700 transition-all text-sm font-medium"
+                style={{ borderColor: "#fed7aa" }}>
+                ← Scan Another
+              </button>
+              <button
+                onClick={() => {
+                  const text = `I scanned ${result?.product?.product_name || "a product"} and it scored ${result?.healthScore}/100 (${result?.verdict}) on DANTEY AI! 🔍 Check your food: https://nutriscan-ai-orpin.vercel.app`;
+                  if (navigator.share) {
+                    navigator.share({ title: "DANTEY AI", text });
+                  } else {
+                    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+                  }
+                }}
+                className="flex-1 py-4 rounded-2xl text-white text-sm font-bold transition-all"
+                style={{ background: "#f97316" }}>
+                Share Result 📤
+              </button>
+            </div>
           </div>
         )}
       </div>
 
-      {/* Mobile bottom nav */}
+      {/* Bottom nav */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t px-6 py-3 flex items-center justify-around md:hidden z-40" style={{ borderColor: "#fed7aa" }}>
         <a href="/" className="flex flex-col items-center gap-1 text-gray-400">
           <span className="text-xl">🏠</span>
@@ -408,7 +467,14 @@ export default function ScanPage() {
 
       {showCamera && (
         <BarcodeScanner
-          onScan={(code) => { setBarcode(code); setShowCamera(false); setTimeout(() => handleScan(), 100); }}
+          onScan={(code) => {
+            setBarcode(code);
+            setShowCamera(false);
+            setTimeout(() => {
+              setBarcode(code);
+              handleScan();
+            }, 300);
+          }}
           onClose={() => setShowCamera(false)}
         />
       )}
