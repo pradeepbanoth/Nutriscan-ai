@@ -9,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/api/", "/history", "/login"],
       },
     ],
-    sitemap: "https://dantey-ai-orpin.vercel.app/sitemap.xml",
+    sitemap: "https://PAUSTICA-ai-orpin.vercel.app/sitemap.xml",
   };
 }

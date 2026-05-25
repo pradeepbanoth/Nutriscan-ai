@@ -1,6 +1,6 @@
 {
-  "name": "DANTEY AI",
-  "short_name": "DANTEY",
+  "name": "PAUSTICA",
+  "short_name": "PAUSTICA",
   "description": "Scan any food and get instant AI health analysis",
   "start_url": "/scan",
   "display": "standalone",

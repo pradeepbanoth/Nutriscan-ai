@@ -10,7 +10,7 @@ export default function PricingPage() {
       name: "Free",
       price: "₹0",
       period: "forever",
-      description: "Perfect for trying out DANTEY AI",
+      description: "Perfect for trying out PAUSTICA",
       color: "#f97316",
       bg: "#fff7ed",
       border: "#fed7aa",
@@ -68,9 +68,9 @@ export default function PricingPage() {
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <a href="/" className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm" style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}>
-              <span className="text-white font-black text-sm">D</span>
+              <span className="text-white font-black text-sm">P</span>
             </div>
-            <span className="font-black text-gray-900 text-lg tracking-tight">DANTEY <span style={{ color: "#f97316" }}>AI</span></span>
+            <span className="font-black text-gray-900 text-lg tracking-tight">PAUSTICA<span style={{ color: "#f97316" }}>AI</span></span>
           </a>
           <a href="/scan" className="text-sm font-bold px-4 py-2 rounded-full text-white" style={{ background: "#f97316" }}>
             Start Scanning
@@ -225,7 +225,7 @@ export default function PricingPage() {
         {/* Bottom CTA */}
         <div className="rounded-3xl p-10 text-center text-white" style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}>
           <h2 className="text-3xl font-black mb-3 tracking-tight">Start eating smarter today</h2>
-          <p className="text-orange-100 mb-6">Join thousands of Indians making better food choices with DANTEY AI</p>
+          <p className="text-orange-100 mb-6">Join thousands of Indians making better food choices with PAUSTICA</p>
           <a href="/scan" className="inline-flex items-center gap-2 bg-white font-bold px-8 py-4 rounded-full text-base" style={{ color: "#f97316" }}>
             📷 Try Free — No signup needed
           </a>

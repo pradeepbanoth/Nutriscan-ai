@@ -14,10 +14,10 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm" style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}>
-              <span className="text-white font-black text-sm">D</span>
+              <span className="text-white font-black text-sm">P</span>
             </div>
             <span className="font-black text-gray-900 text-lg tracking-tight">
-              dantey <span style={{ color: "#f97316" }}>AI</span>
+              PAUSTICA<span style={{ color: "#f97316" }}>AI</span>
             </span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm font-medium text-gray-500">
@@ -171,7 +171,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="relative z-10 border-t py-8 px-6" style={{ borderColor: "#fed7aa" }}>
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-400">
-          <div>© 2026 DANTEY AI. All rights reserved.</div>
+          <div>© 2026 PAUSTICA. All rights reserved.</div>
           <div className="flex gap-6">
             <a href="/privacy" className="hover:text-gray-700 transition-colors">Privacy</a>
 <a href="/terms" className="hover:text-gray-700 transition-colors">Terms</a>

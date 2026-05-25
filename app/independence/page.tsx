@@ -8,9 +8,9 @@ export default function IndependencePage() {
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
           <a href="/" className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm" style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}>
-              <span className="text-white font-black text-sm">D</span>
+              <span className="text-white font-black text-sm">P</span>
             </div>
-            <span className="font-black text-gray-900 text-lg tracking-tight">DANTEY <span style={{ color: "#f97316" }}>AI</span></span>
+            <span className="font-black text-gray-900 text-lg tracking-tight">PAUSTICA<span style={{ color: "#f97316" }}>AI</span></span>
           </a>
           <a href="/scan" className="text-sm font-bold px-4 py-2 rounded-full text-white" style={{ background: "#f97316" }}>
             Start Scanning
@@ -29,7 +29,7 @@ export default function IndependencePage() {
             <span style={{ color: "#f97316" }}>No compromise.</span>
           </h1>
           <p className="text-gray-500 text-lg max-w-2xl mx-auto leading-relaxed">
-            DANTEY AI is built to serve you — not food companies. Our health scores are based purely on science, never on commercial interests.
+            PAUSTICA is built to serve you — not food companies. Our health scores are based purely on science, never on commercial interests.
           </p>
         </div>
 
@@ -53,7 +53,7 @@ export default function IndependencePage() {
             {
               icon: "🔒",
               title: "No Ads. Ever.",
-              description: "DANTEY AI contains zero advertisements. We will never show you sponsored content or paid promotions disguised as recommendations.",
+              description: "PAUSTICA contains zero advertisements. We will never show you sponsored content or paid promotions disguised as recommendations.",
               color: "#fff7ed",
               border: "#fed7aa",
             },
@@ -128,7 +128,7 @@ export default function IndependencePage() {
         <div className="rounded-3xl p-8 border mb-8" style={{ background: "#fff7ed", borderColor: "#fed7aa" }}>
           <h3 className="font-black text-gray-900 mb-3">Important disclaimer</h3>
           <p className="text-sm text-gray-500 leading-relaxed">
-            DANTEY AI health scores are for informational purposes only and are not medical advice. While we strive for accuracy, product formulations change and our database may not always reflect the latest information. Always read the actual product label and consult a healthcare professional for medical dietary decisions.
+            PAUSTICA health scores are for informational purposes only and are not medical advice. While we strive for accuracy, product formulations change and our database may not always reflect the latest information. Always read the actual product label and consult a healthcare professional for medical dietary decisions.
           </p>
         </div>
 
