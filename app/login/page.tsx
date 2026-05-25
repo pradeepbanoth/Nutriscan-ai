@@ -19,11 +19,16 @@ export default function LoginPage() {
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        setMessage("✅ Account created! Check your email to confirm, then log in.");
+       setMessage("✅ Account created! Check your email to confirm, then log in to set up your profile.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        window.location.href = "/scan";
+        const { data: profile } = await supabase.from("profiles").select("onboarded").eq("id", (await supabase.auth.getUser()).data.user?.id || "").single();
+if (!profile?.onboarded) {
+  window.location.href = "/onboarding";
+} else {
+  window.location.href = "/scan";
+}
       }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
