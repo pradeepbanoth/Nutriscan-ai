@@ -14,10 +14,10 @@ interface Scan {
 }
 
 function getScoreStyle(score: number) {
-  if (score >= 75) return { color: "#16a34a", bg: "#f0fdf4" };
-  if (score >= 60) return { color: "#d97706", bg: "#fffbeb" };
-  if (score >= 40) return { color: "#ea580c", bg: "#fff7ed" };
-  return { color: "#dc2626", bg: "#fef2f2" };
+  if (score >= 75) return { color: "#16a34a", bg: "#f0fdf4", border: "#bbf7d0" };
+  if (score >= 60) return { color: "#d97706", bg: "#fffbeb", border: "#fde68a" };
+  if (score >= 40) return { color: "#ea580c", bg: "#fff7ed", border: "#fed7aa" };
+  return { color: "#dc2626", bg: "#fef2f2", border: "#fecaca" };
 }
 
 function ScoreBadge({ score, verdict }: { score: number; verdict: string }) {
@@ -37,7 +37,7 @@ function ScoreBadge({ score, verdict }: { score: number; verdict: string }) {
           <span className="text-sm font-black" style={{ color: style.color }}>{score}</span>
         </div>
       </div>
-      <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: style.bg, color: style.color }}>
+      <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: style.bg, color: style.color, border: `1px solid ${style.border}` }}>
         {verdict}
       </span>
     </div>
@@ -58,6 +58,8 @@ function timeAgo(dateStr: string): string {
 export default function HistoryPage() {
   const [scans, setScans] = useState<Scan[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("all");
 
   useEffect(() => {
     async function loadHistory() {
@@ -73,9 +75,22 @@ export default function HistoryPage() {
     loadHistory();
   }, []);
 
+  // Filter and search
+  const filtered = scans.filter(scan => {
+    const matchSearch = scan.product_name?.toLowerCase().includes(search.toLowerCase()) ||
+      scan.barcode?.includes(search);
+    const matchFilter =
+      filter === "all" ? true :
+      filter === "excellent" ? scan.health_score >= 75 :
+      filter === "good" ? scan.health_score >= 60 && scan.health_score < 75 :
+      filter === "moderate" ? scan.health_score >= 40 && scan.health_score < 60 :
+      filter === "poor" ? scan.health_score < 40 : true;
+    return matchSearch && matchFilter;
+  });
+
   const avgScore = scans.length ? Math.round(scans.reduce((a, s) => a + s.health_score, 0) / scans.length) : 0;
-  const unhealthy = scans.filter(s => s.verdict === "Poor").length;
-  const healthy = scans.filter(s => s.verdict === "Excellent").length;
+  const poor = scans.filter(s => s.health_score < 40).length;
+  const excellent = scans.filter(s => s.health_score >= 75).length;
 
   return (
     <main className="min-h-screen pb-24" style={{ background: "#fff7ed" }}>
@@ -84,9 +99,9 @@ export default function HistoryPage() {
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
           <a href="/" className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm" style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}>
-              <span className="text-white font-black text-sm">P</span>
+              <span className="text-white font-black text-sm">D</span>
             </div>
-            <span className="font-black text-gray-900 text-lg tracking-tight">PAUSTICA</span>
+            <span className="font-black text-gray-900 text-lg tracking-tight">DANTEY <span style={{ color: "#f97316" }}>AI</span></span>
           </a>
           <a href="/scan" className="text-sm font-bold px-4 py-2 rounded-full text-white shadow-sm" style={{ background: "#f97316" }}>
             + New Scan
@@ -97,7 +112,7 @@ export default function HistoryPage() {
       <div className="max-w-2xl mx-auto px-4 py-8">
         <div className="mb-6">
           <h1 className="text-3xl font-black text-gray-900 tracking-tight">Scan History</h1>
-          <p className="text-gray-400 text-sm mt-1">Every product you've analyzed</p>
+          <p className="text-gray-400 text-sm mt-1">Every product you have analyzed</p>
         </div>
 
         {/* Loading */}
@@ -114,7 +129,7 @@ export default function HistoryPage() {
             {[
               { label: "Total Scans", value: scans.length, color: "#111827" },
               { label: "Avg Score", value: avgScore, color: avgScore >= 60 ? "#16a34a" : "#dc2626" },
-              { label: "Poor Rated", value: unhealthy, color: "#dc2626" },
+              { label: "Poor Rated", value: poor, color: "#dc2626" },
             ].map((stat) => (
               <div key={stat.label} className="bg-white rounded-2xl p-4 text-center border shadow-sm" style={{ borderColor: "#fed7aa" }}>
                 <div className="text-3xl font-black" style={{ color: stat.color }}>{stat.value}</div>
@@ -134,10 +149,52 @@ export default function HistoryPage() {
                   {avgScore >= 75 ? "Eating Well! 🥗" : avgScore >= 60 ? "Room to Improve 🙂" : avgScore >= 40 ? "Needs Attention ⚠️" : "Poor Diet 🚨"}
                 </p>
                 <p className="text-sm text-gray-400 mt-1">
-                  {healthy} excellent · {unhealthy} poor · {scans.length - healthy - unhealthy} moderate
+                  {excellent} excellent · {poor} poor · {scans.length - excellent - poor} moderate
                 </p>
               </div>
               <div className="text-5xl">{avgScore >= 75 ? "🥗" : avgScore >= 60 ? "🙂" : avgScore >= 40 ? "⚠️" : "🚨"}</div>
+            </div>
+          </div>
+        )}
+
+        {/* Search and Filter */}
+        {!loading && scans.length > 0 && (
+          <div className="space-y-3 mb-6">
+            {/* Search */}
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search products..."
+                className="w-full bg-white border rounded-2xl pl-10 pr-4 py-3 text-sm text-gray-800 focus:outline-none shadow-sm"
+                style={{ borderColor: "#fed7aa" }}
+              />
+            </div>
+
+            {/* Filter buttons */}
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {[
+                { value: "all", label: "All" },
+                { value: "excellent", label: "✅ Excellent" },
+                { value: "good", label: "🟡 Good" },
+                { value: "moderate", label: "🟠 Moderate" },
+                { value: "poor", label: "🔴 Poor" },
+              ].map((f) => (
+                <button
+                  key={f.value}
+                  onClick={() => setFilter(f.value)}
+                  className="text-xs font-bold px-4 py-2 rounded-full whitespace-nowrap transition-all"
+                  style={{
+                    background: filter === f.value ? "#f97316" : "white",
+                    color: filter === f.value ? "white" : "#6b7280",
+                    border: filter === f.value ? "1px solid #f97316" : "1px solid #fed7aa",
+                  }}
+                >
+                  {f.label}
+                </button>
+              ))}
             </div>
           </div>
         )}
@@ -154,11 +211,22 @@ export default function HistoryPage() {
           </div>
         )}
 
+        {/* No results */}
+        {!loading && scans.length > 0 && filtered.length === 0 && (
+          <div className="bg-white rounded-3xl border p-10 text-center shadow-sm" style={{ borderColor: "#fed7aa" }}>
+            <div className="text-4xl mb-3">🔍</div>
+            <h3 className="font-bold text-gray-800 mb-1">No results found</h3>
+            <p className="text-gray-400 text-sm">Try a different search or filter</p>
+          </div>
+        )}
+
         {/* Scan list */}
-        {!loading && scans.length > 0 && (
+        {!loading && filtered.length > 0 && (
           <div className="space-y-3">
-            <p className="text-xs font-bold uppercase tracking-widest text-gray-400 px-1">{scans.length} Products Scanned</p>
-            {scans.map((scan) => (
+            <p className="text-xs font-bold uppercase tracking-widest text-gray-400 px-1">
+              {filtered.length} {filtered.length === scans.length ? "Products Scanned" : `of ${scans.length} shown`}
+            </p>
+            {filtered.map((scan) => (
               <div key={scan.id} className="bg-white rounded-2xl border p-4 flex items-center gap-4 hover:shadow-md transition-shadow" style={{ borderColor: "#fed7aa" }}>
                 <div className="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden border" style={{ background: "#fff7ed", borderColor: "#fed7aa" }}>
                   {scan.image_url ? (
