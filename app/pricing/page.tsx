@@ -82,7 +82,7 @@ export default function PricingPage() {
         {/* Header */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold mb-6 border" style={{ background: "#fff7ed", borderColor: "#fed7aa", color: "#ea580c" }}>
-            💳 Simple, Transparent Pricing
+             Simple, Transparent Pricing
           </div>
           <h1 className="text-5xl font-black text-gray-900 tracking-tight mb-4">
             Choose your plan
@@ -126,7 +126,7 @@ export default function PricingPage() {
               <div className="p-8" style={{ background: plan.name === "Pro" ? "linear-gradient(135deg, #f97316, #ea580c)" : "white" }}>
                 {plan.name === "Pro" && (
                   <div className="inline-flex items-center gap-1 bg-white/20 rounded-full px-3 py-1 text-xs font-bold text-white mb-4">
-                    ⭐ Most Popular
+                     Most Popular
                   </div>
                 )}
                 <h2 className="text-2xl font-black mb-1" style={{ color: plan.name === "Pro" ? "white" : "#111827" }}>
@@ -145,7 +145,7 @@ export default function PricingPage() {
                 </div>
                 {plan.savings && (
                   <div className="mt-2 inline-flex items-center gap-1 bg-white/20 rounded-full px-3 py-1 text-xs font-bold text-white">
-                    🎉 {plan.savings}
+                     {plan.savings}
                   </div>
                 )}
               </div>
@@ -227,7 +227,7 @@ export default function PricingPage() {
           <h2 className="text-3xl font-black mb-3 tracking-tight">Start eating smarter today</h2>
           <p className="text-orange-100 mb-6">Join thousands of Indians making better food choices with PAUSTICA</p>
           <a href="/scan" className="inline-flex items-center gap-2 bg-white font-bold px-8 py-4 rounded-full text-base" style={{ color: "#f97316" }}>
-            📷 Try Free — No signup needed
+             Try Free — No signup needed
           </a>
         </div>
       </div>

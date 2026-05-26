@@ -56,12 +56,12 @@ export default function Home() {
         {/* CTA buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-20">
           <a href="/scan" className="flex items-center gap-3 font-bold px-8 py-4 rounded-full text-white shadow-lg text-base transition-all" style={{ background: "#f97316" }}>
-            <span>📷</span>
+            <span></span>
             Scan a Food Now
             <span>→</span>
           </a>
           <a href="#" className="flex items-center gap-2 border font-medium px-8 py-4 rounded-full text-gray-600 hover:border-orange-300 hover:text-gray-900 transition-all text-base bg-white" style={{ borderColor: "#fed7aa" }}>
-            <span>▶</span>
+            <span></span>
             See how it works
           </a>
         </div>
@@ -95,7 +95,7 @@ export default function Home() {
               <div className="absolute bottom-4 left-4 w-8 h-8 border-b-2 border-l-2 rounded-bl-lg" style={{ borderColor: "#f97316" }} />
               <div className="absolute bottom-4 right-4 w-8 h-8 border-b-2 border-r-2 rounded-br-lg" style={{ borderColor: "#f97316" }} />
               <div className="text-center">
-                <div className="text-5xl mb-2">📦</div>
+                <div className="text-5xl mb-2"></div>
                 <p className="text-sm text-gray-400">Point camera at barcode or label</p>
               </div>
             </div>
@@ -105,7 +105,7 @@ export default function Home() {
               <div className="rounded-2xl p-4 border" style={{ background: "#fff7ed", borderColor: "#fed7aa" }}>
                 <div className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Health Score</div>
                 <div className="text-5xl font-black" style={{ color: "#dc2626" }}>34</div>
-                <div className="text-xs mt-1" style={{ color: "#dc2626" }}>⚠ Poor</div>
+                <div className="text-xs mt-1" style={{ color: "#dc2626" }}> Poor</div>
               </div>
               <div className="rounded-2xl p-4 border" style={{ background: "#fff7ed", borderColor: "#fed7aa" }}>
                 <div className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Concerns</div>
@@ -141,12 +141,12 @@ export default function Home() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[
-            { icon: "🔍", title: "Barcode Scanner", desc: "Instant product lookup from 2M+ products in our global database." },
-            { icon: "📸", title: "OCR Label Reading", desc: "Can't find the barcode? Just photograph the nutrition label." },
-            { icon: "🧬", title: "Ingredient Analysis", desc: "Every additive checked against WHO, FDA, and EFSA databases." },
-            { icon: "⚡", title: "NOVA Classification", desc: "Detect ultra-processed foods using internationally validated methods." },
-            { icon: "🎯", title: "Personalized Scores", desc: "Results adapt to your diet — keto, diabetic, vegan, and more." },
-            { icon: "💡", title: "Healthier Alternatives", desc: "AI suggests better products for every unhealthy item you scan." },
+            { icon: "", title: "Barcode Scanner", desc: "Instant product lookup from 2M+ products in our global database." },
+            { icon: "", title: "OCR Label Reading", desc: "Can't find the barcode? Just photograph the nutrition label." },
+            { icon: "", title: "Ingredient Analysis", desc: "Every additive checked against WHO, FDA, and EFSA databases." },
+            { icon: "", title: "NOVA Classification", desc: "Detect ultra-processed foods using internationally validated methods." },
+            { icon: "", title: "Personalized Scores", desc: "Results adapt to your diet — keto, diabetic, vegan, and more." },
+            { icon: "", title: "Healthier Alternatives", desc: "AI suggests better products for every unhealthy item you scan." },
           ].map((feature) => (
             <div key={feature.title} className="bg-white rounded-2xl p-6 border hover:shadow-md transition-all cursor-pointer" style={{ borderColor: "#fed7aa" }}>
               <div className="text-3xl mb-4">{feature.icon}</div>
@@ -163,7 +163,7 @@ export default function Home() {
           <h2 className="text-4xl font-black mb-4 tracking-tight">Start scanning for free</h2>
           <p className="text-orange-100 mb-8 text-lg">Join thousands of people making smarter food choices every day.</p>
           <a href="/scan" className="inline-flex items-center gap-2 bg-white font-bold px-8 py-4 rounded-full text-base transition-all hover:bg-orange-50" style={{ color: "#f97316" }}>
-            📷 Scan Your First Product →
+             Scan Your First Product →
           </a>
         </div>
       </section>
@@ -171,7 +171,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="relative z-10 border-t py-8 px-6" style={{ borderColor: "#fed7aa" }}>
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-400">
-          <div>© 2026 PAUSTICA. All rights reserved.</div>
+          <div> 2026 PAUSTICA. All rights reserved.</div>
           <div className="flex gap-6">
             <a href="/privacy" className="hover:text-gray-700 transition-colors">Privacy</a>
 <a href="/terms" className="hover:text-gray-700 transition-colors">Terms</a>

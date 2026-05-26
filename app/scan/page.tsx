@@ -72,15 +72,15 @@ function generateAIExplanation(product: ProductData, score: number): string[] {
   else if (score >= 60) paragraphs.push(`${name} is acceptable but has some nutritional concerns.`);
   else if (score >= 40) paragraphs.push(`${name} has several concerns. Best consumed occasionally.`);
   else paragraphs.push(`${name} scores poorly with multiple health concerns detected.`);
-  if ((n.sugars_100g ?? 0) > 20) paragraphs.push(`⚠️ Contains ${n.sugars_100g}g sugar per 100g — extremely high. WHO recommends max 25g/day.`);
-  if ((n["saturated-fat_100g"] ?? 0) > 10) paragraphs.push(`🫀 High saturated fat (${n["saturated-fat_100g"]}g/100g) linked to elevated LDL cholesterol.`);
-  if ((n.sodium_100g ?? 0) > 0.5) paragraphs.push(`🧂 High sodium (${Math.round((n.sodium_100g ?? 0) * 1000)}mg/100g) linked to hypertension.`);
-  if (product.nova_group === 4) paragraphs.push(`🏭 Ultra-processed (NOVA 4) — linked to obesity and poor metabolic health.`);
-  if ((n.fiber_100g ?? 0) > 5) paragraphs.push(`✅ Good fiber content (${n.fiber_100g}g/100g) — supports digestive health.`);
-  if ((n.proteins_100g ?? 0) > 15) paragraphs.push(`✅ High protein (${n.proteins_100g}g/100g) — supports muscle maintenance.`);
-  if (score < 50) paragraphs.push(`💡 Consider switching to whole food alternatives with simpler ingredients.`);
-  else if (score < 75) paragraphs.push(`💡 Acceptable in moderation — balance with whole foods daily.`);
-  else paragraphs.push(`💡 A solid nutritional choice!`);
+  if ((n.sugars_100g ?? 0) > 20) paragraphs.push(`️ Contains ${n.sugars_100g}g sugar per 100g — extremely high. WHO recommends max 25g/day.`);
+  if ((n["saturated-fat_100g"] ?? 0) > 10) paragraphs.push(` High saturated fat (${n["saturated-fat_100g"]}g/100g) linked to elevated LDL cholesterol.`);
+  if ((n.sodium_100g ?? 0) > 0.5) paragraphs.push(` High sodium (${Math.round((n.sodium_100g ?? 0) * 1000)}mg/100g) linked to hypertension.`);
+  if (product.nova_group === 4) paragraphs.push(` Ultra-processed (NOVA 4) — linked to obesity and poor metabolic health.`);
+  if ((n.fiber_100g ?? 0) > 5) paragraphs.push(` Good fiber content (${n.fiber_100g}g/100g) — supports digestive health.`);
+  if ((n.proteins_100g ?? 0) > 15) paragraphs.push(` High protein (${n.proteins_100g}g/100g) — supports muscle maintenance.`);
+  if (score < 50) paragraphs.push(` Consider switching to whole food alternatives with simpler ingredients.`);
+  else if (score < 75) paragraphs.push(` Acceptable in moderation — balance with whole foods daily.`);
+  else paragraphs.push(` A solid nutritional choice!`);
   return paragraphs;
 }
 
@@ -131,7 +131,7 @@ function NovaBadge({ group }: { group?: number }) {
     1: { label: "NOVA 1 · Unprocessed", color: "bg-green-100 text-green-700" },
     2: { label: "NOVA 2 · Culinary", color: "bg-yellow-100 text-yellow-700" },
     3: { label: "NOVA 3 · Processed", color: "bg-orange-100 text-orange-700" },
-    4: { label: "NOVA 4 · Ultra-Processed ⚠", color: "bg-red-100 text-red-700" },
+    4: { label: "NOVA 4 · Ultra-Processed ", color: "bg-red-100 text-red-700" },
   };
   if (!group || !labels[group]) return null;
   const { label, color } = labels[group];
@@ -222,7 +222,7 @@ export default function ScanPage() {
             />
             <button onClick={() => setShowCamera(true)}
               className="px-4 py-3 rounded-2xl border text-gray-500 hover:bg-orange-50 transition-all text-lg"
-              style={{ borderColor: "#fed7aa" }}>📷</button>
+              style={{ borderColor: "#fed7aa" }}></button>
             <button onClick={handleScan} disabled={loading}
               className="font-bold px-6 py-3 rounded-2xl text-white shadow-sm transition-all disabled:opacity-50 text-sm"
               style={{ background: "#f97316" }}>
@@ -272,7 +272,7 @@ export default function ScanPage() {
         {/* Not found */}
         {result && !result.found && (
           <div className="bg-white rounded-3xl border p-10 text-center" style={{ borderColor: "#fed7aa" }}>
-            <div className="text-5xl mb-4">🔍</div>
+            <div className="text-5xl mb-4"></div>
             <h3 className="font-bold text-gray-800 mb-2">Product Not Found</h3>
             <p className="text-gray-400 text-sm mb-4">This barcode is not in our database yet.</p>
             <div className="rounded-2xl p-4 text-left" style={{ background: "#fff7ed" }}>
@@ -293,7 +293,7 @@ export default function ScanPage() {
           <div className="space-y-4">
             {saved && (
               <div className="rounded-2xl px-4 py-2.5 text-center text-sm font-semibold" style={{ background: "#fff7ed", color: "#f97316", border: "1px solid #fed7aa" }}>
-                ✅ Saved to your history
+                 Saved to your history
               </div>
             )}
 
@@ -305,7 +305,7 @@ export default function ScanPage() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={result.product.image_url} alt="" className="w-20 h-20 object-contain rounded-2xl p-1" style={{ background: "#fff7ed" }} />
                 ) : (
-                  <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-3xl" style={{ background: "#fff7ed" }}>📦</div>
+                  <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-3xl" style={{ background: "#fff7ed" }}></div>
                 )}
                 <div className="flex-1 min-w-0">
                   <h2 className="font-black text-gray-900 text-xl truncate">{result.product.product_name || "Unknown Product"}</h2>
@@ -334,7 +334,7 @@ export default function ScanPage() {
                   <div className="space-y-2">
                     {result.warnings.map((w) => (
                       <div key={w} className="flex items-center gap-2 rounded-xl px-3 py-2" style={{ background: "#fff7ed" }}>
-                        <span style={{ color: "#f97316" }}>⚠</span>
+                        <span style={{ color: "#f97316" }}></span>
                         <span className="text-sm font-medium text-gray-700">{w}</span>
                       </div>
                     ))}
@@ -345,7 +345,7 @@ export default function ScanPage() {
               {/* AI Analysis */}
               <div className="p-5 border-b" style={{ borderColor: "#fff7ed" }}>
                 <div className="flex items-center gap-2 mb-3">
-                  <div className="w-6 h-6 rounded-lg flex items-center justify-center text-xs" style={{ background: "#fff7ed" }}>🧠</div>
+                  <div className="w-6 h-6 rounded-lg flex items-center justify-center text-xs" style={{ background: "#fff7ed" }}></div>
                   <p className="text-xs font-bold uppercase tracking-widest" style={{ color: "#f97316" }}>AI Analysis</p>
                 </div>
                 <div className="space-y-2">
@@ -394,7 +394,7 @@ export default function ScanPage() {
                 <div className="h-2" style={{ background: "linear-gradient(90deg, #16a34a, #22c55e)" }} />
                 <div className="p-5">
                   <div className="flex items-center gap-2 mb-4">
-                    <div className="w-7 h-7 rounded-lg flex items-center justify-center text-sm" style={{ background: "#f0fdf4" }}>💚</div>
+                    <div className="w-7 h-7 rounded-lg flex items-center justify-center text-sm" style={{ background: "#f0fdf4" }}></div>
                     <h3 className="text-sm font-black text-gray-900">Healthier Alternatives</h3>
                     <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold ml-auto">Better choices</span>
                   </div>
@@ -416,7 +416,7 @@ export default function ScanPage() {
                     className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl border text-sm font-bold transition-all"
                     style={{ borderColor: "#16a34a", color: "#16a34a" }}
                   >
-                    🔍 Find healthier alternatives →
+                     Find healthier alternatives →
                   </a>
                 </div>
               </div>
@@ -431,7 +431,7 @@ export default function ScanPage() {
               </button>
               <button
                 onClick={() => {
-                  const text = `I scanned ${result?.product?.product_name || "a product"} and it scored ${result?.healthScore}/100 (${result?.verdict}) on PAUSTICA! 🔍 Check your food: https://nutriscan-ai-orpin.vercel.app`;
+                  const text = `I scanned ${result?.product?.product_name || "a product"} and it scored ${result?.healthScore}/100 (${result?.verdict}) on PAUSTICA!  Check your food: https://nutriscan-ai-orpin.vercel.app`;
                   if (navigator.share) {
                     navigator.share({ title: "PAUSTICA", text });
                   } else {
@@ -440,7 +440,7 @@ export default function ScanPage() {
                 }}
                 className="flex-1 py-4 rounded-2xl text-white text-sm font-bold transition-all"
                 style={{ background: "#f97316" }}>
-                Share Result 📤
+                Share Result 
               </button>
             </div>
           </div>
@@ -450,17 +450,17 @@ export default function ScanPage() {
       {/* Bottom nav */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t px-6 py-3 flex items-center justify-around md:hidden z-40" style={{ borderColor: "#fed7aa" }}>
         <a href="/" className="flex flex-col items-center gap-1 text-gray-400">
-          <span className="text-xl">🏠</span>
+          <span className="text-xl"></span>
           <span className="text-xs font-medium">Home</span>
         </a>
         <a href="/scan" className="flex flex-col items-center gap-1">
           <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg -mt-6" style={{ background: "#f97316" }}>
-            <span className="text-xl">📷</span>
+            <span className="text-xl"></span>
           </div>
           <span className="text-xs font-medium" style={{ color: "#f97316" }}>Scan</span>
         </a>
         <a href="/history" className="flex flex-col items-center gap-1 text-gray-400">
-          <span className="text-xl">📋</span>
+          <span className="text-xl"></span>
           <span className="text-xs font-medium">History</span>
         </a>
       </div>

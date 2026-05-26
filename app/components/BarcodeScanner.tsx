@@ -173,7 +173,7 @@ export default function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps)
         {/* Error */}
         {error && (
           <div className="mx-4 mt-3 rounded-2xl p-4 text-center" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)" }}>
-            <div className="text-2xl mb-2">📷</div>
+            <div className="text-2xl mb-2"></div>
             <p className="text-red-400 text-sm leading-relaxed">{error}</p>
           </div>
         )}
@@ -199,7 +199,7 @@ export default function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps)
         {/* Tips */}
         {scanning && !detected && !error && (
           <div className="mx-4 mt-3 rounded-2xl p-3" style={{ background: "rgba(255,255,255,0.05)" }}>
-            <p className="text-white/30 text-xs text-center">💡 Hold the barcode inside the orange frame • Ensure good lighting • Keep steady</p>
+            <p className="text-white/30 text-xs text-center"> Hold the barcode inside the orange frame • Ensure good lighting • Keep steady</p>
           </div>
         )}
 

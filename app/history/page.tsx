@@ -146,13 +146,13 @@ export default function HistoryPage() {
               <div>
                 <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-1">Your Diet Score</p>
                 <p className="text-2xl font-black text-gray-900">
-                  {avgScore >= 75 ? "Eating Well! 🥗" : avgScore >= 60 ? "Room to Improve 🙂" : avgScore >= 40 ? "Needs Attention ⚠️" : "Poor Diet 🚨"}
+                  {avgScore >= 75 ? "Eating Well! " : avgScore >= 60 ? "Room to Improve " : avgScore >= 40 ? "Needs Attention ️" : "Poor Diet "}
                 </p>
                 <p className="text-sm text-gray-400 mt-1">
                   {excellent} excellent · {poor} poor · {scans.length - excellent - poor} moderate
                 </p>
               </div>
-              <div className="text-5xl">{avgScore >= 75 ? "🥗" : avgScore >= 60 ? "🙂" : avgScore >= 40 ? "⚠️" : "🚨"}</div>
+              <div className="text-5xl">{avgScore >= 75 ? "" : avgScore >= 60 ? "" : avgScore >= 40 ? "️" : ""}</div>
             </div>
           </div>
         )}
@@ -162,7 +162,7 @@ export default function HistoryPage() {
           <div className="space-y-3 mb-6">
             {/* Search */}
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">🔍</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></span>
               <input
                 type="text"
                 value={search}
@@ -177,10 +177,10 @@ export default function HistoryPage() {
             <div className="flex gap-2 overflow-x-auto pb-1">
               {[
                 { value: "all", label: "All" },
-                { value: "excellent", label: "✅ Excellent" },
-                { value: "good", label: "🟡 Good" },
-                { value: "moderate", label: "🟠 Moderate" },
-                { value: "poor", label: "🔴 Poor" },
+                { value: "excellent", label: " Excellent" },
+                { value: "good", label: " Good" },
+                { value: "moderate", label: " Moderate" },
+                { value: "poor", label: " Poor" },
               ].map((f) => (
                 <button
                   key={f.value}
@@ -202,7 +202,7 @@ export default function HistoryPage() {
         {/* Empty state */}
         {!loading && scans.length === 0 && (
           <div className="bg-white rounded-3xl border p-12 text-center shadow-sm" style={{ borderColor: "#fed7aa" }}>
-            <div className="text-5xl mb-4">📦</div>
+            <div className="text-5xl mb-4"></div>
             <h3 className="font-bold text-gray-800 mb-2">No scans yet</h3>
             <p className="text-gray-400 text-sm mb-6">Start scanning food products to track your nutrition</p>
             <a href="/scan" className="font-bold px-6 py-3 rounded-full text-white text-sm" style={{ background: "#f97316" }}>
@@ -214,7 +214,7 @@ export default function HistoryPage() {
         {/* No results */}
         {!loading && scans.length > 0 && filtered.length === 0 && (
           <div className="bg-white rounded-3xl border p-10 text-center shadow-sm" style={{ borderColor: "#fed7aa" }}>
-            <div className="text-4xl mb-3">🔍</div>
+            <div className="text-4xl mb-3"></div>
             <h3 className="font-bold text-gray-800 mb-1">No results found</h3>
             <p className="text-gray-400 text-sm">Try a different search or filter</p>
           </div>
@@ -233,7 +233,7 @@ export default function HistoryPage() {
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={scan.image_url} alt={scan.product_name} className="w-full h-full object-contain p-1" />
                   ) : (
-                    <span className="text-2xl">📦</span>
+                    <span className="text-2xl"></span>
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -251,17 +251,17 @@ export default function HistoryPage() {
       {/* Bottom nav */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t px-6 py-3 flex items-center justify-around md:hidden z-40" style={{ borderColor: "#fed7aa" }}>
         <a href="/" className="flex flex-col items-center gap-1 text-gray-400">
-          <span className="text-xl">🏠</span>
+          <span className="text-xl"></span>
           <span className="text-xs font-medium">Home</span>
         </a>
         <a href="/scan" className="flex flex-col items-center gap-1">
           <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg -mt-6" style={{ background: "#f97316" }}>
-            <span className="text-xl">📷</span>
+            <span className="text-xl"></span>
           </div>
           <span className="text-xs font-medium" style={{ color: "#f97316" }}>Scan</span>
         </a>
         <a href="/history" className="flex flex-col items-center gap-1" style={{ color: "#f97316" }}>
-          <span className="text-xl">📋</span>
+          <span className="text-xl"></span>
           <span className="text-xs font-medium">History</span>
         </a>
       </div>

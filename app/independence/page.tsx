@@ -22,7 +22,7 @@ export default function IndependencePage() {
         {/* Header */}
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold mb-6 border" style={{ background: "#fff7ed", borderColor: "#fed7aa", color: "#ea580c" }}>
-            🛡️ Our Commitment to You
+            ️ Our Commitment to You
           </div>
           <h1 className="text-5xl font-black text-gray-900 tracking-tight mb-6">
             100% Independent.<br />
@@ -37,28 +37,28 @@ export default function IndependencePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-16">
           {[
             {
-              icon: "🚫",
+              icon: "",
               title: "No Brand Partnerships",
               description: "We have zero partnerships with food brands. No company can pay us to improve their product score. Every score is calculated purely by our AI based on nutritional data.",
               color: "#fef2f2",
               border: "#fecaca",
             },
             {
-              icon: "📊",
+              icon: "",
               title: "Science-Based Scoring",
               description: "Our health scores are based on WHO guidelines, FDA recommendations, USDA standards, and FSSAI India guidelines. No exceptions. No bias.",
               color: "#f0fdf4",
               border: "#bbf7d0",
             },
             {
-              icon: "🔒",
+              icon: "",
               title: "No Ads. Ever.",
               description: "PAUSTICA contains zero advertisements. We will never show you sponsored content or paid promotions disguised as recommendations.",
               color: "#fff7ed",
               border: "#fed7aa",
             },
             {
-              icon: "🤝",
+              icon: "",
               title: "Your Data is Yours",
               description: "We never sell your personal data to food companies, advertisers, or anyone else. Your scan history is private and belongs only to you.",
               color: "#eff6ff",
@@ -135,7 +135,7 @@ export default function IndependencePage() {
         {/* CTA */}
         <div className="text-center">
           <a href="/scan" className="inline-flex items-center gap-2 font-bold px-8 py-4 rounded-full text-white shadow-lg text-base" style={{ background: "#f97316" }}>
-            📷 Start Scanning — It's Free
+             Start Scanning — It's Free
           </a>
           <p className="text-gray-400 text-sm mt-4">No account required to scan your first product</p>
         </div>

@@ -19,7 +19,7 @@ export default function LoginPage() {
       if (mode === "signup") {
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-       setMessage("✅ Account created! Check your email to confirm, then log in to set up your profile.");
+       setMessage(" Account created! Check your email to confirm, then log in to set up your profile.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
