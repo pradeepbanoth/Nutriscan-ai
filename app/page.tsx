@@ -1,16 +1,41 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import BarcodeScanner from "../components/BarcodeScanner";
 import { getAlternatives } from "../lib/getAlternatives";
+
+type Product = {
+  id: number;
+  name: string;
+  brand: string;
+  image: string;
+  ingredients: string;
+  nutriscore: string;
+  nova: string | number;
+  sugar: number;
+  fat: number;
+  salt: number;
+};
 
 export default function Home() {
   const [barcode, setBarcode] = useState("");
   const [loading, setLoading] = useState(false);
-  const [product, setProduct] = useState<any>(null);
+  const [product, setProduct] = useState<Product | null>(null);
   const [scannerOpen, setScannerOpen] = useState(false);
-  const [scanHistory, setScanHistory] = useState<any[]>([]);
-  const [favorites, setFavorites] = useState<any[]>([]);
+
+  const [scanHistory, setScanHistory] = useState<Product[]>(() => {
+    if (typeof window === "undefined") return [];
+
+    const savedHistory = localStorage.getItem("paustica_scan_history");
+    return savedHistory ? JSON.parse(savedHistory) : [];
+  });
+
+  const [favorites, setFavorites] = useState<Product[]>(() => {
+    if (typeof window === "undefined") return [];
+
+    const savedFavorites = localStorage.getItem("paustica_favorites");
+    return savedFavorites ? JSON.parse(savedFavorites) : [];
+  });
 
   const harmfulIngredients = [
     "palm oil",
@@ -30,20 +55,7 @@ export default function Home() {
     "corn syrup",
   ];
 
-  useEffect(() => {
-    const savedHistory = localStorage.getItem("paustica_scan_history");
-    const savedFavorites = localStorage.getItem("paustica_favorites");
-
-    if (savedHistory) {
-      setScanHistory(JSON.parse(savedHistory));
-    }
-
-    if (savedFavorites) {
-      setFavorites(JSON.parse(savedFavorites));
-    }
-  }, []);
-
-  const saveHistory = (newItem: any) => {
+  const saveHistory = (newItem: Product) => {
     const updatedHistory = [
       newItem,
       ...scanHistory.filter((item) => item.name !== newItem.name),
@@ -57,7 +69,7 @@ export default function Home() {
     );
   };
 
-  const saveFavorites = (updatedFavorites: any[]) => {
+  const saveFavorites = (updatedFavorites: Product[]) => {
     setFavorites(updatedFavorites);
 
     localStorage.setItem(
@@ -87,9 +99,7 @@ export default function Home() {
   };
 
   const removeFavorite = (name: string) => {
-    const updatedFavorites = favorites.filter(
-      (item) => item.name !== name
-    );
+    const updatedFavorites = favorites.filter((item) => item.name !== name);
 
     saveFavorites(updatedFavorites);
   };
@@ -99,14 +109,10 @@ export default function Home() {
       ?.toLowerCase()
       ?.split(",")
       ?.filter((ingredient: string) =>
-        harmfulIngredients.some((harmful) =>
-          ingredient.includes(harmful)
-        )
+        harmfulIngredients.some((harmful) => ingredient.includes(harmful))
       ) || [];
 
-  const alternatives = product?.name
-    ? getAlternatives(product.name)
-    : [];
+  const alternatives = product?.name ? getAlternatives(product.name) : [];
 
   const fetchProduct = async (code?: string) => {
     const finalBarcode = code || barcode;
@@ -123,7 +129,7 @@ export default function Home() {
       const data = await res.json();
 
       if (data.status === 1) {
-        const fetchedProduct = {
+        const fetchedProduct: Product = {
           id: Date.now(),
           name: data.product.product_name || "Unknown Product",
           brand: data.product.brands || "Unknown Brand",
@@ -346,16 +352,14 @@ export default function Home() {
                       </h3>
 
                       <div className="flex flex-wrap gap-3">
-                        {detectedHarmful.map(
-                          (ingredient: string, index: number) => (
-                            <div
-                              key={index}
-                              className="px-4 py-3 rounded-2xl bg-white border border-red-200 text-red-700 font-semibold"
-                            >
-                              {ingredient}
-                            </div>
-                          )
-                        )}
+                        {detectedHarmful.map((ingredient, index) => (
+                          <div
+                            key={index}
+                            className="px-4 py-3 rounded-2xl bg-white border border-red-200 text-red-700 font-semibold"
+                          >
+                            {ingredient}
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -369,18 +373,16 @@ export default function Home() {
                       </h3>
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {alternatives.map(
-                          (alternative: string, index: number) => (
-                            <div
-                              key={index}
-                              className="bg-white border border-green-200 rounded-2xl p-4"
-                            >
-                              <p className="font-semibold text-green-700">
-                                {alternative}
-                              </p>
-                            </div>
-                          )
-                        )}
+                        {alternatives.map((alternative, index) => (
+                          <div
+                            key={index}
+                            className="bg-white border border-green-200 rounded-2xl p-4"
+                          >
+                            <p className="font-semibold text-green-700">
+                              {alternative}
+                            </p>
+                          </div>
+                        ))}
                       </div>
 
                       <p className="mt-6 text-gray-700">

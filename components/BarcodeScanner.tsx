@@ -17,7 +17,7 @@ export default function BarcodeScanner({
   useEffect(() => {
     const codeReader = new BrowserMultiFormatReader();
 
-    let controls: any;
+let controls: { stop: () => void } | undefined;
 
     async function startScanner() {
       try {
