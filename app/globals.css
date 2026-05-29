@@ -1,1 +1,43 @@
-﻿@import 'tailwindcss';
+@import "tailwindcss";
+
+:root {
+  --background: #F6F3EE;
+  --foreground: #1F2937;
+
+  --primary: #F97316;
+  --primary-dark: #EA580C;
+
+  --card: #FFFFFF;
+  --border: #E7E5E4;
+  --muted: #6B7280;
+
+  --success: #22C55E;
+  --warning: #EAB308;
+  --danger: #F97316;
+
+  --surface-soft: #FFF7ED;
+  --surface-muted: #FAFAF9;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-inter), system-ui, sans-serif;
+}
+@keyframes scan {
+  0% {
+    top: 0%;
+  }
+
+  50% {
+    top: 95%;
+  }
+
+  100% {
+    top: 0%;
+  }
+}
+
+.animate-scan {
+  animation: scan 2s linear infinite;
+}
