@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import BarcodeScanner from "../components/BarcodeScanner";
 import { getAlternatives } from "../lib/getAlternatives";
-import { supabase } from "./lib/supabase";
 import { ingredientIntelligence } from "../lib/ingredientIntelligence";
-import {calculateGoalScore, HealthGoal,} from "../lib/goalScoring";
+import { calculateGoalScore, HealthGoal } from "../lib/goalScoring";
+import { supabase } from "./lib/supabase";
 
 type Product = {
   id: number;
@@ -20,76 +20,31 @@ type Product = {
   salt: number;
 };
 
+type ProductRow = {
+  id: number;
+  product_name: string;
+  brand: string | null;
+  image: string | null;
+  ingredients: string | null;
+  nutriscore: string | null;
+  nova: string | null;
+  sugar: number | null;
+  fat: number | null;
+  salt: number | null;
+};
+
 export default function Home() {
   const [barcode, setBarcode] = useState("");
   const [loading, setLoading] = useState(false);
   const [product, setProduct] = useState<Product | null>(null);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [selectedGoal, setSelectedGoal] = useState<HealthGoal>("General Wellness");
   const [userId, setUserId] = useState<string | null>(null);
+  const [selectedGoal, setSelectedGoal] =
+    useState<HealthGoal>("General Wellness");
 
   const [scanHistory, setScanHistory] = useState<Product[]>([]);
-const [favorites, setFavorites] = useState<Product[]>([]);
-
-const loadCloudData = async (uid: string) => {
-  const { data: historyData } = await supabase
-    .from("scan_history")
-    .select("*")
-    .eq("user_id", uid)
-    .order("created_at", { ascending: false });
-
-  const { data: favoritesData } = await supabase
-    .from("favorites")
-    .select("*")
-    .eq("user_id", uid)
-    .order("created_at", { ascending: false });
-
-  if (historyData) {
-    setScanHistory(
-      historyData.map((item) => ({
-        id: item.id,
-        name: item.product_name,
-        brand: item.brand,
-        image: item.image,
-        ingredients: item.ingredients,
-        nutriscore: item.nutriscore,
-        nova: item.nova,
-        sugar: item.sugar,
-        fat: item.fat,
-        salt: item.salt,
-      }))
-    );
-    
-useEffect(() => {
-
-  const savedHistory = localStorage.getItem("paustica_scan_history");
-  const savedFavorites = localStorage.getItem("paustica_favorites");
-
-  if (savedHistory) {
-    setScanHistory(JSON.parse(savedHistory));
-  }
-
-  if (savedFavorites) {
-    setFavorites(JSON.parse(savedFavorites));
-  }
-}, []);
-
-useEffect(() => {
-  const getUser = async () => {
-    const { data } = await supabase.auth.getUser();
-
-    if (data.user) {
-      setUserEmail(data.user.email ?? null);
-      setUserId(data.user.id);
-
-      loadCloudData(data.user.id);
-    }
-  };
-
-  getUser();
-}, []);
-  
+  const [favorites, setFavorites] = useState<Product[]>([]);
 
   const harmfulIngredients = [
     "palm oil",
@@ -109,26 +64,69 @@ useEffect(() => {
     "corn syrup",
   ];
 
-  
+  const mapRowToProduct = (item: ProductRow): Product => ({
+    id: item.id,
+    name: item.product_name,
+    brand: item.brand || "",
+    image: item.image || "",
+    ingredients: item.ingredients || "",
+    nutriscore: item.nutriscore || "unknown",
+    nova: item.nova || "N/A",
+    sugar: item.sugar || 0,
+    fat: item.fat || 0,
+    salt: item.salt || 0,
+  });
+
+  async function loadCloudData(uid: string) {
+    const { data: historyData } = await supabase
+      .from("scan_history")
+      .select("*")
+      .eq("user_id", uid)
+      .order("created_at", { ascending: false });
+
+    const { data: favoritesData } = await supabase
+      .from("favorites")
+      .select("*")
+      .eq("user_id", uid)
+      .order("created_at", { ascending: false });
+
+    if (historyData) {
+      setScanHistory((historyData as ProductRow[]).map(mapRowToProduct));
+    }
+
+    if (favoritesData) {
+      setFavorites((favoritesData as ProductRow[]).map(mapRowToProduct));
+    }
   }
 
-  if (favoritesData) {
-    setFavorites(
-      favoritesData.map((item) => ({
-        id: item.id,
-        name: item.product_name,
-        brand: item.brand,
-        image: item.image,
-        ingredients: item.ingredients,
-        nutriscore: item.nutriscore,
-        nova: item.nova,
-        sugar: item.sugar,
-        fat: item.fat,
-        salt: item.salt,
-      }))
-    );
-  }
-};
+  useEffect(() => {
+    requestAnimationFrame(() => {
+      const savedHistory = localStorage.getItem("paustica_scan_history");
+      const savedFavorites = localStorage.getItem("paustica_favorites");
+
+      if (savedHistory) {
+        setScanHistory(JSON.parse(savedHistory));
+      }
+
+      if (savedFavorites) {
+        setFavorites(JSON.parse(savedFavorites));
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data } = await supabase.auth.getUser();
+
+      if (data.user) {
+        setUserEmail(data.user.email ?? null);
+        setUserId(data.user.id);
+        await loadCloudData(data.user.id);
+      }
+    };
+
+    getUser();
+  }, []);
 
   const saveHistory = async (newItem: Product) => {
     const updatedHistory = [
@@ -136,21 +134,22 @@ useEffect(() => {
       ...scanHistory.filter((item) => item.name !== newItem.name),
     ].slice(0, 12);
 
-   if (userId) {
-  await supabase.from("scan_history").insert({
-    user_id: userId,
-    product_name: newItem.name,
-    brand: newItem.brand,
-    image: newItem.image,
-    ingredients: newItem.ingredients,
-    nutriscore: newItem.nutriscore,
-    nova: String(newItem.nova),
-    sugar: newItem.sugar,
-    fat: newItem.fat,
-    salt: newItem.salt,
-  });
-} setScanHistory(updatedHistory);
+    if (userId) {
+      await supabase.from("scan_history").insert({
+        user_id: userId,
+        product_name: newItem.name,
+        brand: newItem.brand,
+        image: newItem.image,
+        ingredients: newItem.ingredients,
+        nutriscore: newItem.nutriscore,
+        nova: String(newItem.nova),
+        sugar: newItem.sugar,
+        fat: newItem.fat,
+        salt: newItem.salt,
+      });
+    }
 
+    setScanHistory(updatedHistory);
     localStorage.setItem(
       "paustica_scan_history",
       JSON.stringify(updatedHistory)
@@ -159,7 +158,6 @@ useEffect(() => {
 
   const saveFavorites = (updatedFavorites: Product[]) => {
     setFavorites(updatedFavorites);
-
     localStorage.setItem(
       "paustica_favorites",
       JSON.stringify(updatedFavorites)
@@ -170,111 +168,103 @@ useEffect(() => {
     ? favorites.some((item) => item.name === product.name)
     : false;
 
-   const toggleFavorite = async () => {
-  if (!product) return;
+  const toggleFavorite = async () => {
+    if (!product) return;
 
-  if (isFavorite) {
-    const updatedFavorites = favorites.filter(
-      (item) => item.name !== product.name
-    );
+    if (isFavorite) {
+      await removeFavorite(product.name);
+    } else {
+      const updatedFavorites = [product, ...favorites];
 
-    saveFavorites(updatedFavorites);
-  } else {
-    const updatedFavorites = [product, ...favorites];
+      if (userId) {
+        await supabase.from("favorites").insert({
+          user_id: userId,
+          product_name: product.name,
+          brand: product.brand,
+          image: product.image,
+          ingredients: product.ingredients,
+          nutriscore: product.nutriscore,
+          nova: String(product.nova),
+          sugar: product.sugar,
+          fat: product.fat,
+          salt: product.salt,
+        });
+      }
+
+      saveFavorites(updatedFavorites);
+    }
+  };
+
+  const removeFavorite = async (name: string) => {
+    const updatedFavorites = favorites.filter((item) => item.name !== name);
 
     if (userId) {
-      await supabase.from("favorites").insert({
-        user_id: userId,
-        product_name: product.name,
-        brand: product.brand,
-        image: product.image,
-        ingredients: product.ingredients,
-        nutriscore: product.nutriscore,
-        nova: String(product.nova),
-        sugar: product.sugar,
-        fat: product.fat,
-        salt: product.salt,
-      });
+      await supabase
+        .from("favorites")
+        .delete()
+        .eq("user_id", userId)
+        .eq("product_name", name);
     }
 
     saveFavorites(updatedFavorites);
-  }
-};
-
- const removeFavorite = async (name: string) => {
-  const updatedFavorites = favorites.filter(
-    (item) => item.name !== name
-  );
-
-  if (userId) {
-    await supabase
-      .from("favorites")
-      .delete()
-      .eq("user_id", userId)
-      .eq("product_name", name);
-  }
-
-  saveFavorites(updatedFavorites);
-};
+  };
 
   const logout = async () => {
-  await supabase.auth.signOut();
-  setUserEmail(null);
-  window.location.href = "/";
-};
+    await supabase.auth.signOut();
+    setUserEmail(null);
+    setUserId(null);
+    window.location.href = "/";
+  };
 
   const detectedHarmful =
-  product?.ingredients
-    ?.toLowerCase()
-    ?.split(",")
-    ?.filter((ingredient: string) =>
-      harmfulIngredients.some((harmful) =>
-        ingredient.includes(harmful)
-      )
-    ) || [];
+    product?.ingredients
+      ?.toLowerCase()
+      ?.split(",")
+      ?.filter((ingredient: string) =>
+        harmfulIngredients.some((harmful) => ingredient.includes(harmful))
+      ) || [];
 
-const ingredientInsights = detectedHarmful
-  .map((ingredient) => {
-    const key = ingredient.trim().toLowerCase();
+  const ingredientInsights = detectedHarmful
+    .map((ingredient) => {
+      const key = ingredient.trim().toLowerCase();
 
-    return {
-      ingredient,
-      info: ingredientIntelligence[key],
-    };
-  })
-  .filter((item) => item.info);
-
-     
+      return {
+        ingredient,
+        info: ingredientIntelligence[key],
+      };
+    })
+    .filter((item) => item.info);
 
   const alternatives = product?.name ? getAlternatives(product.name) : [];
+
   const healthScore = product
-  ? calculateGoalScore(
-      selectedGoal,
-      product.sugar,
-      product.fat,
-      product.salt,
-      Number(product.nova),
-      detectedHarmful.length
-    )
-  : 0;
+    ? calculateGoalScore(
+        selectedGoal,
+        product.sugar,
+        product.fat,
+        product.salt,
+        Number(product.nova),
+        detectedHarmful.length
+      )
+    : 0;
 
-const healthGrade =
-  healthScore >= 85
-    ? "A"
-    : healthScore >= 70
-    ? "B"
-    : healthScore >= 55
-    ? "C"
-    : healthScore >= 40
-    ? "D"
-    : "E";
+  const healthGrade =
+    healthScore >= 85
+      ? "A"
+      : healthScore >= 70
+      ? "B"
+      : healthScore >= 55
+      ? "C"
+      : healthScore >= 40
+      ? "D"
+      : "E";
 
-const healthVerdict =
-  healthScore >= 75
-    ? "This product looks like a better choice with relatively lower risk."
-    : healthScore >= 50
-    ? "This product is moderate. Consume occasionally and check portion size."
-    : "This product looks unhealthy due to processing, sugar, salt, fat, or additives.";
+  const healthVerdict =
+    healthScore >= 75
+      ? "This product looks like a better choice with relatively lower risk."
+      : healthScore >= 50
+      ? "This product is moderate. Consume occasionally and check portion size."
+      : "This product looks unhealthy due to processing, sugar, salt, fat, or additives.";
 
   const fetchProduct = async (code?: string) => {
     const finalBarcode = code || barcode;
@@ -306,7 +296,7 @@ const healthVerdict =
         };
 
         setProduct(fetchedProduct);
-        saveHistory(fetchedProduct);
+        await saveHistory(fetchedProduct);
         setScannerOpen(false);
       } else {
         alert("Product not found");
@@ -319,17 +309,14 @@ const healthVerdict =
     setLoading(false);
   };
 
- const clearHistory = async () => {
-  setScanHistory([]);
-  localStorage.removeItem("paustica_scan_history");
+  const clearHistory = async () => {
+    setScanHistory([]);
+    localStorage.removeItem("paustica_scan_history");
 
-  if (userId) {
-    await supabase
-      .from("scan_history")
-      .delete()
-      .eq("user_id", userId);
-  }
-};
+    if (userId) {
+      await supabase.from("scan_history").delete().eq("user_id", userId);
+    }
+  };
 
   return (
     <main
@@ -353,27 +340,27 @@ const healthVerdict =
             </span>
           </div>
 
-         {userEmail ? (
-  <button
-    onClick={logout}
-    className="rounded-full px-6 py-3 text-sm font-bold text-white shadow-lg"
-    style={{
-      background: "linear-gradient(135deg, #f97316, #ea580c)",
-    }}
-  >
-    Logout
-  </button>
-) : (
-  <a
-    href="/auth"
-    className="rounded-full px-6 py-3 text-sm font-bold text-white shadow-lg"
-    style={{
-      background: "linear-gradient(135deg, #f97316, #ea580c)",
-    }}
-  >
-    Login
-  </a>
-)}
+          {userEmail ? (
+            <button
+              onClick={logout}
+              className="rounded-full px-6 py-3 text-sm font-bold text-white shadow-lg"
+              style={{
+                background: "linear-gradient(135deg, #f97316, #ea580c)",
+              }}
+            >
+              Logout
+            </button>
+          ) : (
+            <a
+              href="/auth"
+              className="rounded-full px-6 py-3 text-sm font-bold text-white shadow-lg"
+              style={{
+                background: "linear-gradient(135deg, #f97316, #ea580c)",
+              }}
+            >
+              Login
+            </a>
+          )}
         </div>
       </nav>
 
@@ -465,9 +452,7 @@ const healthVerdict =
                           {product.name}
                         </h2>
 
-                        <p className="text-gray-500 mb-6">
-                          {product.brand}
-                        </p>
+                        <p className="text-gray-500 mb-6">{product.brand}</p>
                       </div>
 
                       <button
@@ -513,113 +498,130 @@ const healthVerdict =
                     </div>
                   </div>
                 </div>
-                 
-                 <div className="mt-8 text-left">
-  <div
-    className={`rounded-3xl p-6 border ${
-      healthScore >= 75
-        ? "bg-green-50 border-green-200"
-        : healthScore >= 50
-        ? "bg-yellow-50 border-yellow-200"
-        : "bg-red-50 border-red-200"
-    }`}
-  >
-    <div className="flex items-center justify-between gap-4 mb-4">
-      <div>
-        <p className="text-sm text-gray-500 font-semibold">
-         
-         <div className="mt-8 text-left">
-  <label className="block text-sm font-bold text-gray-500 mb-3">
-    Personal Health Goal
-  </label>
 
-  <select
-    value={selectedGoal}
-    onChange={(e) =>
-      setSelectedGoal(e.target.value as HealthGoal)
-    }
-    className="w-full rounded-2xl border border-orange-100 bg-orange-50 px-5 py-4 font-bold text-gray-800 outline-none"
-  >
-    <option>General Wellness</option>
-    <option>Weight Loss</option>
-    <option>Diabetes Friendly</option>
-    <option>Muscle Gain</option>
-    <option>Heart Health</option>
-    <option>Kids Nutrition</option>
-  </select>
-</div>
-         
-          AI Health Score
-        </p>
+                <div className="mt-8 text-left">
+                  <label className="block text-sm font-bold text-gray-500 mb-3">
+                    Personal Health Goal
+                  </label>
 
-        <h3 className="text-5xl font-black text-gray-900">
-          {healthScore}/100
-        </h3>
-      </div>
+                  <select
+                    value={selectedGoal}
+                    onChange={(e) =>
+                      setSelectedGoal(e.target.value as HealthGoal)
+                    }
+                    className="w-full rounded-2xl border border-orange-100 bg-orange-50 px-5 py-4 font-bold text-gray-800 outline-none"
+                  >
+                    <option>General Wellness</option>
+                    <option>Weight Loss</option>
+                    <option>Diabetes Friendly</option>
+                    <option>Muscle Gain</option>
+                    <option>Heart Health</option>
+                    <option>Kids Nutrition</option>
+                  </select>
+                </div>
 
-      <div className="text-right">
-        <p className="text-sm text-gray-500 font-semibold">
-          Grade
-        </p>
+                <div className="mt-8 text-left">
+                  <div
+                    className={`rounded-3xl p-6 border ${
+                      healthScore >= 75
+                        ? "bg-green-50 border-green-200"
+                        : healthScore >= 50
+                        ? "bg-yellow-50 border-yellow-200"
+                        : "bg-red-50 border-red-200"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-4 mb-4">
+                      <div>
+                        <p className="text-sm text-gray-500 font-semibold">
+                          AI Health Score
+                        </p>
 
-        <div className="text-5xl font-black text-orange-600">
-          {healthGrade}
-        </div>
-      </div>
-    </div>
+                        <h3 className="text-5xl font-black text-gray-900">
+                          {healthScore}/100
+                        </h3>
+                      </div>
 
-    <div className="w-full h-4 bg-white rounded-full overflow-hidden mb-6">
-      <div
-        className={`h-full rounded-full ${
-          healthScore >= 75
-            ? "bg-green-500"
-            : healthScore >= 50
-            ? "bg-yellow-500"
-            : "bg-red-500"
-        }`}
-        style={{ width: `${healthScore}%` }}
-      />
-    </div>
+                      <div className="text-right">
+                        <p className="text-sm text-gray-500 font-semibold">
+                          Grade
+                        </p>
 
-    <p className="text-gray-700 leading-relaxed mb-6">
-      {healthVerdict}
-    </p>
+                        <div className="text-5xl font-black text-orange-600">
+                          {healthGrade}
+                        </div>
+                      </div>
+                    </div>
 
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <div className="bg-white rounded-2xl p-4 border border-orange-100">
-        <p className="text-xs text-gray-400 mb-1">Sugar Risk</p>
-        <p className="font-black text-orange-600">
-          {product.sugar > 15 ? "High" : product.sugar > 7 ? "Medium" : "Low"}
-        </p>
-      </div>
+                    <div className="w-full h-4 bg-white rounded-full overflow-hidden mb-6">
+                      <div
+                        className={`h-full rounded-full ${
+                          healthScore >= 75
+                            ? "bg-green-500"
+                            : healthScore >= 50
+                            ? "bg-yellow-500"
+                            : "bg-red-500"
+                        }`}
+                        style={{ width: `${healthScore}%` }}
+                      />
+                    </div>
 
-      <div className="bg-white rounded-2xl p-4 border border-orange-100">
-        <p className="text-xs text-gray-400 mb-1">Fat Risk</p>
-        <p className="font-black text-orange-600">
-          {product.fat > 20 ? "High" : product.fat > 10 ? "Medium" : "Low"}
-        </p>
-      </div>
+                    <p className="text-gray-700 leading-relaxed mb-6">
+                      {healthVerdict}
+                    </p>
 
-      <div className="bg-white rounded-2xl p-4 border border-orange-100">
-        <p className="text-xs text-gray-400 mb-1">Salt Risk</p>
-        <p className="font-black text-orange-600">
-          {product.salt > 1.5 ? "High" : product.salt > 0.5 ? "Medium" : "Low"}
-        </p>
-      </div>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="bg-white rounded-2xl p-4 border border-orange-100">
+                        <p className="text-xs text-gray-400 mb-1">
+                          Sugar Risk
+                        </p>
+                        <p className="font-black text-orange-600">
+                          {product.sugar > 15
+                            ? "High"
+                            : product.sugar > 7
+                            ? "Medium"
+                            : "Low"}
+                        </p>
+                      </div>
 
-      <div className="bg-white rounded-2xl p-4 border border-orange-100">
-        <p className="text-xs text-gray-400 mb-1">Processing</p>
-        <p className="font-black text-orange-600">
-          {Number(product.nova) >= 4
-            ? "Ultra"
-            : Number(product.nova) >= 3
-            ? "Processed"
-            : "Low"}
-        </p>
-      </div>
-    </div>
-  </div>
-</div> 
+                      <div className="bg-white rounded-2xl p-4 border border-orange-100">
+                        <p className="text-xs text-gray-400 mb-1">Fat Risk</p>
+                        <p className="font-black text-orange-600">
+                          {product.fat > 20
+                            ? "High"
+                            : product.fat > 10
+                            ? "Medium"
+                            : "Low"}
+                        </p>
+                      </div>
+
+                      <div className="bg-white rounded-2xl p-4 border border-orange-100">
+                        <p className="text-xs text-gray-400 mb-1">
+                          Salt Risk
+                        </p>
+                        <p className="font-black text-orange-600">
+                          {product.salt > 1.5
+                            ? "High"
+                            : product.salt > 0.5
+                            ? "Medium"
+                            : "Low"}
+                        </p>
+                      </div>
+
+                      <div className="bg-white rounded-2xl p-4 border border-orange-100">
+                        <p className="text-xs text-gray-400 mb-1">
+                          Processing
+                        </p>
+                        <p className="font-black text-orange-600">
+                          {Number(product.nova) >= 4
+                            ? "Ultra"
+                            : Number(product.nova) >= 3
+                            ? "Processed"
+                            : "Low"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
                 <div className="mt-10 text-left">
                   <h3 className="text-xl font-black text-gray-900 mb-4">
@@ -653,74 +655,75 @@ const healthVerdict =
                     </div>
                   </div>
                 )}
-                 {ingredientInsights.length > 0 && (
-  <div className="mt-10 text-left">
-    <div className="bg-blue-50 border border-blue-200 rounded-3xl p-8">
-      <h3 className="text-2xl font-black text-blue-700 mb-6">
-        AI Ingredient Intelligence
-      </h3>
 
-      <div className="space-y-6">
-        {ingredientInsights.map((item, index) => (
-          <div
-            key={index}
-            className="bg-white border border-blue-100 rounded-3xl p-6"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h4 className="text-xl font-black text-gray-900">
-                {item.ingredient}
-              </h4>
+                {ingredientInsights.length > 0 && (
+                  <div className="mt-10 text-left">
+                    <div className="bg-blue-50 border border-blue-200 rounded-3xl p-8">
+                      <h3 className="text-2xl font-black text-blue-700 mb-6">
+                        AI Ingredient Intelligence
+                      </h3>
 
-              <span
-                className={`px-4 py-2 rounded-full text-sm font-bold ${
-                  item.info?.risk === "High"
-                    ? "bg-red-100 text-red-700"
-                    : item.info?.risk === "Medium"
-                    ? "bg-yellow-100 text-yellow-700"
-                    : "bg-green-100 text-green-700"
-                }`}
-              >
-                {item.info?.risk} Risk
-              </span>
-            </div>
+                      <div className="space-y-6">
+                        {ingredientInsights.map((item, index) => (
+                          <div
+                            key={index}
+                            className="bg-white border border-blue-100 rounded-3xl p-6"
+                          >
+                            <div className="flex items-center justify-between mb-4">
+                              <h4 className="text-xl font-black text-gray-900">
+                                {item.ingredient}
+                              </h4>
 
-            <div className="space-y-4">
-              <div>
-                <p className="font-bold text-gray-900 mb-1">
-                  Why it matters
-                </p>
+                              <span
+                                className={`px-4 py-2 rounded-full text-sm font-bold ${
+                                  item.info?.risk === "High"
+                                    ? "bg-red-100 text-red-700"
+                                    : item.info?.risk === "Medium"
+                                    ? "bg-yellow-100 text-yellow-700"
+                                    : "bg-green-100 text-green-700"
+                                }`}
+                              >
+                                {item.info?.risk} Risk
+                              </span>
+                            </div>
 
-                <p className="text-gray-700">
-                  {item.info?.why}
-                </p>
-              </div>
+                            <div className="space-y-4">
+                              <div>
+                                <p className="font-bold text-gray-900 mb-1">
+                                  Why it matters
+                                </p>
 
-              <div>
-                <p className="font-bold text-gray-900 mb-1">
-                  Scientific View
-                </p>
+                                <p className="text-gray-700">
+                                  {item.info?.why}
+                                </p>
+                              </div>
 
-                <p className="text-gray-700">
-                  {item.info?.scientificView}
-                </p>
-              </div>
+                              <div>
+                                <p className="font-bold text-gray-900 mb-1">
+                                  Scientific View
+                                </p>
 
-              <div>
-                <p className="font-bold text-gray-900 mb-1">
-                  Recommendation
-                </p>
+                                <p className="text-gray-700">
+                                  {item.info?.scientificView}
+                                </p>
+                              </div>
 
-                <p className="text-gray-700">
-                  {item.info?.recommendation}
-                </p>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  </div>
-)}
+                              <div>
+                                <p className="font-bold text-gray-900 mb-1">
+                                  Recommendation
+                                </p>
+
+                                <p className="text-gray-700">
+                                  {item.info?.recommendation}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {alternatives.length > 0 && (
                   <div className="mt-10 text-left">
@@ -755,7 +758,7 @@ const healthVerdict =
         )}
 
         {favorites.length > 0 && (
-              <div className="max-w-6xl mx-auto mt-20 text-left">
+          <div className="max-w-6xl mx-auto mt-20 text-left">
             <h2 className="text-3xl font-black text-gray-900 mb-6">
               Favorites
             </h2>
@@ -807,8 +810,8 @@ const healthVerdict =
           </div>
         )}
 
-{scanHistory.length > 0 && (
-              <div className="max-w-6xl mx-auto mt-20 text-left">
+        {scanHistory.length > 0 && (
+          <div className="max-w-6xl mx-auto mt-20 text-left">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-3xl font-black text-gray-900">
                 Recent Scans
