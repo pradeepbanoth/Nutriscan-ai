@@ -6,7 +6,7 @@ import { getAlternatives } from "../lib/getAlternatives";
 import { ingredientIntelligence } from "../lib/ingredientIntelligence";
 import { calculateGoalScore, HealthGoal } from "../lib/goalScoring";
 import { supabase } from "./lib/supabase";
-
+import InstallButton from "../components/InstallButton";
 type Product = {
   id: number;
   name: string;
@@ -366,6 +366,14 @@ export default function Home() {
     >
       OCR
     </a>
+    <a
+  href="/food-photo"
+  className="rounded-full px-5 py-3 text-sm font-bold text-orange-600 bg-orange-50 border border-orange-100"
+>
+  Food Photo
+</a>
+
+   <InstallButton />
 
     <button
       onClick={logout}
