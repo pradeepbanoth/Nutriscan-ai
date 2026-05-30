@@ -326,45 +326,86 @@ export default function Home() {
       <nav className="sticky top-0 z-50 border-b border-orange-100 bg-white/70 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-2xl flex items-center justify-center shadow-md"
-              style={{
-                background: "linear-gradient(135deg, #f97316, #ea580c)",
-              }}
-            >
-              <span className="text-white font-black text-sm">P</span>
-            </div>
+  <img
+    src="/logo.png"
+    alt="PAUSTICA"
+    className="w-12 h-12 object-contain"
+  />
 
-            <span className="text-xl font-black tracking-tight text-[#0f172a]">
-              PAUSTICA<span className="text-orange-500">AI</span>
-            </span>
-          </div>
+  <span className="text-xl font-black tracking-tight text-[#0f172a]">
+    PAUSTICA
+  </span>
+</div>
 
-          {userEmail ? (
-            <button
-              onClick={logout}
-              className="rounded-full px-6 py-3 text-sm font-bold text-white shadow-lg"
-              style={{
-                background: "linear-gradient(135deg, #f97316, #ea580c)",
-              }}
-            >
-              Logout
-            </button>
-          ) : (
-            <a
-              href="/auth"
-              className="rounded-full px-6 py-3 text-sm font-bold text-white shadow-lg"
-              style={{
-                background: "linear-gradient(135deg, #f97316, #ea580c)",
-              }}
-            >
-              Login
-            </a>
-          )}
+         {userEmail ? (
+  <div className="flex items-center gap-3">
+    <a
+      href="/profile"
+      className="rounded-full px-5 py-3 text-sm font-bold text-orange-600 bg-orange-50 border border-orange-100"
+    >
+      Profile
+    </a>
+
+    <a
+      href="/report"
+      className="rounded-full px-5 py-3 text-sm font-bold text-orange-600 bg-orange-50 border border-orange-100"
+    >
+      Report
+    </a>
+
+    <a
+      href="/coach"
+      className="rounded-full px-5 py-3 text-sm font-bold text-orange-600 bg-orange-50 border border-orange-100"
+    >
+      AI Coach
+    </a>
+
+    <a
+      href="/ocr"
+      className="rounded-full px-5 py-3 text-sm font-bold text-orange-600 bg-orange-50 border border-orange-100"
+    >
+      OCR
+    </a>
+
+    <button
+      onClick={logout}
+      className="rounded-full px-6 py-3 text-sm font-bold text-white shadow-lg"
+      style={{
+        background: "linear-gradient(135deg, #f97316, #ea580c)",
+      }}
+    >
+      Logout
+    </button>
+  </div>
+) : (
+  <div className="flex items-center gap-3">
+    <a
+      href="/ocr"
+      className="rounded-full px-5 py-3 text-sm font-bold text-orange-600 bg-orange-50 border border-orange-100"
+    >
+      OCR
+    </a>
+
+    <a
+      href="/auth"
+      className="rounded-full px-6 py-3 text-sm font-bold text-white shadow-lg"
+      style={{
+        background: "linear-gradient(135deg, #f97316, #ea580c)",
+      }}
+    >
+      Login
+    </a>
+  </div>
+)}
         </div>
       </nav>
 
       <section className="relative z-10 max-w-7xl mx-auto px-6 pt-20 pb-20 text-center">
+        <img
+  src="/logo.png"
+  alt="PAUSTICA"
+  className="w-32 h-32 mx-auto mb-8 object-contain"
+/>
         <h1 className="text-6xl sm:text-7xl md:text-8xl font-black tracking-[-0.06em] leading-[0.9] text-gray-900 mb-10">
           Scan your food
           <br />

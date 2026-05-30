@@ -55,9 +55,17 @@ export default function AuthPage() {
   return (
     <main className="min-h-screen bg-[#fff7ed] flex items-center justify-center px-6">
       <div className="w-full max-w-md bg-white border border-orange-100 rounded-[32px] shadow-2xl p-8">
-        <h1 className="text-4xl font-black text-gray-900 text-center mb-3">
-          PAUSTICA AI
-        </h1>
+       <div className="flex flex-col items-center mb-4">
+  <img
+    src="/logo.png"
+    alt="PAUSTICA"
+    className="w-24 h-24 object-contain mb-3"
+  />
+
+  <h1 className="text-4xl font-black text-gray-900">
+    PAUSTICA
+  </h1>
+</div>
 
         <p className="text-gray-500 text-center mb-8">
           Login or create your account
