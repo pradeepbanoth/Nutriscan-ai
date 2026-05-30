@@ -31,10 +31,37 @@ export default function Home() {
 
   const [scanHistory, setScanHistory] = useState<Product[]>([]);
 const [favorites, setFavorites] = useState<Product[]>([]);
-const [mounted, setMounted] = useState(false);
 
+const loadCloudData = async (uid: string) => {
+  const { data: historyData } = await supabase
+    .from("scan_history")
+    .select("*")
+    .eq("user_id", uid)
+    .order("created_at", { ascending: false });
+
+  const { data: favoritesData } = await supabase
+    .from("favorites")
+    .select("*")
+    .eq("user_id", uid)
+    .order("created_at", { ascending: false });
+
+  if (historyData) {
+    setScanHistory(
+      historyData.map((item) => ({
+        id: item.id,
+        name: item.product_name,
+        brand: item.brand,
+        image: item.image,
+        ingredients: item.ingredients,
+        nutriscore: item.nutriscore,
+        nova: item.nova,
+        sugar: item.sugar,
+        fat: item.fat,
+        salt: item.salt,
+      }))
+    );
+    
 useEffect(() => {
-  setMounted(true);
 
   const savedHistory = localStorage.getItem("paustica_scan_history");
   const savedFavorites = localStorage.getItem("paustica_favorites");
@@ -82,34 +109,7 @@ useEffect(() => {
     "corn syrup",
   ];
 
-  const loadCloudData = async (uid: string) => {
-  const { data: historyData } = await supabase
-    .from("scan_history")
-    .select("*")
-    .eq("user_id", uid)
-    .order("created_at", { ascending: false });
-
-  const { data: favoritesData } = await supabase
-    .from("favorites")
-    .select("*")
-    .eq("user_id", uid)
-    .order("created_at", { ascending: false });
-
-  if (historyData) {
-    setScanHistory(
-      historyData.map((item) => ({
-        id: item.id,
-        name: item.product_name,
-        brand: item.brand,
-        image: item.image,
-        ingredients: item.ingredients,
-        nutriscore: item.nutriscore,
-        nova: item.nova,
-        sugar: item.sugar,
-        fat: item.fat,
-        salt: item.salt,
-      }))
-    );
+  
   }
 
   if (favoritesData) {
@@ -754,8 +754,8 @@ const healthVerdict =
           </div>
         )}
 
-{mounted && favorites.length > 0 && (
-            <div className="max-w-6xl mx-auto mt-20 text-left">
+        {favorites.length > 0 && (
+              <div className="max-w-6xl mx-auto mt-20 text-left">
             <h2 className="text-3xl font-black text-gray-900 mb-6">
               Favorites
             </h2>
@@ -807,8 +807,8 @@ const healthVerdict =
           </div>
         )}
 
-{mounted && scanHistory.length > 0 && (
-            <div className="max-w-6xl mx-auto mt-20 text-left">
+{scanHistory.length > 0 && (
+              <div className="max-w-6xl mx-auto mt-20 text-left">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-3xl font-black text-gray-900">
                 Recent Scans
