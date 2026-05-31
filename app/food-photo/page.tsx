@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import PremiumGate from "../../components/PremiumGate";
-
+import PremiumGate from "../../components/PremiumGateComponent";
 type FoodResult = {
   name: string;
   calories: string;

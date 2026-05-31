@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Tesseract from "tesseract.js";
 import { ingredientIntelligence } from "../../lib/ingredientIntelligence";
-import PremiumGate from "../../components/PremiumGate";
+import PremiumGate from "../../components/PremiumGateComponent";
 
 export default function OCRPage() {
   const [image, setImage] = useState<string | null>(null);

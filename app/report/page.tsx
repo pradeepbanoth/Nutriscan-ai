@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { calculateGoalScore } from "../../lib/goalScoring";
-import PremiumGate from "../../components/PremiumGate";
+import PremiumGate from "../../components/PremiumGateComponent";
 
 type ScanRow = {
   id: number;
