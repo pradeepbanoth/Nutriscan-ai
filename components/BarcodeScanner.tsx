@@ -1,113 +1,161 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { BrowserMultiFormatReader } from "@zxing/browser";
+import {
+  BrowserMultiFormatReader,
+  IScannerControls,
+} from "@zxing/browser";
 
 interface Props {
   onScan: (barcode: string) => void;
 }
 
-export default function BarcodeScanner({
-  onScan,
-}: Props) {
+export default function BarcodeScanner({ onScan }: Props) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const controlsRef = useRef<IScannerControls | null>(null);
+  const scannedRef = useRef(false);
 
   const [scanned, setScanned] = useState(false);
+  const [cameraError, setCameraError] = useState("");
+  const [torchSupported, setTorchSupported] = useState(false);
+  const [torchOn, setTorchOn] = useState(false);
 
   useEffect(() => {
     const codeReader = new BrowserMultiFormatReader();
 
-let controls: { stop: () => void } | undefined;
-
-    async function startScanner() {
+    const startScanner = async () => {
       try {
-        const devices =
-          await BrowserMultiFormatReader.listVideoInputDevices();
+        setCameraError("");
+        scannedRef.current = false;
+        setScanned(false);
 
-        if (!devices.length) {
-          alert("No camera found");
+        if (!navigator.mediaDevices?.getUserMedia) {
+          setCameraError("Camera is not supported on this browser.");
           return;
         }
 
-        controls =
-          await codeReader.decodeFromVideoDevice(
-            devices[0].deviceId,
-            videoRef.current!,
-            (result, error) => {
-              if (result && !scanned) {
-                const barcode = result.getText();
+        const controls = await codeReader.decodeFromConstraints(
+          {
+            video: {
+              facingMode: { ideal: "environment" },
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+              focusMode: "continuous",
+            } as MediaTrackConstraints,
+            audio: false,
+          },
+          videoRef.current!,
+          (result) => {
+            if (result && !scannedRef.current) {
+              scannedRef.current = true;
 
-                setScanned(true);
+              const barcode = result.getText();
+              setScanned(true);
 
-                if (navigator.vibrate) {
-                  navigator.vibrate(200);
-                }
-
-                onScan(barcode);
-
-                controls?.stop();
+              if (navigator.vibrate) {
+                navigator.vibrate(200);
               }
+
+              onScan(barcode);
+              controlsRef.current?.stop();
             }
-          );
-      } catch (err) {
-        console.log(err);
+          }
+        );
+
+        controlsRef.current = controls;
+
+        const videoTrack = videoRef.current?.srcObject
+          ? (videoRef.current.srcObject as MediaStream).getVideoTracks()[0]
+          : null;
+
+        const capabilities = videoTrack?.getCapabilities?.();
+
+        if (capabilities && "torch" in capabilities) {
+          setTorchSupported(true);
+        }
+      } catch (error) {
+        console.error(error);
+
+        setCameraError(
+          "Unable to open back camera. Please allow camera permission and try again."
+        );
       }
-    }
+    };
 
     startScanner();
 
     return () => {
-      controls?.stop();
+      controlsRef.current?.stop();
+      controlsRef.current = null;
     };
-  }, [onScan, scanned]);
+  }, [onScan]);
+
+  const toggleTorch = async () => {
+    const stream = videoRef.current?.srcObject as MediaStream | null;
+    const track = stream?.getVideoTracks()[0];
+
+    if (!track) return;
+
+    try {
+      await track.applyConstraints({
+        advanced: [{ torch: !torchOn } as MediaTrackConstraintSet],
+      });
+
+      setTorchOn(!torchOn);
+    } catch (error) {
+      console.error(error);
+      alert("Torch is not supported on this device.");
+    }
+  };
 
   return (
     <div className="relative w-full">
-      {/* Scanner Frame */}
-      <div className="relative overflow-hidden rounded-[28px] border border-orange-200 shadow-2xl">
+      <div className="relative overflow-hidden rounded-[28px] border border-orange-200 shadow-2xl bg-black">
         <video
           ref={videoRef}
           className="w-full h-[420px] object-cover bg-black"
+          muted
+          playsInline
+          autoPlay
         />
 
-        {/* Overlay */}
         <div className="absolute inset-0 pointer-events-none">
-          {/* Dark Overlay */}
           <div className="absolute inset-0 bg-black/20" />
 
-          {/* Scan Area */}
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="relative w-[260px] h-[180px] border-2 border-white rounded-3xl shadow-[0_0_30px_rgba(255,255,255,0.5)]">
-              {/* Animated Scan Line */}
+            <div className="relative w-[280px] h-[190px] border-2 border-white rounded-3xl shadow-[0_0_30px_rgba(255,255,255,0.5)]">
               {!scanned && (
                 <div className="absolute left-0 right-0 top-0 h-1 bg-orange-500 animate-[scan_2s_linear_infinite]" />
               )}
 
-              {/* Success State */}
               {scanned && (
                 <div className="absolute inset-0 bg-green-500/20 border-green-400 rounded-3xl animate-pulse" />
               )}
             </div>
           </div>
-
-          {/* Corners */}
-          <div className="absolute top-[120px] left-[60px] w-10 h-10 border-l-4 border-t-4 border-white rounded-tl-2xl" />
-          <div className="absolute top-[120px] right-[60px] w-10 h-10 border-r-4 border-t-4 border-white rounded-tr-2xl" />
-          <div className="absolute bottom-[120px] left-[60px] w-10 h-10 border-l-4 border-b-4 border-white rounded-bl-2xl" />
-          <div className="absolute bottom-[120px] right-[60px] w-10 h-10 border-r-4 border-b-4 border-white rounded-br-2xl" />
         </div>
+
+        {torchSupported && !scanned && (
+          <button
+            onClick={toggleTorch}
+            className="absolute bottom-5 right-5 z-20 rounded-full px-5 py-3 bg-white text-orange-600 font-bold shadow-lg"
+          >
+            {torchOn ? "Torch Off" : "Torch On"}
+          </button>
+        )}
       </div>
 
-      {/* Bottom Text */}
       <div className="mt-5 text-center">
-        {!scanned ? (
+        {cameraError ? (
+          <p className="text-sm font-bold text-red-500">{cameraError}</p>
+        ) : !scanned ? (
           <>
             <p className="text-lg font-bold text-orange-600">
               Scanning barcode...
             </p>
 
             <p className="text-sm text-gray-400 mt-1">
-              Align barcode inside frame
+              Use the back camera and align barcode inside frame
             </p>
           </>
         ) : (
@@ -123,7 +171,6 @@ let controls: { stop: () => void } | undefined;
         )}
       </div>
 
-      {/* Animation Style */}
       <style jsx>{`
         @keyframes scan {
           0% {
