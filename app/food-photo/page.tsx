@@ -1,7 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import PremiumGate from "../../components/PremiumGateComponent";
+import { getUserPlan } from "../../lib/getUserPlan";
+import { supabase } from "../lib/supabase";
+
 type FoodResult = {
   name: string;
   calories: string;
@@ -14,53 +17,77 @@ type FoodResult = {
 export default function FoodPhotoPage() {
   const [image, setImage] = useState<string | null>(null);
   const [result, setResult] = useState<FoodResult | null>(null);
-  const [loading, setLoading] = useState(false); 
+  const [loading, setLoading] = useState(false);
+  const [checkingPlan, setCheckingPlan] = useState(true);
+  const [isPremium, setIsPremium] = useState(false);
 
- 
+  useEffect(() => {
+    const checkPlan = async () => {
+      const { data } = await supabase.auth.getUser();
 
-const analyzeFood = async (file: File) => {
-  try {
-    setLoading(true);
-    setResult(null);
-
-    const imageUrl = URL.createObjectURL(file);
-    setImage(imageUrl);
-
-    const formData = new FormData();
-    formData.append("image", file);
-
-    const response = await fetch("/api/food-analysis", {
-      method: "POST",
-      body: formData,
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || "Analysis failed");
-    }
-
-    setResult(data);
-  } catch (error) {
-  console.error("Food analysis error:", error);
-  alert(String(error));
-}finally {
-    setLoading(false);
-  }
-}; 
-
- const isPremium = false;
-
-if (!isPremium) {
-  return (
-    <main className="min-h-screen bg-[#fff7ed] flex items-center justify-center px-6">
-      <PremiumGate
-        title="food-photo is Premium"
-        description="Upgrade to scan ingredient labels from photos."
-      />
-    </main>
-  );
+      if (!data.user) {
+  setCheckingPlan(false);
+  window.location.href = "/auth";
+  return;
 }
+
+      const plan = await getUserPlan(data.user.id);
+      setIsPremium(plan === "premium");
+      setCheckingPlan(false);
+    };
+
+    checkPlan();
+  }, []);
+
+  const analyzeFood = async (file: File) => {
+    try {
+      setLoading(true);
+      setResult(null);
+
+      const imageUrl = URL.createObjectURL(file);
+      setImage(imageUrl);
+
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const response = await fetch("/api/food-analysis", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Analysis failed");
+      }
+
+      setResult(data);
+    } catch (error) {
+      console.error("Food analysis error:", error);
+      alert(String(error));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (checkingPlan) {
+    return (
+      <main className="min-h-screen bg-[#fff7ed] flex items-center justify-center px-6">
+        <p className="text-gray-500 font-bold">Checking your plan...</p>
+      </main>
+    );
+  }
+
+  if (!isPremium) {
+    return (
+      <main className="min-h-screen bg-[#fff7ed] flex items-center justify-center px-6">
+        <PremiumGate
+          title="Food Photo AI is Premium"
+          description="Upgrade to analyze food photos using AI."
+        />
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[#fff7ed] px-6 py-10">
@@ -73,9 +100,7 @@ if (!isPremium) {
               className="w-12 h-12 object-contain"
             />
 
-            <h1 className="text-3xl font-black text-gray-900">
-              PAUSTICA
-            </h1>
+            <h1 className="text-3xl font-black text-gray-900">PAUSTICA</h1>
           </div>
 
           <a
@@ -158,9 +183,7 @@ if (!isPremium) {
                   {result.score}/100
                 </h3>
 
-                <p className="text-gray-700 mt-4">
-                  {result.processing}
-                </p>
+                <p className="text-gray-700 mt-4">{result.processing}</p>
               </div>
 
               <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-lg">
@@ -168,13 +191,9 @@ if (!isPremium) {
                   Detected Food Type
                 </h3>
 
-                <p className="text-gray-700 font-bold">
-                  {result.name}
-                </p>
+                <p className="text-gray-700 font-bold">{result.name}</p>
 
-                <p className="text-gray-500 mt-2">
-                  {result.calories}
-                </p>
+                <p className="text-gray-500 mt-2">{result.calories}</p>
               </div>
 
               <div className="bg-red-50 border border-red-200 rounded-3xl p-6">
@@ -209,7 +228,8 @@ if (!isPremium) {
         )}
 
         <p className="text-center text-gray-400 text-sm mt-10">
-          Current version uses a basic demo analysis. Real AI vision can be added later using a secure backend API.
+          Food photo analysis uses AI and may not always be perfect. Please
+          verify labels when possible.
         </p>
       </div>
     </main>

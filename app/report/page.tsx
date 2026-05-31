@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { calculateGoalScore } from "../../lib/goalScoring";
 import PremiumGate from "../../components/PremiumGateComponent";
+import { getUserPlan } from "../../lib/getUserPlan";
 
 type ScanRow = {
   id: number;
@@ -22,7 +23,8 @@ export default function ReportPage() {
   const [email, setEmail] = useState("");
   const [scans, setScans] = useState<ScanRow[]>([]);
   const [favoritesCount, setFavoritesCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+const [loading, setLoading] = useState(true);
+const [isPremium, setIsPremium] = useState(false);
 
  
 
@@ -31,11 +33,14 @@ export default function ReportPage() {
       const { data } = await supabase.auth.getUser();
 
       if (!data.user) {
-        window.location.href = "/auth";
-        return;
-      }
+  window.location.href = "/auth";
+  return;
+}
 
-      setEmail(data.user.email || "");
+setEmail(data.user.email || "");
+
+const plan = await getUserPlan(data.user.id);
+setIsPremium(plan === "premium");
 
       const { data: scanData } = await supabase
         .from("scan_history")
@@ -56,19 +61,7 @@ export default function ReportPage() {
     loadReport();
   }, []);
 
-   const isPremium = false;
-
-if (!isPremium) {
-  return (
-    <main className="min-h-screen bg-[#fff7ed] flex items-center justify-center px-6">
-      <PremiumGate
-        title="report is Premium"
-        description="Upgrade to scan ingredient labels from photos."
-      />
-    </main>
-  );
-}
-
+   
   const scoredScans = scans.map((scan) => {
     const score = calculateGoalScore(
       "General Wellness",
@@ -141,6 +134,16 @@ if (!isPremium) {
       </main>
     );
   }
+  if (!isPremium) {
+  return (
+    <main className="min-h-screen bg-[#fff7ed] flex items-center justify-center px-6">
+      <PremiumGate
+        title="Weekly Reports are Premium"
+        description="Upgrade to unlock advanced nutrition reports, trends, and health insights."
+      />
+    </main>
+  );
+}
 
   return (
     <main className="min-h-screen bg-[#fff7ed] px-6 py-10">

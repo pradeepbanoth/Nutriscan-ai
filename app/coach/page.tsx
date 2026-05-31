@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { calculateGoalScore } from "../../lib/goalScoring";
+import { getUserPlan } from "../../lib/getUserPlan";
 import PremiumGate from "../../components/PremiumGateComponent";
 
 type ScanRow = {
@@ -19,8 +20,7 @@ export default function CoachPage() {
   const [email, setEmail] = useState("");
   const [scans, setScans] = useState<ScanRow[]>([]);
   const [loading, setLoading] = useState(true);
-
- 
+  const [isPremium, setIsPremium] = useState(false);
 
   useEffect(() => {
     const loadCoach = async () => {
@@ -32,6 +32,9 @@ export default function CoachPage() {
       }
 
       setEmail(data.user.email || "");
+
+      const plan = await getUserPlan(data.user.id);
+      setIsPremium(plan === "premium");
 
       const { data: scanData } = await supabase
         .from("scan_history")
@@ -45,19 +48,6 @@ export default function CoachPage() {
 
     loadCoach();
   }, []);
-
-   const isPremium = false;
-
-if (!isPremium) {
-  return (
-    <main className="min-h-screen bg-[#fff7ed] flex items-center justify-center px-6">
-      <PremiumGate
-        title="coach is Premium"
-        description="Upgrade to scan ingredient labels from photos."
-      />
-    </main>
-  );
-}
 
   const scoredScans = scans.map((scan) => ({
     ...scan,
@@ -98,21 +88,30 @@ if (!isPremium) {
     );
   }
 
+  if (!isPremium) {
+    return (
+      <main className="min-h-screen bg-[#fff7ed] flex items-center justify-center px-6">
+        <PremiumGate
+          title="AI Coach is Premium"
+          description="Upgrade to unlock personalized nutrition coaching and deeper food insights."
+        />
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-[#fff7ed] px-6 py-10">
       <div className="max-w-6xl mx-auto">
         <nav className="flex items-center justify-between mb-12">
-        <div className="flex items-center gap-3">
-  <img
-    src="/logo.png"
-    alt="PAUSTICA"
-    className="w-12 h-12 object-contain"
-  />
+          <div className="flex items-center gap-3">
+            <img
+              src="/logo.png"
+              alt="PAUSTICA"
+              className="w-12 h-12 object-contain"
+            />
 
-  <h1 className="text-3xl font-black text-gray-900">
-    PAUSTICA
-  </h1>
-</div>
+            <h1 className="text-3xl font-black text-gray-900">PAUSTICA</h1>
+          </div>
 
           <a
             href="/"
@@ -123,9 +122,7 @@ if (!isPremium) {
         </nav>
 
         <div className="bg-white border border-orange-100 rounded-[36px] shadow-2xl p-8 mb-8">
-          <p className="text-orange-600 font-bold mb-2">
-            AI Nutrition Coach
-          </p>
+          <p className="text-orange-600 font-bold mb-2">AI Nutrition Coach</p>
 
           <h2 className="text-4xl font-black text-gray-900 mb-2">
             Personalized Food Guidance
@@ -155,7 +152,9 @@ if (!isPremium) {
           </div>
 
           <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-lg">
-            <p className="text-gray-500 font-semibold mb-2">Ultra Processed</p>
+            <p className="text-gray-500 font-semibold mb-2">
+              Ultra Processed
+            </p>
             <h3 className="text-5xl font-black text-red-500">
               {ultraProcessed}
             </h3>
@@ -215,11 +214,10 @@ if (!isPremium) {
             </div>
 
             <div className="bg-blue-50 border border-blue-200 rounded-3xl p-6">
-              <h4 className="font-black text-blue-700 mb-3">
-                Build Habit
-              </h4>
+              <h4 className="font-black text-blue-700 mb-3">Build Habit</h4>
               <p className="text-gray-700">
-                Scan before buying. Choose products with lower sugar, salt, and NOVA score.
+                Scan before buying. Choose products with lower sugar, salt, and
+                NOVA score.
               </p>
             </div>
           </div>
