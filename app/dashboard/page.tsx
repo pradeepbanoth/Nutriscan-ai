@@ -13,7 +13,9 @@ type ScanRow = {
   sugar: number | null;
   fat: number | null;
   salt: number | null;
+  created_at?: string;
 };
+
 
 export default function DashboardPage() {
   const [email, setEmail] = useState("");
@@ -83,6 +85,19 @@ export default function DashboardPage() {
 
   const highSugar = scans.filter((item) => (item.sugar || 0) > 15).length;
   const ultraProcessed = scans.filter((item) => Number(item.nova) >= 4).length;
+   const uniqueDays = [
+  ...new Set(
+    scans
+      .map((scan) =>
+        scan.created_at
+          ? new Date(scan.created_at).toISOString().split("T")[0]
+          : null
+      )
+      .filter(Boolean)
+  ),
+];
+
+const streak = uniqueDays.length;
 
   const insight =
     averageScore >= 75
@@ -128,8 +143,8 @@ export default function DashboardPage() {
           <p className="text-gray-500">{email}</p>
         </section>
 
-        <section className="grid md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-lg">
+             <section className="grid md:grid-cols-5 gap-6 mb-8">
+              <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-lg">
             <p className="text-gray-500 font-semibold mb-2">Total Scans</p>
             <h3 className="text-5xl font-black text-orange-600">
               {scans.length}
@@ -156,6 +171,15 @@ export default function DashboardPage() {
               {highSugar + ultraProcessed}
             </h3>
           </div>
+          <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-lg">
+  <p className="text-gray-500 font-semibold mb-2">
+    Health Streak
+  </p>
+
+  <h3 className="text-5xl font-black text-green-600">
+    🔥 {streak}
+  </h3>
+</div>
         </section>
 
         <section className="grid md:grid-cols-2 gap-6 mb-8">
