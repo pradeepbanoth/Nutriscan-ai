@@ -17,18 +17,7 @@ export default function FoodPhotoPage() {
   const [result, setResult] = useState<FoodResult | null>(null);
   const [loading, setLoading] = useState(false); 
 
-  const isPremium = false;
-
-if (!isPremium) {
-  return (
-    <main className="min-h-screen bg-[#fff7ed] flex items-center justify-center px-6">
-      <PremiumGate
-        title="food-photo is Premium"
-        description="Upgrade to scan ingredient labels from photos."
-      />
-    </main>
-  );
-}
+ 
 
 const analyzeFood = async (file: File) => {
   try {
@@ -59,7 +48,20 @@ const analyzeFood = async (file: File) => {
 }finally {
     setLoading(false);
   }
-};
+}; 
+
+ const isPremium = false;
+
+if (!isPremium) {
+  return (
+    <main className="min-h-screen bg-[#fff7ed] flex items-center justify-center px-6">
+      <PremiumGate
+        title="food-photo is Premium"
+        description="Upgrade to scan ingredient labels from photos."
+      />
+    </main>
+  );
+}
 
   return (
     <main className="min-h-screen bg-[#fff7ed] px-6 py-10">

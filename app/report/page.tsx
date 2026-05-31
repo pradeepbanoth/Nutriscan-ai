@@ -24,18 +24,7 @@ export default function ReportPage() {
   const [favoritesCount, setFavoritesCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  const isPremium = false;
-
-if (!isPremium) {
-  return (
-    <main className="min-h-screen bg-[#fff7ed] flex items-center justify-center px-6">
-      <PremiumGate
-        title="report is Premium"
-        description="Upgrade to scan ingredient labels from photos."
-      />
-    </main>
-  );
-}
+ 
 
   useEffect(() => {
     const loadReport = async () => {
@@ -66,6 +55,19 @@ if (!isPremium) {
 
     loadReport();
   }, []);
+
+   const isPremium = false;
+
+if (!isPremium) {
+  return (
+    <main className="min-h-screen bg-[#fff7ed] flex items-center justify-center px-6">
+      <PremiumGate
+        title="report is Premium"
+        description="Upgrade to scan ingredient labels from photos."
+      />
+    </main>
+  );
+}
 
   const scoredScans = scans.map((scan) => {
     const score = calculateGoalScore(
