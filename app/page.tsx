@@ -9,6 +9,7 @@ import { supabase } from "./lib/supabase";
 import InstallButton from "../components/InstallButton";
 import { getScoreBreakdown } from "../lib/scoreBreakdown";
 import { getProductComparisons } from "../lib/productComparisons";
+import MobileMenu from "../components/MobileMenu";
 
 type Product = {
   id: number;
@@ -346,68 +347,72 @@ const breakdown = product
       className="min-h-screen overflow-x-hidden"
       style={{ background: "#fff7ed" }}
     >
-      <nav className="sticky top-0 z-50 border-b border-orange-100 bg-white/70 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-  <img
-    src="/logo.png"
-    alt="PAUSTICA"
-    className="w-12 h-12 object-contain"
-  />
+<nav className="sticky top-0 z-50 border-b border-orange-100 bg-white/70 backdrop-blur-xl">
+  <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+    <div className="flex items-center gap-3">
+      <img
+        src="/logo.png"
+        alt="PAUSTICA"
+        className="w-12 h-12 object-contain"
+      />
 
-  <span className="text-xl font-black tracking-tight text-[#0f172a]">
-    PAUSTICA
-  </span>
-</div>
+      <span className="text-xl font-black tracking-tight text-[#0f172a]">
+        PAUSTICA
+      </span>
+    </div>
 
- {userEmail ? (
-  <div className="flex items-center gap-3">
-<a
-  href="/dashboard"
-  className="rounded-full px-5 py-3 text-sm font-bold text-orange-600 bg-orange-50 border border-orange-100"
->
-  Dashboard
-</a>
+    <MobileMenu loggedIn={!!userEmail} onLogout={logout} />
 
-<a
-  href="/menu"
-  className="rounded-full px-5 py-3 text-sm font-bold text-orange-600 bg-orange-50 border border-orange-100"
->
-  Menu
-</a>
+    <div className="hidden md:flex items-center gap-3">
+      {userEmail ? (
+        <>
+          <a
+            href="/dashboard"
+            className="rounded-full px-5 py-3 text-sm font-bold text-orange-600 bg-orange-50 border border-orange-100"
+          >
+            Dashboard
+          </a>
 
-<button
-  onClick={logout}
-  className="rounded-full px-6 py-3 text-sm font-bold text-white shadow-lg"
-  style={{
-    background: "linear-gradient(135deg, #f97316, #ea580c)",
-  }}
->
-  Logout
-</button>
+          <a
+            href="/menu"
+            className="rounded-full px-5 py-3 text-sm font-bold text-orange-600 bg-orange-50 border border-orange-100"
+          >
+            Menu
+          </a>
+
+          <button
+            onClick={logout}
+            className="rounded-full px-6 py-3 text-sm font-bold text-white shadow-lg"
+            style={{
+              background: "linear-gradient(135deg, #f97316, #ea580c)",
+            }}
+          >
+            Logout
+          </button>
+        </>
+      ) : (
+        <>
+          <a
+            href="/menu"
+            className="rounded-full px-5 py-3 text-sm font-bold text-orange-600 bg-orange-50 border border-orange-100"
+          >
+            Menu
+          </a>
+
+          <a
+            href="/auth"
+            className="rounded-full px-6 py-3 text-sm font-bold text-white shadow-lg"
+            style={{
+              background: "linear-gradient(135deg, #f97316, #ea580c)",
+            }}
+          >
+            Login
+          </a>
+        </>
+      )}
+    </div>
   </div>
-) : (
-  <div className="flex items-center gap-3">
-    <a
-      href="/ocr"
-      className="rounded-full px-5 py-3 text-sm font-bold text-orange-600 bg-orange-50 border border-orange-100"
-    >
-      OCR
-    </a>
-
-    <a
-      href="/auth"
-      className="rounded-full px-6 py-3 text-sm font-bold text-white shadow-lg"
-      style={{
-        background: "linear-gradient(135deg, #f97316, #ea580c)",
-      }}
-    >
-      Login
-    </a>
-  </div>
-)}
-        </div>
-      </nav>
+</nav>
 
       <section className="relative z-10 max-w-7xl mx-auto px-6 pt-20 pb-20 text-center">
         <img
