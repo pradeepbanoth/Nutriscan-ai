@@ -40,9 +40,9 @@ const analyzeFood = async (file: File) => {
 
     setResult(data);
   } catch (error) {
-    console.error(error);
-    alert("Failed to analyze image");
-  } finally {
+  console.error("Food analysis error:", error);
+  alert(String(error));
+}finally {
     setLoading(false);
   }
 };

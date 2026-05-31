@@ -6,17 +6,14 @@ export async function POST(req: Request) {
     const file = formData.get("image") as File | null;
 
     if (!file) {
-      return NextResponse.json(
-        { error: "No image uploaded" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "No image uploaded" }, { status: 400 });
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
       return NextResponse.json(
-        { error: "Gemini API key missing" },
+        { error: "Gemini API key missing in .env.local" },
         { status: 500 }
       );
     }
@@ -27,21 +24,21 @@ export async function POST(req: Request) {
     const prompt = `
 Analyze this food/product image for PAUSTICA.
 
-Return ONLY valid JSON in this format:
+Return ONLY raw valid JSON. No markdown. No explanation.
+
 {
   "name": "detected food name",
   "calories": "estimated calories per 100g",
   "processing": "low processed / processed / ultra processed",
-  "score": number from 0 to 100,
+  "score": 0,
   "risks": ["risk 1", "risk 2", "risk 3"],
   "alternatives": ["alternative 1", "alternative 2", "alternative 3"]
 }
 `;
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
+    const geminiRes = await fetch(
+`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+{        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
@@ -51,8 +48,8 @@ Return ONLY valid JSON in this format:
               parts: [
                 { text: prompt },
                 {
-                  inline_data: {
-                    mime_type: file.type,
+                  inlineData: {
+                    mimeType: file.type || "image/png",
                     data: base64Image,
                   },
                 },
@@ -63,21 +60,47 @@ Return ONLY valid JSON in this format:
       }
     );
 
-    const data = await response.json();
+    const geminiData = await geminiRes.json();
+
+    if (!geminiRes.ok) {
+      console.log("Gemini API Error:", geminiData);
+
+      return NextResponse.json(
+        {
+          error:
+            geminiData?.error?.message ||
+            "Gemini API rejected the request",
+        },
+        { status: 500 }
+      );
+    }
 
     const rawText =
-      data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+      geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || "";
 
     const cleanedText = rawText
       .replace(/```json/g, "")
       .replace(/```/g, "")
       .trim();
 
-    const result = JSON.parse(cleanedText);
+    let result;
+
+    try {
+      result = JSON.parse(cleanedText);
+    } catch {
+      console.log("Gemini returned non-JSON:", rawText);
+
+      return NextResponse.json(
+        {
+          error: "Gemini returned invalid JSON",
+        },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error(error);
+    console.log("Food analysis route error:", error);
 
     return NextResponse.json(
       { error: "Failed to analyze food image" },
