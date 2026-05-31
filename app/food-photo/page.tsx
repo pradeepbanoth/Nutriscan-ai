@@ -16,35 +16,36 @@ export default function FoodPhotoPage() {
   const [result, setResult] = useState<FoodResult | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const analyzeFood = async (file: File) => {
+const analyzeFood = async (file: File) => {
+  try {
     setLoading(true);
     setResult(null);
 
     const imageUrl = URL.createObjectURL(file);
     setImage(imageUrl);
 
-    setTimeout(() => {
-      setResult({
-        name: "Packaged Snack / Processed Food",
-        calories: "Approx. 450–550 kcal per 100g",
-        processing: "Likely ultra-processed",
-        score: 38,
-        risks: [
-          "May contain high salt",
-          "May contain refined oils",
-          "May be calorie dense",
-          "Likely low in fiber",
-        ],
-        alternatives: [
-          "Roasted Makhana",
-          "Air-popped Popcorn",
-          "Roasted Chickpeas",
-        ],
-      });
+    const formData = new FormData();
+    formData.append("image", file);
 
-      setLoading(false);
-    }, 1800);
-  };
+    const response = await fetch("/api/food-analysis", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Analysis failed");
+    }
+
+    setResult(data);
+  } catch (error) {
+    console.error(error);
+    alert("Failed to analyze image");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <main className="min-h-screen bg-[#fff7ed] px-6 py-10">
