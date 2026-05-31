@@ -390,6 +390,12 @@ const breakdown = product
       OCR
     </a>
     <a
+  href="/pricing"
+  className="rounded-full px-5 py-3 text-sm font-bold text-orange-600 bg-orange-50 border border-orange-100"
+>
+  Pricing
+</a>
+    <a
   href="/food-photo"
   className="rounded-full px-5 py-3 text-sm font-bold text-orange-600 bg-orange-50 border border-orange-100"
 >
