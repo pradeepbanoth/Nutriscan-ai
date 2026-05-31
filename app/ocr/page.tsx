@@ -3,11 +3,25 @@
 import { useState } from "react";
 import Tesseract from "tesseract.js";
 import { ingredientIntelligence } from "../../lib/ingredientIntelligence";
+import PremiumGate from "../../components/PremiumGate";
 
 export default function OCRPage() {
   const [image, setImage] = useState<string | null>(null);
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const isPremium = false;
+
+if (!isPremium) {
+  return (
+    <main className="min-h-screen bg-[#fff7ed] flex items-center justify-center px-6">
+      <PremiumGate
+        title="OCR Scanner is Premium"
+        description="Upgrade to scan ingredient labels from photos."
+      />
+    </main>
+  );
+}
 
   const harmfulIngredients = Object.keys(ingredientIntelligence);
 

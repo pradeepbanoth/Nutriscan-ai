@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { calculateGoalScore } from "../../lib/goalScoring";
+import PremiumGate from "../../components/PremiumGate";
 
 type ScanRow = {
   id: number;
@@ -18,6 +19,19 @@ export default function CoachPage() {
   const [email, setEmail] = useState("");
   const [scans, setScans] = useState<ScanRow[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const isPremium = false;
+
+if (!isPremium) {
+  return (
+    <main className="min-h-screen bg-[#fff7ed] flex items-center justify-center px-6">
+      <PremiumGate
+        title="coach is Premium"
+        description="Upgrade to scan ingredient labels from photos."
+      />
+    </main>
+  );
+}
 
   useEffect(() => {
     const loadCoach = async () => {

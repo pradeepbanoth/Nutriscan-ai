@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import PremiumGate from "../../components/PremiumGate";
 
 type FoodResult = {
   name: string;
@@ -14,7 +15,20 @@ type FoodResult = {
 export default function FoodPhotoPage() {
   const [image, setImage] = useState<string | null>(null);
   const [result, setResult] = useState<FoodResult | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false); 
+
+  const isPremium = false;
+
+if (!isPremium) {
+  return (
+    <main className="min-h-screen bg-[#fff7ed] flex items-center justify-center px-6">
+      <PremiumGate
+        title="food-photo is Premium"
+        description="Upgrade to scan ingredient labels from photos."
+      />
+    </main>
+  );
+}
 
 const analyzeFood = async (file: File) => {
   try {
