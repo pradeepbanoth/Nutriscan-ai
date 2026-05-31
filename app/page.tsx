@@ -362,22 +362,29 @@ const breakdown = product
 
  {userEmail ? (
   <div className="flex items-center gap-3">
-    <a
-      href="/menu"
-      className="rounded-full px-5 py-3 text-sm font-bold text-orange-600 bg-orange-50 border border-orange-100"
-    >
-      Menu
-    </a>
+<a
+  href="/dashboard"
+  className="rounded-full px-5 py-3 text-sm font-bold text-orange-600 bg-orange-50 border border-orange-100"
+>
+  Dashboard
+</a>
 
-    <button
-      onClick={logout}
-      className="rounded-full px-6 py-3 text-sm font-bold text-white shadow-lg"
-      style={{
-        background: "linear-gradient(135deg, #f97316, #ea580c)",
-      }}
-    >
-      Logout
-    </button>
+<a
+  href="/menu"
+  className="rounded-full px-5 py-3 text-sm font-bold text-orange-600 bg-orange-50 border border-orange-100"
+>
+  Menu
+</a>
+
+<button
+  onClick={logout}
+  className="rounded-full px-6 py-3 text-sm font-bold text-white shadow-lg"
+  style={{
+    background: "linear-gradient(135deg, #f97316, #ea580c)",
+  }}
+>
+  Logout
+</button>
   </div>
 ) : (
   <div className="flex items-center gap-3">
