@@ -360,49 +360,14 @@ const breakdown = product
   </span>
 </div>
 
-         {userEmail ? (
+ {userEmail ? (
   <div className="flex items-center gap-3">
     <a
-      href="/profile"
+      href="/menu"
       className="rounded-full px-5 py-3 text-sm font-bold text-orange-600 bg-orange-50 border border-orange-100"
     >
-      Profile
+      Menu
     </a>
-
-    <a
-      href="/report"
-      className="rounded-full px-5 py-3 text-sm font-bold text-orange-600 bg-orange-50 border border-orange-100"
-    >
-      Report
-    </a>
-
-    <a
-      href="/coach"
-      className="rounded-full px-5 py-3 text-sm font-bold text-orange-600 bg-orange-50 border border-orange-100"
-    >
-      AI Coach
-    </a>
-
-    <a
-      href="/ocr"
-      className="rounded-full px-5 py-3 text-sm font-bold text-orange-600 bg-orange-50 border border-orange-100"
-    >
-      OCR
-    </a>
-    <a
-  href="/pricing"
-  className="rounded-full px-5 py-3 text-sm font-bold text-orange-600 bg-orange-50 border border-orange-100"
->
-  Pricing
-</a>
-    <a
-  href="/food-photo"
-  className="rounded-full px-5 py-3 text-sm font-bold text-orange-600 bg-orange-50 border border-orange-100"
->
-  Food Photo
-</a>
-
-   <InstallButton />
 
     <button
       onClick={logout}
