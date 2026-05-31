@@ -7,6 +7,9 @@ import { ingredientIntelligence } from "../lib/ingredientIntelligence";
 import { calculateGoalScore, HealthGoal } from "../lib/goalScoring";
 import { supabase } from "./lib/supabase";
 import InstallButton from "../components/InstallButton";
+import { getScoreBreakdown } from "../lib/scoreBreakdown";
+import { getProductComparisons } from "../lib/productComparisons";
+
 type Product = {
   id: number;
   name: string;
@@ -236,17 +239,37 @@ export default function Home() {
     .filter((item) => item.info);
 
   const alternatives = product?.name ? getAlternatives(product.name) : [];
-
+  const comparisons = product?.name
+  ? getProductComparisons(product.name)
+  : [];
+  
   const healthScore = product
-    ? calculateGoalScore(
-        selectedGoal,
-        product.sugar,
-        product.fat,
-        product.salt,
-        Number(product.nova),
-        detectedHarmful.length
-      )
-    : 0;
+  ? calculateGoalScore(
+      selectedGoal,
+      product.sugar,
+      product.fat,
+      product.salt,
+      Number(product.nova),
+      detectedHarmful.length
+    )
+  : 0;
+
+const breakdown = product
+  ? getScoreBreakdown(
+      product.sugar,
+      product.fat,
+      product.salt,
+      Number(product.nova),
+      ingredientInsights.length
+    )
+  : {
+      sugarImpact: 0,
+      fatImpact: 0,
+      saltImpact: 0,
+      processingImpact: 0,
+      additiveImpact: 0,
+      totalImpact: 0,
+    };
 
   const healthGrade =
     healthScore >= 85
@@ -589,6 +612,57 @@ export default function Home() {
                           {healthScore}/100
                         </h3>
                       </div>
+                      <div className="mt-6 bg-white border border-orange-100 rounded-3xl p-6 shadow-lg">
+  <h3 className="text-xl font-black text-gray-900 mb-4">
+    Score Breakdown
+  </h3>
+
+  <div className="space-y-3">
+    <div className="flex justify-between">
+      <span>Sugar Impact</span>
+      <span className="font-bold text-red-500">
+        -{breakdown.sugarImpact}
+      </span>
+    </div>
+
+    <div className="flex justify-between">
+      <span>Fat Impact</span>
+      <span className="font-bold text-red-500">
+        -{breakdown.fatImpact}
+      </span>
+    </div>
+
+    <div className="flex justify-between">
+      <span>Salt Impact</span>
+      <span className="font-bold text-red-500">
+        -{breakdown.saltImpact}
+      </span>
+    </div>
+
+    <div className="flex justify-between">
+      <span>Processing Impact</span>
+      <span className="font-bold text-red-500">
+        -{breakdown.processingImpact}
+      </span>
+    </div>
+
+    <div className="flex justify-between">
+      <span>Additives Impact</span>
+      <span className="font-bold text-red-500">
+        -{breakdown.additiveImpact}
+      </span>
+    </div>
+
+    <hr className="my-3" />
+
+    <div className="flex justify-between text-lg">
+      <span className="font-black">Total Impact</span>
+      <span className="font-black text-red-600">
+        -{breakdown.totalImpact}
+      </span>
+    </div>
+  </div>
+</div>
 
                       <div className="text-right">
                         <p className="text-sm text-gray-500 font-semibold">
@@ -783,15 +857,25 @@ export default function Home() {
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {alternatives.map((alternative, index) => (
-                          <div
-                            key={index}
-                            className="bg-white border border-green-200 rounded-2xl p-4"
-                          >
-                            <p className="font-semibold text-green-700">
-                              {alternative}
-                            </p>
-                          </div>
-                        ))}
+  <div
+    key={index}
+    className="bg-white border border-green-200 rounded-2xl p-5"
+  >
+    <div className="flex items-center justify-between gap-3 mb-3">
+      <p className="font-black text-green-700">
+        {alternative.name}
+      </p>
+
+      <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-black">
+        {alternative.score}/100
+      </span>
+    </div>
+
+    <p className="text-sm text-gray-600 leading-relaxed">
+      {alternative.reason}
+    </p>
+  </div>
+))}
                       </div>
 
                       <p className="mt-6 text-gray-700">
@@ -805,6 +889,64 @@ export default function Home() {
             </div>
           </div>
         )}
+
+        {comparisons.length > 0 && (
+  <div className="mt-10 text-left">
+    <div className="bg-white border border-orange-100 rounded-3xl p-8 shadow-xl">
+      <h3 className="text-2xl font-black text-gray-900 mb-6">
+        Product Comparison
+      </h3>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-left">
+          <thead>
+            <tr className="border-b border-orange-100">
+              <th className="py-3 text-gray-500">Product</th>
+              <th className="py-3 text-gray-500">Score</th>
+              <th className="py-3 text-gray-500">Sugar</th>
+              <th className="py-3 text-gray-500">Processing</th>
+              <th className="py-3 text-gray-500">Verdict</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {comparisons.map((item) => (
+              <tr key={item.name} className="border-b border-orange-50">
+                <td className="py-4 font-black text-gray-900">
+                  {item.name}
+                </td>
+
+                <td className="py-4">
+                  <span
+                    className={`px-3 py-1 rounded-full text-sm font-black ${
+                      item.score >= 75
+                        ? "bg-green-100 text-green-700"
+                        : item.score >= 50
+                        ? "bg-yellow-100 text-yellow-700"
+                        : "bg-red-100 text-red-700"
+                    }`}
+                  >
+                    {item.score}/100
+                  </span>
+                </td>
+
+                <td className="py-4 text-gray-700">{item.sugar}</td>
+
+                <td className="py-4 text-gray-700">
+                  {item.processing}
+                </td>
+
+                <td className="py-4 text-gray-700">
+                  {item.verdict}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+)}
 
         {favorites.length > 0 && (
           <div className="max-w-6xl mx-auto mt-20 text-left">
