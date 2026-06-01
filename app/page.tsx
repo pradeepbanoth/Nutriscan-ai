@@ -1,5 +1,7 @@
 "use client";
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useEffect, useState } from "react";
 import BarcodeScanner from "../components/BarcodeScanner";
 import { getAlternatives } from "../lib/getAlternatives";
@@ -52,8 +54,8 @@ export default function Home() {
   const [scanHistory, setScanHistory] = useState<Product[]>([]);
   const [favorites, setFavorites] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [suggestions, setSuggestions] = useState<Product[]>([]);
-  const [searchResults, setSearchResults] = useState<Product[]>([]);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const FREE_DAILY_SCAN_LIMIT = 10;
   
