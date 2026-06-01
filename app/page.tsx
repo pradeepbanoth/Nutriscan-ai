@@ -42,7 +42,7 @@ export default function Home() {
   const [barcode, setBarcode] = useState("");
   const [loading, setLoading] = useState(false);
   const [product, setProduct] = useState<Product | null>(null);
-  const [scannerOpen, setScannerOpen] = useState();
+  const [scannerOpen, setScannerOpen] = useState(false);
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [selectedGoal, setSelectedGoal] =
@@ -513,7 +513,8 @@ const recordScanToday = () => {
       "paustica_daily_scans",
       JSON.stringify({ date: today, count: 1 })
     );
-    setDailyScansUsed(data.count + 1);
+
+    setDailyScansUsed(1);
     return;
   }
 
@@ -524,14 +525,19 @@ const recordScanToday = () => {
       "paustica_daily_scans",
       JSON.stringify({ date: today, count: 1 })
     );
+
     setDailyScansUsed(1);
     return;
   }
 
+  const newCount = data.count + 1;
+
   localStorage.setItem(
     "paustica_daily_scans",
-    JSON.stringify({ date: today, count: data.count + 1 })
+    JSON.stringify({ date: today, count: newCount })
   );
+
+  setDailyScansUsed(newCount);
 };
 
       const fetchProduct = async (code?: string) => {
