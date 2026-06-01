@@ -52,12 +52,24 @@ export default function Home() {
   const [scanHistory, setScanHistory] = useState<Product[]>([]);
   const [favorites, setFavorites] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [suggestions, setSuggestions] = useState<any[]>([]);
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [suggestions, setSuggestions] = useState<Product[]>([]);
+  const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const FREE_DAILY_SCAN_LIMIT = 10;
-  const [dailyScansUsed, setDailyScansUsed] = useState(0);
+  
+  const [dailyScansUsed, setDailyScansUsed] = useState(() => {
+  if (typeof window === "undefined") return 0;
 
+  const today = new Date().toISOString().split("T")[0];
+  const saved = localStorage.getItem("paustica_daily_scans");
+
+  if (!saved) return 0;
+
+  const data = JSON.parse(saved);
+
+  return data.date === today ? data.count : 0;
+});
+  
 
   const getDailyScansUsed = () => {
   const today = new Date().toISOString().split("T")[0];
@@ -70,6 +82,27 @@ export default function Home() {
   if (data.date !== today) return 0;
 
   return data.count || 0;
+};
+
+  const fetchSuggestions = async (query: string) => {
+  if (query.length < 2) {
+    setSuggestions([]);
+    return;
+  }
+
+  try {
+    const res = await fetch(
+      `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(
+        query
+      )}&search_simple=1&action=process&json=1&page_size=5`
+    );
+
+    const data = await res.json();
+
+    setSuggestions(data.products || []);
+  } catch {
+    setSuggestions([]);
+  }
 };
 
   useEffect(() => {
@@ -193,7 +226,6 @@ export default function Home() {
         setFavorites(JSON.parse(savedFavorites));
       }
     });
-    setDailyScansUsed(getDailyScansUsed());
   }, []);
 
   useEffect(() => {
@@ -388,44 +420,33 @@ const breakdown = product
       ? "This product is moderate. Consume occasionally and check portion size."
       : "This product looks unhealthy due to processing, sugar, salt, fat, or additives.";
        
-      const fetchSuggestions = async (query: string) => {
-  if (query.length < 2) {
-    setSuggestions([]);
-    return;
-  }
-
-  try {
-    const res = await fetch(
-      `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(
-        query
-      )}&search_simple=1&action=process&json=1&page_size=5`
-    );
-
-    const data = await res.json();
-
-    setSuggestions(data.products || []);
-  } catch {
-    setSuggestions([]);
-  }
-};
+    
  
- const analyzeSelectedProduct = async (item: any) => {
-  if (!item) return;
+     const analyzeSelectedProduct = async (item: Record<string, unknown>) => {
+      if (!item) return;
 
   setLoading(true);
   setSuggestions([]);
 
   const fetchedProduct: Product = {
-    id: Date.now(),
-    name: item.product_name || "Unknown Product",
-    brand: item.brands || "Unknown Brand",
-    image: item.image_front_url || "",
-    ingredients: item.ingredients_text || "Ingredients unavailable",
-    nutriscore: item.nutriscore_grade || "unknown",
-    nova: item.nova_group || "N/A",
-    sugar: item.nutriments?.sugars_100g ?? 0,
-    fat: item.nutriments?.fat_100g ?? 0,
-    salt: item.nutriments?.salt_100g ?? 0,
+    id: 0,
+    name: String(item.product_name ?? "Unknown Product"),
+    brand: String(item.brands ?? "Unknown Brand"),
+    image: String(item.image_front_url ?? ""),
+    ingredients: String(item.ingredients_text ?? "Ingredients unavailable"),
+    nutriscore: String(item.nutriscore_grade ?? "unknown"),
+    nova: String(item.nova_group ?? "N/A"),
+    sugar: Number(
+  (item as any).nutriments?.sugars_100g ?? 0
+),
+
+fat: Number(
+  (item as any).nutriments?.fat_100g ?? 0
+),
+
+salt: Number(
+  (item as any).nutriments?.salt_100g ?? 0
+),
   };
 
   setProduct(fetchedProduct);
