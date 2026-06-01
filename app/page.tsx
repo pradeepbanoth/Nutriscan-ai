@@ -58,6 +58,20 @@ export default function Home() {
   const FREE_DAILY_SCAN_LIMIT = 10;
   const [dailyScansUsed, setDailyScansUsed] = useState(0);
 
+
+  const getDailyScansUsed = () => {
+  const today = new Date().toISOString().split("T")[0];
+  const saved = localStorage.getItem("paustica_daily_scans");
+
+  if (!saved) return 0;
+
+  const data = JSON.parse(saved);
+
+  if (data.date !== today) return 0;
+
+  return data.count || 0;
+};
+
   useEffect(() => {
   const timer = setTimeout(() => {
     fetchSuggestions(searchQuery);
