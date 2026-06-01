@@ -6,6 +6,11 @@ import {
   IScannerControls,
 } from "@zxing/browser";
 
+import {
+  DecodeHintType,
+  BarcodeFormat,
+} from "@zxing/library";
+
 interface Props {
   onScan: (barcode: string) => void;
 }
@@ -21,8 +26,19 @@ export default function BarcodeScanner({ onScan }: Props) {
   const [torchOn, setTorchOn] = useState(false);
 
   useEffect(() => {
-    const codeReader = new BrowserMultiFormatReader();
+   const hints = new Map();
 
+hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+  BarcodeFormat.EAN_13,
+  BarcodeFormat.EAN_8,
+  BarcodeFormat.UPC_A,
+  BarcodeFormat.UPC_E,
+  BarcodeFormat.CODE_128,
+]);
+
+hints.set(DecodeHintType.TRY_HARDER, true);
+
+const codeReader = new BrowserMultiFormatReader(hints);
     const startScanner = async () => {
       try {
         setCameraError("");
@@ -38,8 +54,8 @@ export default function BarcodeScanner({ onScan }: Props) {
           {
             video: {
               facingMode: { ideal: "environment" },
-              width: { ideal: 1280 },
-              height: { ideal: 720 },
+              width: { ideal: 1920 },
+              height: { ideal: 1080 },
               focusMode: "continuous",
             } as MediaTrackConstraints,
             audio: false,
@@ -125,7 +141,7 @@ export default function BarcodeScanner({ onScan }: Props) {
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="relative w-[280px] h-[190px] border-2 border-white rounded-3xl shadow-[0_0_30px_rgba(255,255,255,0.5)]">
               {!scanned && (
-                <div className="absolute left-0 right-0 top-0 h-1 bg-orange-500 animate-[scan_2s_linear_infinite]" />
+                <div className="absolute left-0 right-0 top-0 h-1 bg-orange-500 animate-[scan_1s_linear_infinite]" />
               )}
 
               {scanned && (

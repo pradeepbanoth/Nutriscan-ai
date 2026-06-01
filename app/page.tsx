@@ -10,6 +10,7 @@ import InstallButton from "../components/InstallButton";
 import { getScoreBreakdown } from "../lib/scoreBreakdown";
 import { getProductComparisons } from "../lib/productComparisons";
 import MobileMenu from "../components/MobileMenu";
+import { getConfidenceScore } from "../lib/getConfidenceScore";
 
 type Product = {
   id: number;
@@ -41,14 +42,29 @@ export default function Home() {
   const [barcode, setBarcode] = useState("");
   const [loading, setLoading] = useState(false);
   const [product, setProduct] = useState<Product | null>(null);
-  const [scannerOpen, setScannerOpen] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState();
   const [userEmail, setUserEmail] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [selectedGoal, setSelectedGoal] =
     useState<HealthGoal>("General Wellness");
+  const [isFetching, setIsFetching] = useState(false);
 
   const [scanHistory, setScanHistory] = useState<Product[]>([]);
   const [favorites, setFavorites] = useState<Product[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const FREE_DAILY_SCAN_LIMIT = 10;
+  const [dailyScansUsed, setDailyScansUsed] = useState(0);
+
+  useEffect(() => {
+  const timer = setTimeout(() => {
+    fetchSuggestions(searchQuery);
+  }, 400);
+
+  return () => clearTimeout(timer);
+}, [searchQuery]);
 
   const harmfulIngredients = [
     "palm oil",
@@ -66,7 +82,54 @@ export default function Home() {
     "acesulfame k",
     "maltodextrin",
     "corn syrup",
-  ];
+    "ins 211",
+"ins211",
+"e211",
+"ins 621",
+"ins621",
+"e621",
+"ins 950",
+"ins950",
+"e950",
+"ins 951",
+"ins951",
+"e951",
+"ins 330",
+"ins330",
+"e330",
+"acesulfame k",
+"potassium sorbate",
+"carrageenan",
+"titanium dioxide",
+"polysorbate 80",
+"potassium benzoate",
+"xanthan gum",
+"guar gum",
+"erythritol",
+"stevia",
+  ]; 
+
+  const ingredientAliases: Record<string, string> = {
+  "e621": "msg",
+  "ins621": "msg",
+  "ins 621": "msg",
+  "monosodium glutamate": "msg",
+
+  "e211": "sodium benzoate",
+  "ins211": "sodium benzoate",
+  "ins 211": "sodium benzoate",
+
+  "e950": "acesulfame k",
+  "ins950": "acesulfame k",
+  "ins 950": "acesulfame k",
+
+  "e951": "aspartame",
+  "ins951": "aspartame",
+  "ins 951": "aspartame",
+
+  "e330": "ins 330",
+  "ins330": "ins 330",
+};
 
   const mapRowToProduct = (item: ProductRow): Product => ({
     id: item.id,
@@ -116,6 +179,7 @@ export default function Home() {
         setFavorites(JSON.parse(savedFavorites));
       }
     });
+    setDailyScansUsed(getDailyScansUsed());
   }, []);
 
   useEffect(() => {
@@ -123,10 +187,21 @@ export default function Home() {
       const { data } = await supabase.auth.getUser();
 
       if (data.user) {
-        setUserEmail(data.user.email ?? null);
-        setUserId(data.user.id);
-        await loadCloudData(data.user.id);
-      }
+  setUserEmail(data.user.email ?? null);
+  setUserId(data.user.id);
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("health_goal")
+    .eq("id", data.user.id)
+    .single();
+
+  if (profile?.health_goal) {
+    setSelectedGoal(profile.health_goal as HealthGoal);
+  }
+
+  await loadCloudData(data.user.id);
+}
     };
 
     getUser();
@@ -229,15 +304,21 @@ export default function Home() {
       ) || [];
 
   const ingredientInsights = detectedHarmful
-    .map((ingredient) => {
-      const key = ingredient.trim().toLowerCase();
+  .map((ingredient) => {
+    const rawKey = ingredient
+  .trim()
+  .toLowerCase()
+  .replace(/[\-\(\)]/g, " ")
+  .replace(/\s+/g, " ");
+    const normalizedKey =
+      ingredientAliases[rawKey] || rawKey;
 
-      return {
-        ingredient,
-        info: ingredientIntelligence[key],
-      };
-    })
-    .filter((item) => item.info);
+    return {
+      ingredient,
+      info: ingredientIntelligence[normalizedKey],
+    };
+  })
+  .filter((item) => item.info);
 
   const alternatives = product?.name ? getAlternatives(product.name) : [];
   const comparisons = product?.name
@@ -271,6 +352,9 @@ const breakdown = product
       additiveImpact: 0,
       totalImpact: 0,
     };
+    const confidence = product
+  ? getConfidenceScore(product)
+  : { label: "Low", score: 0 };
 
   const healthGrade =
     healthScore >= 85
@@ -289,49 +373,220 @@ const breakdown = product
       : healthScore >= 50
       ? "This product is moderate. Consume occasionally and check portion size."
       : "This product looks unhealthy due to processing, sugar, salt, fat, or additives.";
+       
+      const fetchSuggestions = async (query: string) => {
+  if (query.length < 2) {
+    setSuggestions([]);
+    return;
+  }
 
-  const fetchProduct = async (code?: string) => {
-    const finalBarcode = code || barcode;
+  try {
+    const res = await fetch(
+      `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(
+        query
+      )}&search_simple=1&action=process&json=1&page_size=5`
+    );
 
-    if (!finalBarcode) return;
+    const data = await res.json();
 
-    setLoading(true);
+    setSuggestions(data.products || []);
+  } catch {
+    setSuggestions([]);
+  }
+};
+ 
+ const analyzeSelectedProduct = async (item: any) => {
+  if (!item) return;
 
-    try {
-      const res = await fetch(
-        `https://world.openfoodfacts.org/api/v0/product/${finalBarcode}.json`
-      );
+  setLoading(true);
+  setSuggestions([]);
 
-      const data = await res.json();
+  const fetchedProduct: Product = {
+    id: Date.now(),
+    name: item.product_name || "Unknown Product",
+    brand: item.brands || "Unknown Brand",
+    image: item.image_front_url || "",
+    ingredients: item.ingredients_text || "Ingredients unavailable",
+    nutriscore: item.nutriscore_grade || "unknown",
+    nova: item.nova_group || "N/A",
+    sugar: item.nutriments?.sugars_100g ?? 0,
+    fat: item.nutriments?.fat_100g ?? 0,
+    salt: item.nutriments?.salt_100g ?? 0,
+  };
 
-      if (data.status === 1) {
-        const fetchedProduct: Product = {
-          id: Date.now(),
-          name: data.product.product_name || "Unknown Product",
-          brand: data.product.brands || "Unknown Brand",
-          image: data.product.image_front_url || "",
-          ingredients:
-            data.product.ingredients_text || "Ingredients unavailable",
-          nutriscore: data.product.nutriscore_grade || "unknown",
-          nova: data.product.nova_group || "N/A",
-          sugar: data.product.nutriments?.sugars_100g ?? 0,
-          fat: data.product.nutriments?.fat_100g ?? 0,
-          salt: data.product.nutriments?.salt_100g ?? 0,
-        };
+  setProduct(fetchedProduct);
+  recordScanToday(); 
+  const getDailyScansUsed = () => {
+  const today = new Date().toISOString().split("T")[0];
+  const saved = localStorage.getItem("paustica_daily_scans");
 
-        setProduct(fetchedProduct);
-        await saveHistory(fetchedProduct);
-        setScannerOpen(false);
-      } else {
-        alert("Product not found");
-      }
-    } catch (error) {
-      console.log(error);
-      alert("Something went wrong");
+  if (!saved) return 0;
+
+  const data = JSON.parse(saved);
+
+  if (data.date !== today) return 0;
+
+  return data.count || 0;
+};
+  setScannerOpen(false);
+
+  await saveHistory(fetchedProduct);
+
+  setLoading(false);
+};
+
+    const searchProduct = async () => {
+  if (!searchQuery.trim()) return;
+  if (!canScanToday()) {
+  setUpgradeOpen(true);
+  setLoading(false);
+  return;
+}
+
+  setLoading(true);
+
+  try {
+    const res = await fetch(
+      `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(
+        searchQuery
+      )}&search_simple=1&action=process&json=1&page_size=8`
+    );
+
+    const data = await res.json();
+    const results = data.products || [];
+
+    if (results.length === 0) {
+      alert("No product found. Try a more specific name.");
+      setSearchResults([]);
+      return;
     }
 
+    setSearchResults(results);
+    setSuggestions([]);
+    setScannerOpen(false);
+    setProduct(null);
+  } catch (error) {
+    console.log(error);
+    alert("Search failed. Please try again.");
+  }
+
+  setLoading(false);
+};
+
+   const canScanToday = () => {
+  const today = new Date().toISOString().split("T")[0];
+  const saved = localStorage.getItem("paustica_daily_scans");
+
+  if (!saved) {
+    return true;
+  }
+
+  const data = JSON.parse(saved);
+
+  if (data.date !== today) {
+    return true;
+  }
+
+  return data.count < FREE_DAILY_SCAN_LIMIT;
+};
+
+const recordScanToday = () => {
+  const today = new Date().toISOString().split("T")[0];
+  const saved = localStorage.getItem("paustica_daily_scans");
+
+  if (!saved) {
+    localStorage.setItem(
+      "paustica_daily_scans",
+      JSON.stringify({ date: today, count: 1 })
+    );
+    setDailyScansUsed(data.count + 1);
+    return;
+  }
+
+  const data = JSON.parse(saved);
+
+  if (data.date !== today) {
+    localStorage.setItem(
+      "paustica_daily_scans",
+      JSON.stringify({ date: today, count: 1 })
+    );
+    setDailyScansUsed(1);
+    return;
+  }
+
+  localStorage.setItem(
+    "paustica_daily_scans",
+    JSON.stringify({ date: today, count: data.count + 1 })
+  );
+};
+
+      const fetchProduct = async (code?: string) => {
+  const finalBarcode = code || barcode;
+
+  if (!finalBarcode) return;
+
+    if (!canScanToday()) {
+    setUpgradeOpen(true);
     setLoading(false);
-  };
+    setScannerOpen(false);
+    return;
+    }
+
+  const cached = localStorage.getItem(`product_${finalBarcode}`);
+
+  if (cached) {
+    const cachedProduct = JSON.parse(cached);
+
+    setProduct(cachedProduct);
+    setScannerOpen(false);
+    setLoading(false);
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const res = await fetch(
+      `https://world.openfoodfacts.org/api/v2/product/${finalBarcode}`
+    );
+
+    const data = await res.json();
+
+    if (data.status === 1) {
+      const fetchedProduct: Product = {
+        id: Date.now(),
+        name: data.product.product_name || "Unknown Product",
+        brand: data.product.brands || "Unknown Brand",
+        image: data.product.image_front_url || "",
+        ingredients:
+          data.product.ingredients_text || "Ingredients unavailable",
+        nutriscore: data.product.nutriscore_grade || "unknown",
+        nova: data.product.nova_group || "N/A",
+        sugar: data.product.nutriments?.sugars_100g ?? 0,
+        fat: data.product.nutriments?.fat_100g ?? 0,
+        salt: data.product.nutriments?.salt_100g ?? 0,
+      };
+
+      localStorage.setItem(
+        `product_${finalBarcode}`,
+        JSON.stringify(fetchedProduct)
+      );
+
+      setScannerOpen(false);
+      setProduct(fetchedProduct);
+
+      await saveHistory(fetchedProduct);
+    } else {
+  setProduct(null);
+  alert("Product not found in database. Try another barcode or enter product details manually.");
+}
+  } catch (error) {
+    console.log(error);
+    alert("Something went wrong");
+  }
+
+  setLoading(false);
+};
 
   const clearHistory = async () => {
     setScanHistory([]);
@@ -372,6 +627,12 @@ const breakdown = product
           >
             Dashboard
           </a>
+          <button
+  onClick={() => setUpgradeOpen(true)}
+  className="rounded-full px-5 py-3 text-sm font-bold text-white bg-gray-900"
+>
+  Upgrade
+</button>
 
           <a
             href="/menu"
@@ -398,6 +659,12 @@ const breakdown = product
           >
             Menu
           </a>
+          <button
+  onClick={() => setUpgradeOpen(true)}
+  className="rounded-full px-5 py-3 text-sm font-bold text-white bg-gray-900"
+>
+  Upgrade
+</button>
 
           <a
             href="/auth"
@@ -421,24 +688,23 @@ const breakdown = product
   className="w-32 h-32 mx-auto mb-8 object-contain"
 />
         <h1 className="text-6xl sm:text-7xl md:text-8xl font-black tracking-[-0.06em] leading-[0.9] text-gray-900 mb-10">
-          Scan your food
-          <br />
-          <span
-            style={{
-              background:
-                "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            }}
-          >
-            instantly
-          </span>
+          Know what's really
+<br />
+<span
+  style={{
+    background:
+      "linear-gradient(135deg, #f97316 0%, #ea580c 100%)",
+    WebkitBackgroundClip: "text",
+    WebkitTextFillColor: "transparent",
+  }}
+>
+  inside your food
+</span>
         </h1>
 
         <p className="max-w-3xl mx-auto text-lg md:text-xl leading-relaxed text-gray-500 mb-12">
-          AI-powered barcode scanner that detects unhealthy packaged foods,
-          harmful ingredients, additives, sugar spikes and ultra-processed
-          products.
+          Scan packaged foods and instantly understand health risks, additives,
+          processing levels, and better alternatives.
         </p>
 
         <div className="flex flex-col md:flex-row gap-4 justify-center mb-10">
@@ -453,25 +719,109 @@ const breakdown = product
           </button>
 
           <button
-            onClick={() => fetchProduct("0737628064502")}
-            className="px-8 py-5 rounded-2xl bg-white border border-orange-100 text-orange-600 font-bold text-lg"
-          >
-            Demo Product
-          </button>
-        </div>
+             onClick={() => setScannerOpen(true)}
+               className="..."
+               >
+               Scan Product
+               </button> 
+          <input
+  value={barcode}
+  onChange={(e) => setBarcode(e.target.value)}
+  placeholder="Enter barcode manually"
+  className="px-6 py-5 rounded-2xl bg-white border border-orange-100 text-gray-900 font-bold outline-none"
+/>
+
+       <button
+        disabled={loading}
+        onClick={() => fetchProduct()}
+        className="px-8 py-5 rounded-2xl bg-gray-900 text-white font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+        {loading ? "Analyzing..." : "Analyze Barcode"}
+           </button>
+        </div> 
+
+        <div className="max-w-2xl mx-auto mt-6">
+  <div className="flex gap-3">
+    <input
+      value={searchQuery}
+     onChange={(e) => {
+  setSearchQuery(e.target.value);
+}}
+      onKeyDown={(e) => {
+ if (e.key === "Enter") {
+  setSuggestions([]);
+  searchProduct();
+}
+}}
+      placeholder="Search product name..."
+      className="flex-1 px-6 py-4 rounded-2xl border border-orange-100 bg-white outline-none font-medium"
+    />
+
+    <button
+  disabled={loading}
+  onClick={searchProduct}
+  className="px-6 py-4 rounded-2xl bg-orange-500 text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+>
+  {loading ? "Searching..." : "Search"}
+</button>
+  </div>
+</div>
+  {searchResults.length > 0 && !product && (
+  <div className="max-w-4xl mx-auto mt-8 bg-white rounded-[32px] border border-orange-100 shadow-xl p-6 text-left">
+    <h2 className="text-2xl font-black text-gray-900 mb-5">
+      Search Results
+    </h2>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {searchResults.map((item, index) => (
+        <button
+          key={index}
+          onClick={() => {
+            analyzeSelectedProduct(item);
+            setSearchResults([]);
+          }}
+          className="flex items-center gap-4 text-left p-4 rounded-2xl border border-orange-100 hover:bg-orange-50 transition"
+        >
+          {item.image_front_url && (
+            <img
+              src={item.image_front_url}
+              alt={item.product_name}
+              className="w-16 h-16 rounded-xl object-cover border border-orange-100"
+            />
+          )}
+
+          <div>
+            <h3 className="font-black text-gray-900 line-clamp-2">
+              {item.product_name || "Unknown Product"}
+            </h3>
+
+            <p className="text-sm text-gray-400">
+              {item.brands || "Unknown Brand"}
+            </p>
+          </div>
+        </button>
+      ))}
+    </div>
+  </div>
+)}
+
+  <p className="mt-4 text-sm text-gray-500 font-medium">
+  {dailyScansUsed} / {FREE_DAILY_SCAN_LIMIT} scans used today
+</p>
 
         {scannerOpen && (
           <div className="max-w-2xl mx-auto bg-white p-6 rounded-[32px] border border-orange-100 shadow-2xl mb-10">
-            <BarcodeScanner
+           <BarcodeScanner
               onScan={(code) => {
-                setBarcode(code);
-                fetchProduct(code);
+              setBarcode(code);
+              setScannerOpen(false);
+              setLoading(true);
+              fetchProduct(code);
               }}
-            />
-
+              />
             <p className="text-sm text-gray-400 mt-4">
-              Point your camera at barcode
-            </p>
+                Align barcode inside frame
+              </p>
           </div>
         )}
 
@@ -484,6 +834,28 @@ const breakdown = product
             </p>
           </div>
         )}
+         
+         {!product && !loading && !scannerOpen && (
+  <div className="mt-10 max-w-2xl mx-auto bg-white rounded-[32px] border border-orange-100 shadow-xl p-8">
+    <h2 className="text-2xl font-black text-gray-900 mb-3">
+      Ready to analyze your food
+    </h2>
+
+    <p className="text-gray-500 mb-6">
+      Open the scanner or enter a barcode manually to get instant health insights.
+    </p>
+
+    <button
+      onClick={() => setScannerOpen(true)}
+      className="px-8 py-4 rounded-2xl text-white font-bold shadow-lg"
+      style={{
+        background: "linear-gradient(135deg, #f97316, #ea580c)",
+      }}
+    >
+      Start Scanning
+    </button>
+  </div>
+)}
 
         {product && !loading && (
           <div className="mt-10 w-full max-w-4xl mx-auto">
@@ -491,6 +863,18 @@ const breakdown = product
               <div className="h-2 bg-gradient-to-r from-orange-500 to-orange-600" />
 
               <div className="p-8">
+                <div className="flex justify-end mb-6">
+  <button
+    onClick={() => {
+      setProduct(null);
+      setBarcode("");
+      setScannerOpen(true);
+    }}
+    className="px-5 py-3 rounded-full bg-orange-50 border border-orange-100 text-orange-600 font-bold"
+  >
+    Scan Another Product
+  </button>
+</div>
                 <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
                   {product.image && (
                     <img
@@ -522,13 +906,15 @@ const breakdown = product
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
                       <div className="bg-orange-50 rounded-2xl p-4 border border-orange-100">
                         <p className="text-xs text-gray-400 mb-1">Sugar</p>
                         <p className="text-2xl font-black text-orange-600">
                           {product.sugar}g
                         </p>
                       </div>
+
+                     
 
                       <div className="bg-orange-50 rounded-2xl p-4 border border-orange-100">
                         <p className="text-xs text-gray-400 mb-1">Fat</p>
@@ -550,6 +936,34 @@ const breakdown = product
                           {product.nova}
                         </p>
                       </div>
+                      <div className="bg-orange-50 rounded-2xl p-4 border border-orange-100">
+  <p className="text-xs text-gray-400 mb-1">NOVA</p>
+  <p className="text-2xl font-black text-orange-600">
+    {product.nova}
+  </p>
+</div>
+
+<div className="bg-orange-50 rounded-2xl p-4 border border-orange-100">
+  <p className="text-xs text-gray-400 mb-1">
+    Confidence
+  </p>
+
+  <p
+    className={`text-2xl font-black ${
+      confidence.label === "High"
+        ? "text-green-600"
+        : confidence.label === "Medium"
+        ? "text-yellow-600"
+        : "text-red-600"
+    }`}
+  >
+    {confidence.label}
+  </p>
+
+  <p className="text-xs text-gray-400 mt-1">
+    {confidence.score}%
+  </p>
+</div>
                     </div>
                   </div>
                 </div>
@@ -559,11 +973,21 @@ const breakdown = product
                     Personal Health Goal
                   </label>
 
-                  <select
-                    value={selectedGoal}
-                    onChange={(e) =>
-                      setSelectedGoal(e.target.value as HealthGoal)
-                    }
+                 <select
+  value={selectedGoal}
+  onChange={async (e) => {
+    const goal = e.target.value as HealthGoal;
+    setSelectedGoal(goal);
+
+    if (userId) {
+      await supabase
+        .from("profiles")
+        .upsert({
+          id: userId,
+          health_goal: goal,
+        });
+    }
+  }}
                     className="w-full rounded-2xl border border-orange-100 bg-orange-50 px-5 py-4 font-bold text-gray-800 outline-none"
                   >
                     <option>General Wellness</option>
@@ -674,6 +1098,27 @@ const breakdown = product
                     <p className="text-gray-700 leading-relaxed mb-6">
                       {healthVerdict}
                     </p>
+
+                    <div className="mt-5 bg-white rounded-2xl border border-orange-100 p-5">
+  <p className="font-black text-gray-900 mb-2">
+    Why this score?
+  </p>
+
+  <ul className="space-y-2 text-gray-700">
+    {product.sugar > 15 && <li>High sugar content reduces the score.</li>}
+    {product.salt > 1.5 && <li>High salt level may not be ideal for daily intake.</li>}
+    {product.fat > 20 && <li>High fat content increases calorie density.</li>}
+    {Number(product.nova) >= 4 && <li>Ultra-processed food lowers the health rating.</li>}
+    {ingredientInsights.length > 0 && <li>Detected additives or risky ingredients affect the score.</li>}
+    {product.sugar <= 15 &&
+      product.salt <= 1.5 &&
+      product.fat <= 20 &&
+      Number(product.nova) < 4 &&
+      ingredientInsights.length === 0 && (
+        <li>No major red flags detected from available data.</li>
+      )}
+  </ul>
+</div>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div className="bg-white rounded-2xl p-4 border border-orange-100">
@@ -1035,6 +1480,43 @@ const breakdown = product
           </div>
         )}
       </section>
-    </main>
+
+{upgradeOpen && (
+  <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-6">
+    <div className="bg-white max-w-lg w-full rounded-[32px] p-8 shadow-2xl">
+      <h2 className="text-3xl font-black text-gray-900 mb-3">
+        PAUSTICA Premium
+      </h2>
+
+      <p className="text-gray-500 mb-6">
+      You've used {dailyScansUsed} / {FREE_DAILY_SCAN_LIMIT} free scans today. Upgrade to unlock unlimited scans, AI coach, weekly reports and advanced analysis.
+      </p>
+
+      <div className="space-y-3 mb-8">
+        <div>✓ Unlimited Scans</div>
+        <div>✓ AI Food Coach</div>
+        <div>✓ Weekly Reports</div>
+        <div>✓ Advanced Ingredient Analysis</div>
+        <div>✓ Family Profiles</div>
+      </div>
+
+      <button
+        className="w-full py-4 rounded-2xl bg-orange-500 text-white font-black mb-3"
+      >
+        Coming Soon
+      </button>
+
+      <button
+        onClick={() => setUpgradeOpen(false)}
+        className="w-full py-4 rounded-2xl bg-gray-100 text-gray-700 font-bold"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+)}
+
+</main>
+    
   );
 }

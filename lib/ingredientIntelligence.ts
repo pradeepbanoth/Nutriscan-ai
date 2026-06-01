@@ -104,4 +104,109 @@ export const ingredientIntelligence: Record<
     scientificView: "Frequent added sugar intake is linked with metabolic health risks.",
     recommendation: "Choose lower-sugar products when possible.",
   },
+
+  "acesulfame k": {
+  risk: "Medium",
+  why: "Artificial sweetener commonly used in diet beverages and sugar-free foods.",
+  scientificView: "Approved by regulators, but often found in highly processed foods.",
+  recommendation: "Consume in moderation.",
+},
+
+"potassium sorbate": {
+  risk: "Low",
+  why: "Preservative used to prevent mold and yeast growth.",
+  scientificView: "Generally regarded as safe in approved quantities.",
+  recommendation: "Safe for occasional consumption.",
+},
+
+"carrageenan": {
+  risk: "Medium",
+  why: "Thickening agent used in dairy alternatives and processed foods.",
+  scientificView: "Food-grade carrageenan is approved, though some debate exists regarding digestive sensitivity.",
+  recommendation: "Monitor if you experience digestive discomfort.",
+},
+
+"ins 211": {
+  risk: "Medium",
+  why: "INS 211 is sodium benzoate, a common preservative.",
+  scientificView: "Approved in regulated amounts.",
+  recommendation: "Limit frequent intake of heavily preserved foods.",
+},
+
+"ins 621": {
+  risk: "Medium",
+  why: "INS 621 is monosodium glutamate (MSG), a flavor enhancer.",
+  scientificView: "Generally recognized as safe for most consumers.",
+  recommendation: "Consume in moderation.",
+},
+
+"ins 950": {
+  risk: "Medium",
+  why: "INS 950 is acesulfame potassium, an artificial sweetener.",
+  scientificView: "Approved within regulatory limits.",
+  recommendation: "Limit frequent intake of artificially sweetened products.",
+},
+
+"ins 951": {
+  risk: "Medium",
+  why: "INS 951 is aspartame, a low-calorie sweetener.",
+  scientificView: "Approved by food safety authorities within daily intake limits.",
+  recommendation: "Consume in moderation.",
+},
+
+"ins 330": {
+  risk: "Low",
+  why: "Citric acid used for acidity regulation.",
+  scientificView: "Widely regarded as safe.",
+  recommendation: "Generally safe.",
+},
+
+"titanium dioxide": {
+  risk: "Medium",
+  why: "Used as a whitening agent in some processed foods.",
+  scientificView: "Regulatory treatment varies across regions.",
+  recommendation: "Limit unnecessary intake.",
+},
+
+"polysorbate 80": {
+  risk: "Medium",
+  why: "Emulsifier used to improve texture and stability.",
+  scientificView: "Approved in regulated quantities.",
+  recommendation: "Consume processed foods in moderation.",
+},
+
+"potassium benzoate": {
+  risk: "Medium",
+  why: "Preservative used in beverages and packaged foods.",
+  scientificView: "Generally safe in approved amounts.",
+  recommendation: "Limit excessive intake.",
+},
+
+"xanthan gum": {
+  risk: "Low",
+  why: "Common thickener used in sauces and gluten-free foods.",
+  scientificView: "Generally considered safe.",
+  recommendation: "Safe for most consumers.",
+},
+
+"guar gum": {
+  risk: "Low",
+  why: "Plant-derived thickening agent.",
+  scientificView: "Widely used and generally safe.",
+  recommendation: "Safe for regular consumption.",
+},
+
+"erythritol": {
+  risk: "Low",
+  why: "Sugar alcohol used as a low-calorie sweetener.",
+  scientificView: "Generally regarded as safe.",
+  recommendation: "Consume in moderation if sensitive to sugar alcohols.",
+},
+
+"stevia": {
+  risk: "Low",
+  why: "Natural sweetener extracted from stevia leaves.",
+  scientificView: "Widely accepted as safe.",
+  recommendation: "Good alternative to added sugar.",
+},
 };
