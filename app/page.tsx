@@ -457,6 +457,10 @@ salt: Number(
   };
 
   setProduct(fetchedProduct);
+  posthog.capture("barcode_scan_success", {
+  product_name: fetchedProduct.name,
+  brand: fetchedProduct.brand,
+});
   recordScanToday(); 
   const getDailyScansUsed = () => {
   const today = new Date().toISOString().split("T")[0];
@@ -479,9 +483,13 @@ salt: Number(
 
     const searchProduct = async () => {
   if (!searchQuery.trim()) return;
+  posthog.capture("product_search_started", {
+  query: searchQuery,
+});
   if (!canScanToday()) {
-  setUpgradeOpen(true);
-  setLoading(false);
+    posthog.capture("premium_modal_opened");
+    setUpgradeOpen(true);
+    setLoading(false);
   return;
 }
 
@@ -574,8 +582,9 @@ const recordScanToday = () => {
   if (!finalBarcode) return;
 
     if (!canScanToday()) {
-    setUpgradeOpen(true);
-    setLoading(false);
+     posthog.capture("premium_modal_opened");
+     setUpgradeOpen(true);
+      setLoading(false);
     setScannerOpen(false);
     return;
     }
@@ -770,8 +779,11 @@ const recordScanToday = () => {
           </button>
 
           <button
-             onClick={() => setScannerOpen(true)}
-               className="..."
+            onClick={() => {
+  posthog.capture("scanner_opened");
+  setScannerOpen(true);
+}}
+              className="..."
                >
                Scan Product
                </button> 
