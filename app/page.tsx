@@ -13,6 +13,7 @@ import { getScoreBreakdown } from "../lib/scoreBreakdown";
 import { getProductComparisons } from "../lib/productComparisons";
 import MobileMenu from "../components/MobileMenu";
 import { getConfidenceScore } from "../lib/getConfidenceScore";
+import posthog from "@/lib/posthog";
 
 type Product = {
   id: number;
@@ -132,31 +133,31 @@ export default function Home() {
     "maltodextrin",
     "corn syrup",
     "ins 211",
-"ins211",
-"e211",
-"ins 621",
-"ins621",
-"e621",
-"ins 950",
-"ins950",
-"e950",
-"ins 951",
-"ins951",
-"e951",
-"ins 330",
-"ins330",
-"e330",
-"acesulfame k",
-"potassium sorbate",
-"carrageenan",
-"titanium dioxide",
-"polysorbate 80",
-"potassium benzoate",
-"xanthan gum",
-"guar gum",
-"erythritol",
-"stevia",
-  ]; 
+    "ins211",
+    "e211",
+    "ins 621",
+    "ins621",
+    "e621",
+    "ins 950",
+    "ins950",
+    "e950",
+    "ins 951",
+    "ins951",
+    "e951",
+    "ins 330",
+    "ins330",
+    "e330",
+    "acesulfame k",
+    "potassium sorbate",
+    "carrageenan",
+    "titanium dioxide",
+    "polysorbate 80",
+    "potassium benzoate",
+    "xanthan gum",
+    "guar gum",
+    "erythritol",
+    "stevia",
+     ]; 
 
   const ingredientAliases: Record<string, string> = {
   "e621": "msg",
@@ -229,6 +230,10 @@ export default function Home() {
       }
     });
   }, []);
+
+  useEffect(() => {
+  posthog.capture("homepage_loaded");
+}, []);
 
   useEffect(() => {
     const getUser = async () => {
@@ -752,7 +757,10 @@ const recordScanToday = () => {
 
         <div className="flex flex-col md:flex-row gap-4 justify-center mb-10">
           <button
-            onClick={() => setScannerOpen(true)}
+            onClick={() => {
+             posthog.capture("scanner_opened");
+             setScannerOpen(true);
+            }}
             className="px-8 py-5 rounded-2xl text-white font-bold text-lg shadow-xl"
             style={{
               background: "linear-gradient(135deg, #f97316, #ea580c)",
