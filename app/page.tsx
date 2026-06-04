@@ -535,6 +535,29 @@ const bmiCategory =
     : bmi < 30
     ? "Overweight"
     : "Obese range";
+
+    const achievements = [
+  {
+    title: "First Scan",
+    unlocked: totalScans >= 1,
+  },
+  {
+    title: "10 Products Analyzed",
+    unlocked: totalScans >= 10,
+  },
+  {
+    title: "50 Products Analyzed",
+    unlocked: totalScans >= 50,
+  },
+  {
+    title: "3-Day Streak",
+    unlocked: currentStreak >= 3,
+  },
+  {
+    title: "7-Day Streak",
+    unlocked: currentStreak >= 7,
+  },
+];
  
      const analyzeSelectedProduct = async (item: Record<string, unknown>) => {
       if (!item) return;
@@ -1879,7 +1902,29 @@ const updateScanStats = async () => {
         {bmiCategory}
       </p>
     </div>
-  )}
+  )} 
+
+  <div className="rounded-2xl bg-white border border-orange-100 p-5">
+  <p className="font-black text-gray-900 mb-3">
+    Achievements
+  </p>
+
+  <div className="space-y-2">
+    {achievements.map((achievement) => (
+      <div
+        key={achievement.title}
+        className={`rounded-xl px-4 py-3 text-sm font-bold ${
+          achievement.unlocked
+            ? "bg-green-50 text-green-700"
+            : "bg-gray-50 text-gray-400"
+        }`}
+      >
+        {achievement.unlocked ? "Unlocked" : "Locked"} — {achievement.title}
+      </div>
+    ))}
+  </div>
+</div>
+
 </div>
 
      <button
