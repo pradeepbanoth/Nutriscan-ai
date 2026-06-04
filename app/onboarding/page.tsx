@@ -31,6 +31,20 @@ const steps = [
     ],
   },
   {
+  title: "What's your age?",
+  subtitle: "Age affects nutritional recommendations",
+  field: "age",
+  input: true,
+  inputType: "number",
+  placeholder: "Enter your age",
+},
+{
+  title: "Tell us about your body",
+  subtitle: "We'll calculate BMI and personalize analysis",
+  field: "body_metrics",
+  bodyMetrics: true,
+},
+  {
     title: "Any allergies or avoidances?",
     subtitle: "We'll warn you when products contain these",
     field: "allergies",
@@ -49,6 +63,9 @@ const steps = [
 export default function OnboardingPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [selections, setSelections] = useState<Record<string, string | string[]>>({});
+  const [age, setAge] = useState("");
+  const [height, setHeight] = useState("");
+  const [weight, setWeight] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -82,11 +99,20 @@ export default function OnboardingPage() {
   }
 
   function canProceed() {
-    if (isMultiple) {
-      return ((currentValue as string[]) || []).length > 0;
-    }
-    return !!currentValue;
+  if (step.input) {
+    return age.trim().length > 0;
   }
+
+  if (step.bodyMetrics) {
+    return height.trim().length > 0 && weight.trim().length > 0;
+  }
+
+  if (isMultiple) {
+    return ((currentValue as string[]) || []).length > 0;
+  }
+
+  return !!currentValue;
+}
 
   async function handleFinish() {
     setLoading(true);
@@ -99,14 +125,17 @@ export default function OnboardingPage() {
       }
 
       await supabase.from("profiles").upsert({
-        id: session.user.id,
-        diet_type: selections.diet_type as string,
-        health_goal: selections.health_goal as string,
-        allergies: selections.allergies as string[],
-        onboarded: true,
-      });
+  id: session.user.id,
+  diet_type: selections.diet_type as string,
+  health_goal: selections.health_goal as string,
+  allergies: selections.allergies as string[],
+  age: Number(age),
+  height: Number(height),
+  weight: Number(weight),
+  onboarded: true,
+});
 
-      window.location.href = "/scan";
+      window.location.href = "/";
     } catch (err) {
       console.error(err);
       setError("Something went wrong. Please try again.");
@@ -165,32 +194,59 @@ export default function OnboardingPage() {
           <p className="text-gray-400 text-sm mb-6">{step.subtitle}</p>
 
           {/* Options */}
-          <div className="grid grid-cols-2 gap-3 mb-6">
-            {step.options.map((option) => (
-              <button
-                key={option.value}
-                onClick={() => handleSelect(option.value)}
-                className="flex items-center gap-3 p-4 rounded-2xl border text-left transition-all"
-                style={{
-                  borderColor: isSelected(option.value) ? "#f97316" : "#fed7aa",
-                  background: isSelected(option.value) ? "#fff7ed" : "white",
-                  boxShadow: isSelected(option.value) ? "0 0 0 2px #f97316" : "none",
-                }}
-              >
-                <span className="text-2xl">{option.emoji}</span>
-                <div>
-                  <div className="font-bold text-sm text-gray-900">{option.label}</div>
-                  <div className="text-xs text-gray-400">{option.desc}</div>
-                </div>
-              </button>
-            ))}
-          </div>
+          {step.options && (
+  <div className="grid grid-cols-2 gap-3 mb-6">
+    {step.options.map((option) => (
+      <button
+        key={option.value}
+        onClick={() => handleSelect(option.value)}
+        className="flex items-center gap-3 p-4 rounded-2xl border text-left transition-all"
+        style={{
+          borderColor: isSelected(option.value) ? "#f97316" : "#fed7aa",
+          background: isSelected(option.value) ? "#fff7ed" : "white",
+          boxShadow: isSelected(option.value) ? "0 0 0 2px #f97316" : "none",
+        }}
+      >
+        <span className="text-2xl">{option.emoji}</span>
+        <div>
+          <div className="font-bold text-sm text-gray-900">{option.label}</div>
+          <div className="text-xs text-gray-400">{option.desc}</div>
+        </div>
+      </button>
+    ))}
+  </div>
+)}
+{step.input && (
+  <div className="mb-6">
+    <input
+      type={step.inputType}
+      value={age}
+      onChange={(e) => setAge(e.target.value)}
+      placeholder={step.placeholder}
+      className="w-full px-5 py-4 rounded-2xl border border-orange-200 bg-orange-50 outline-none font-bold text-gray-900"
+    />
+  </div>
+)}
 
-          {error && (
-            <div className="rounded-2xl px-4 py-3 text-sm mb-4" style={{ background: "#fef2f2", color: "#dc2626", border: "1px solid #fecaca" }}>
-              {error}
-            </div>
-          )}
+{step.bodyMetrics && (
+  <div className="space-y-4 mb-6">
+    <input
+      type="number"
+      value={height}
+      onChange={(e) => setHeight(e.target.value)}
+      placeholder="Height in cm"
+      className="w-full px-5 py-4 rounded-2xl border border-orange-200 bg-orange-50 outline-none font-bold text-gray-900"
+    />
+
+    <input
+      type="number"
+      value={weight}
+      onChange={(e) => setWeight(e.target.value)}
+      placeholder="Weight in kg"
+      className="w-full px-5 py-4 rounded-2xl border border-orange-200 bg-orange-50 outline-none font-bold text-gray-900"
+    />
+  </div>
+)}
 
           {/* Next button */}
           <button

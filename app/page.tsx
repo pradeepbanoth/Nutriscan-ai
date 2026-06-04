@@ -536,26 +536,31 @@ const bmiCategory =
     ? "Overweight"
     : "Obese range";
 
-    const achievements = [
+   const achievements = [
   {
     title: "First Scan",
-    unlocked: totalScans >= 1,
+    current: Math.min(totalScans, 1),
+    target: 1,
   },
   {
     title: "10 Products Analyzed",
-    unlocked: totalScans >= 10,
+    current: Math.min(totalScans, 10),
+    target: 10,
   },
   {
     title: "50 Products Analyzed",
-    unlocked: totalScans >= 50,
+    current: Math.min(totalScans, 50),
+    target: 50,
   },
   {
     title: "3-Day Streak",
-    unlocked: currentStreak >= 3,
+    current: Math.min(currentStreak, 3),
+    target: 3,
   },
   {
     title: "7-Day Streak",
-    unlocked: currentStreak >= 7,
+    current: Math.min(currentStreak, 7),
+    target: 7,
   },
 ];
  
@@ -1866,87 +1871,68 @@ const updateScanStats = async () => {
         Personalize PAUSTICA recommendations based on your body and goal.
       </p>
 
-     <div className="space-y-4">
-  <input
-    value={userAge}
-    onChange={(e) => setUserAge(e.target.value)}
-    placeholder="Age"
-    className="w-full px-5 py-4 rounded-2xl border border-orange-100 bg-orange-50 outline-none font-bold"
-  />
+      <div className="space-y-4">
+        <input value={userAge} onChange={(e) => setUserAge(e.target.value)} placeholder="Age" className="w-full px-5 py-4 rounded-2xl border border-orange-100 bg-orange-50 outline-none font-bold" />
+        <input value={userWeight} onChange={(e) => setUserWeight(e.target.value)} placeholder="Weight in kg" className="w-full px-5 py-4 rounded-2xl border border-orange-100 bg-orange-50 outline-none font-bold" />
+        <input value={userHeight} onChange={(e) => setUserHeight(e.target.value)} placeholder="Height in cm" className="w-full px-5 py-4 rounded-2xl border border-orange-100 bg-orange-50 outline-none font-bold" />
 
-  <input
-    value={userWeight}
-    onChange={(e) => setUserWeight(e.target.value)}
-    placeholder="Weight in kg"
-    className="w-full px-5 py-4 rounded-2xl border border-orange-100 bg-orange-50 outline-none font-bold"
-  />
+        {bmi > 0 && (
+          <div className="rounded-2xl bg-orange-50 border border-orange-100 p-5">
+            <p className="text-sm font-bold text-gray-500 mb-1">Estimated BMI</p>
+            <p className="text-3xl font-black text-gray-900">{bmi.toFixed(1)}</p>
+            <p className="text-sm font-bold text-orange-600 mt-1">{bmiCategory}</p>
+          </div>
+        )}
 
-  <input
-    value={userHeight}
-    onChange={(e) => setUserHeight(e.target.value)}
-    placeholder="Height in cm"
-    className="w-full px-5 py-4 rounded-2xl border border-orange-100 bg-orange-50 outline-none font-bold"
-  />
+        <div className="rounded-2xl bg-white border border-orange-100 p-5">
+          <p className="font-black text-gray-900 mb-3">Achievements</p>
 
-  {bmi > 0 && (
-    <div className="rounded-2xl bg-orange-50 border border-orange-100 p-5">
-      <p className="text-sm font-bold text-gray-500 mb-1">
-        Estimated BMI
-      </p>
+          <div className="space-y-3">
+            {achievements.map((achievement) => {
+              const percent = Math.round((achievement.current / achievement.target) * 100);
+              const unlocked = achievement.current >= achievement.target;
 
-      <p className="text-3xl font-black text-gray-900">
-        {bmi.toFixed(1)}
-      </p>
+              return (
+                <div key={achievement.title} className="rounded-2xl border border-orange-100 p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <p className="font-bold text-gray-900">{achievement.title}</p>
+                    <span className={`text-xs font-black px-3 py-1 rounded-full ${unlocked ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-600"}`}>
+                      {unlocked ? "Completed" : `${percent}%`}
+                    </span>
+                  </div>
 
-      <p className="text-sm font-bold text-orange-600 mt-1">
-        {bmiCategory}
-      </p>
-    </div>
-  )} 
+                  <p className="text-xs text-gray-500 mb-2">
+                    {achievement.current} / {achievement.target}
+                  </p>
 
-  <div className="rounded-2xl bg-white border border-orange-100 p-5">
-  <p className="font-black text-gray-900 mb-3">
-    Achievements
-  </p>
-
-  <div className="space-y-2">
-    {achievements.map((achievement) => (
-      <div
-        key={achievement.title}
-        className={`rounded-xl px-4 py-3 text-sm font-bold ${
-          achievement.unlocked
-            ? "bg-green-50 text-green-700"
-            : "bg-gray-50 text-gray-400"
-        }`}
-      >
-        {achievement.unlocked ? "Unlocked" : "Locked"} — {achievement.title}
+                  <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+                    <div className="h-full bg-orange-500 rounded-full transition-all" style={{ width: `${percent}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </div>
-    ))}
-  </div>
-</div>
 
-</div>
+      <button
+        onClick={async () => {
+          if (userId) {
+            await supabase.from("profiles").upsert({
+              id: userId,
+              age: Number(userAge),
+              weight: Number(userWeight),
+              height: Number(userHeight),
+              health_goal: selectedGoal,
+            });
+          }
 
-     <button
-  onClick={async () => {
-    if (userId) {
-      await supabase
-        .from("profiles")
-        .upsert({
-          id: userId,
-          age: Number(userAge),
-          weight: Number(userWeight),
-          height: Number(userHeight),
-          health_goal: selectedGoal,
-        });
-    }
-
-    setProfileOpen(false);
-  }}
-  className="mt-6 w-full py-4 rounded-2xl bg-orange-500 text-white font-black"
->
-  Save Profile
-</button>
+          setProfileOpen(false);
+        }}
+        className="mt-6 w-full py-4 rounded-2xl bg-orange-500 text-white font-black"
+      >
+        Save Profile
+      </button>
 
       <button
         onClick={() => setProfileOpen(false)}
@@ -1957,6 +1943,7 @@ const updateScanStats = async () => {
     </div>
   </div>
 )}
+
 </main>
     
   );
