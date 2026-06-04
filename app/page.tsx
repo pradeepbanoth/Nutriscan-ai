@@ -2,7 +2,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 
 const BarcodeScanner = dynamic(
@@ -27,6 +27,8 @@ import MobileMenu from "../components/MobileMenu";
 import { getConfidenceScore } from "../lib/getConfidenceScore";
 import posthog from "posthog-js";
 import { getPersonalizedWarning } from "../lib/getPersonalizedWarning";
+import Image from "next/image";
+
 
 type Product = {
   id: number;
@@ -76,6 +78,10 @@ export default function Home() {
   const [userAge, setUserAge] = useState("");
   const [userWeight, setUserWeight] = useState("");
   const [userHeight, setUserHeight] = useState("");
+  const [currentStreak, setCurrentStreak] = useState(0);
+  const [bestStreak, setBestStreak] = useState(0);
+  const [totalScans, setTotalScans] = useState(0);
+
 
   const [dailyScansUsed, setDailyScansUsed] = useState(() => {
   if (typeof window === "undefined") return 0;
@@ -211,27 +217,28 @@ export default function Home() {
     salt: item.salt || 0,
   });
 
-  async function loadCloudData(uid: string) {
-    const { data: historyData } = await supabase
-      .from("scan_history")
-      .select("*")
-      .eq("user_id", uid)
-      .order("created_at", { ascending: false });
+ const loadCloudData = useCallback(async (uid: string) => {
+  const { data: historyData } = await supabase
+    .from("scan_history")
+    .select("*")
+    .eq("user_id", uid)
+    .order("created_at", { ascending: false });
 
-    const { data: favoritesData } = await supabase
-      .from("favorites")
-      .select("*")
-      .eq("user_id", uid)
-      .order("created_at", { ascending: false });
+  const { data: favoritesData } = await supabase
+    .from("favorites")
+    .select("*")
+    .eq("user_id", uid)
+    .order("created_at", { ascending: false });
 
-    if (historyData) {
-      setScanHistory((historyData as ProductRow[]).map(mapRowToProduct));
-    }
-
-    if (favoritesData) {
-      setFavorites((favoritesData as ProductRow[]).map(mapRowToProduct));
-    }
+  if (historyData) {
+    setScanHistory((historyData as ProductRow[]).map(mapRowToProduct));
   }
+
+  if (favoritesData) {
+    setFavorites((favoritesData as ProductRow[]).map(mapRowToProduct));
+  }
+}, []);
+
 
   useEffect(() => {
     requestAnimationFrame(() => {
@@ -262,7 +269,7 @@ export default function Home() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("health_goal, age, weight, height")
+    .select("health_goal, age, weight, height, current_streak, best_streak, total_scans, last_scan_date")
     .eq("id", data.user.id)
     .single();
 
@@ -282,12 +289,24 @@ if (profile?.height) {
   setUserHeight(String(profile.height));
 }
 
+if (profile?.current_streak !== null && profile?.current_streak !== undefined) {
+  setCurrentStreak(profile.current_streak);
+}
+
+if (profile?.best_streak !== null && profile?.best_streak !== undefined) {
+  setBestStreak(profile.best_streak);
+}
+
+if (profile?.total_scans !== null && profile?.total_scans !== undefined) {
+  setTotalScans(profile.total_scans);
+}
+
   await loadCloudData(data.user.id);
 }
     };
 
     getUser();
-  }, []);
+  }, [loadCloudData]);
 
   const saveHistory = async (newItem: Product) => {
     const updatedHistory = [
@@ -552,6 +571,7 @@ salt: Number(
   brand: fetchedProduct.brand,
 });
   recordScanToday(); 
+  await updateScanStats();
   const getDailyScansUsed = () => {
   const today = new Date().toISOString().split("T")[0];
   const saved = localStorage.getItem("paustica_daily_scans");
@@ -666,6 +686,59 @@ const recordScanToday = () => {
   setDailyScansUsed(newCount);
 };
 
+const updateScanStats = async () => {
+  if (!userId) return;
+
+  const today = new Date().toISOString().split("T")[0];
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("current_streak, best_streak, total_scans, last_scan_date")
+    .eq("id", userId)
+    .single();
+
+  const previousTotalScans = profile?.total_scans ?? 0;
+  const previousCurrentStreak = profile?.current_streak ?? 0;
+  const previousBestStreak = profile?.best_streak ?? 0;
+  const lastScanDate = profile?.last_scan_date;
+
+  let newCurrentStreak = previousCurrentStreak;
+
+  if (!lastScanDate) {
+    newCurrentStreak = 1;
+  } else {
+    const lastDate = new Date(lastScanDate);
+    const todayDate = new Date(today);
+
+    const diffDays = Math.floor(
+      (todayDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    if (diffDays === 0) {
+      newCurrentStreak = previousCurrentStreak;
+    } else if (diffDays === 1) {
+      newCurrentStreak = previousCurrentStreak + 1;
+    } else {
+      newCurrentStreak = 1;
+    }
+  }
+
+  const newTotalScans = previousTotalScans + 1;
+  const newBestStreak = Math.max(previousBestStreak, newCurrentStreak);
+
+  setTotalScans(newTotalScans);
+  setCurrentStreak(newCurrentStreak);
+  setBestStreak(newBestStreak);
+
+  await supabase.from("profiles").upsert({
+    id: userId,
+    total_scans: newTotalScans,
+    current_streak: newCurrentStreak,
+    best_streak: newBestStreak,
+    last_scan_date: today,
+  });
+};
+
       const fetchProduct = async (code?: string) => {
   const finalBarcode = code || barcode;
 
@@ -752,11 +825,13 @@ const recordScanToday = () => {
 <nav className="sticky top-0 z-50 border-b border-orange-100 bg-white/70 backdrop-blur-xl">
   <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
     <div className="flex items-center gap-3">
-      <img
-        src="/logo.png"
-        alt="PAUSTICA"
-        className="w-12 h-12 object-contain"
-      />
+      <Image
+  src="/logo.png"
+  alt="PAUSTICA"
+  width={48}
+  height={48}
+  className="object-contain"
+/>
 
       <span className="text-xl font-black tracking-tight text-[#0f172a]">
         PAUSTICA
@@ -836,10 +911,12 @@ const recordScanToday = () => {
 </nav>
 
       <section className="relative z-10 max-w-7xl mx-auto px-6 pt-20 pb-20 text-center">
-        <img
+       <Image
   src="/logo.png"
   alt="PAUSTICA"
-  className="w-32 h-32 mx-auto mb-8 object-contain"
+  width={128}
+  height={128}
+  className="mx-auto mb-8 object-contain"
 />
         <h1 className="text-6xl sm:text-7xl md:text-8xl font-black tracking-[-0.06em] leading-[0.9] text-gray-900 mb-10">
           Know what's really
@@ -943,11 +1020,14 @@ const recordScanToday = () => {
           className="flex items-center gap-4 text-left p-4 rounded-2xl border border-orange-100 hover:bg-orange-50 transition"
         >
           {item.image_front_url && (
-            <img
-              src={item.image_front_url}
-              alt={item.product_name}
-              className="w-16 h-16 rounded-xl object-cover border border-orange-100"
-            />
+            <Image
+  src={item.image_front_url}
+  alt={item.product_name}
+  width={64}
+  height={64}
+  className="rounded-xl object-cover border border-orange-100"
+  unoptimized
+/>
           )}
 
           <div>
@@ -1037,11 +1117,14 @@ const recordScanToday = () => {
 </div>
                 <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
                   {product.image && (
-                    <img
-                      src={product.image}
-                      alt={product.name}
-                      className="w-44 h-44 object-cover rounded-3xl border border-orange-100 shadow-md"
-                    />
+                   <Image
+  src={product.image}
+  alt={product.name}
+  width={176}
+  height={176}
+  className="object-cover rounded-3xl border border-orange-100 shadow-md"
+  unoptimized
+/>
                   )}
 
                   <div className="flex-1 text-left">
@@ -1622,11 +1705,14 @@ const recordScanToday = () => {
                   >
                     <div className="flex items-center gap-4">
                       {item.image && (
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="w-20 h-20 rounded-2xl object-cover border border-orange-100"
-                        />
+                        <Image
+  src={item.image}
+  alt={item.name}
+  width={80}
+  height={80}
+  className="rounded-2xl object-cover border border-orange-100"
+  unoptimized
+/>
                       )}
 
                       <div className="flex-1">
@@ -1681,11 +1767,14 @@ const recordScanToday = () => {
                 >
                   <div className="flex items-center gap-4">
                     {item.image && (
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="w-20 h-20 rounded-2xl object-cover border border-orange-100"
-                      />
+                     <Image
+  src={item.image}
+  alt={item.name}
+  width={80}
+  height={80}
+  className="rounded-2xl object-cover border border-orange-100"
+  unoptimized
+/>
                     )}
 
                     <div className="flex-1">

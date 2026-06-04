@@ -15,22 +15,33 @@ export const metadata: Metadata = {
     template: "%s | PAUSTICA",
   },
   description: "Scan any packaged food and get instant AI health analysis — ingredients, additives, nutrition score, and personalized recommendations in seconds.",
-  keywords: ["food scanner", "nutrition analysis", "healthy eating", "barcode scanner", "food health score", "ingredient checker", "AI nutrition", "food additives"],
+  keywords: [
+    "food scanner",
+    "nutrition analysis",
+    "healthy eating",
+    "barcode scanner",
+    "food health score",
+    "ingredient checker",
+    "AI nutrition",
+    "food additives",
+  ],
   authors: [{ name: "PAUSTICA" }],
-creator: "PAUSTICA",
+  creator: "PAUSTICA",
   metadataBase: new URL("https://PAUSTICA-ai-orpin.vercel.app"),
   openGraph: {
     type: "website",
     locale: "en_IN",
     url: "https://PAUSTICA-ai-orpin.vercel.app",
     title: "PAUSTICA — Know What You're Eating",
-    description: "Scan any packaged food and get instant AI health analysis — ingredients, additives, nutrition score, and personalized recommendations in seconds.",
+    description:
+      "Scan any packaged food and get instant AI health analysis — ingredients, additives, nutrition score, and personalized recommendations in seconds.",
     siteName: "PAUSTICA",
   },
   twitter: {
     card: "summary_large_image",
     title: "PAUSTICA — Know What You're Eating",
-    description: "Scan any packaged food and get instant AI health analysis in seconds.",
+    description:
+      "Scan any packaged food and get instant AI health analysis in seconds.",
     creator: "@PAUSTICAai",
   },
   robots: {
@@ -45,7 +56,10 @@ creator: "PAUSTICA",
     google: "oX05GxtLTymWRqGhzESU9-Nryc0XlfGSjmQQj2-4UPg",
   },
   manifest: "/manifest.json",
-themeColor: "#f97316",
+};
+
+export const viewport = {
+  themeColor: "#f97316",
 };
 
 export default function RootLayout({
