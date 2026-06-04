@@ -359,12 +359,12 @@ export default function Home() {
   const ingredientInsights = detectedHarmful
   .map((ingredient) => {
     const rawKey = ingredient
-  .trim()
-  .toLowerCase()
-  .replace(/[\-\(\)]/g, " ")
-  .replace(/\s+/g, " ");
-    const normalizedKey =
-      ingredientAliases[rawKey] || rawKey;
+      .trim()
+      .toLowerCase()
+      .replace(/[\-\(\)]/g, " ")
+      .replace(/\s+/g, " ");
+
+    const normalizedKey = ingredientAliases[rawKey] || rawKey;
 
     return {
       ingredient,
@@ -372,6 +372,29 @@ export default function Home() {
     };
   })
   .filter((item) => item.info);
+
+const highRiskIngredients = ingredientInsights.filter(
+  (item) => item.info?.risk === "High"
+).length;
+
+const mediumRiskIngredients = ingredientInsights.filter(
+  (item) => item.info?.risk === "Medium"
+).length;
+
+const lowRiskIngredients = ingredientInsights.filter(
+  (item) => item.info?.risk === "Low"
+).length;
+
+const ingredientQuality =
+  highRiskIngredients >= 2
+    ? "Poor"
+    : highRiskIngredients >= 1
+    ? "Fair"
+    : mediumRiskIngredients >= 3
+    ? "Moderate"
+    : ingredientInsights.length > 0
+    ? "Good"
+    : "Excellent";
 
   const alternatives = product?.name ? getAlternatives(product.name) : [];
   const comparisons = product?.name
@@ -1276,6 +1299,39 @@ const recordScanToday = () => {
                       <h3 className="text-2xl font-black text-blue-700 mb-6">
                         AI Ingredient Intelligence
                       </h3>
+
+                      <div className="mb-6 bg-white border border-blue-100 rounded-3xl p-6">
+  <p className="text-sm font-bold text-gray-500 mb-2">
+    Ingredient Quality
+  </p>
+
+  <h4 className="text-3xl font-black text-gray-900 mb-4">
+    {ingredientQuality}
+  </h4>
+
+  <div className="grid grid-cols-3 gap-3">
+    <div className="rounded-2xl bg-red-50 border border-red-100 p-4">
+      <p className="text-xs text-red-400 font-bold">High Risk</p>
+      <p className="text-2xl font-black text-red-600">
+        {highRiskIngredients}
+      </p>
+    </div>
+
+    <div className="rounded-2xl bg-yellow-50 border border-yellow-100 p-4">
+      <p className="text-xs text-yellow-500 font-bold">Medium Risk</p>
+      <p className="text-2xl font-black text-yellow-600">
+        {mediumRiskIngredients}
+      </p>
+    </div>
+
+    <div className="rounded-2xl bg-green-50 border border-green-100 p-4">
+      <p className="text-xs text-green-500 font-bold">Low Risk</p>
+      <p className="text-2xl font-black text-green-600">
+        {lowRiskIngredients}
+      </p>
+    </div>
+  </div>
+</div>
 
                       <div className="space-y-6">
                         {ingredientInsights.map((item, index) => (
