@@ -60,7 +60,11 @@ export default function Home() {
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const FREE_DAILY_SCAN_LIMIT = 10;
-  
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [userAge, setUserAge] = useState("");
+  const [userWeight, setUserWeight] = useState("");
+  const [userHeight, setUserHeight] = useState("");
+
   const [dailyScansUsed, setDailyScansUsed] = useState(() => {
   if (typeof window === "undefined") return 0;
 
@@ -246,13 +250,25 @@ export default function Home() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("health_goal")
+    .select("health_goal, age, weight, height")
     .eq("id", data.user.id)
     .single();
 
   if (profile?.health_goal) {
-    setSelectedGoal(profile.health_goal as HealthGoal);
-  }
+  setSelectedGoal(profile.health_goal as HealthGoal);
+}
+
+if (profile?.age) {
+  setUserAge(String(profile.age));
+}
+
+if (profile?.weight) {
+  setUserWeight(String(profile.weight));
+}
+
+if (profile?.height) {
+  setUserHeight(String(profile.height));
+}
 
   await loadCloudData(data.user.id);
 }
@@ -752,6 +768,13 @@ const recordScanToday = () => {
           >
             Logout
           </button>
+
+          <button
+  onClick={() => setProfileOpen(true)}
+  className="rounded-full px-5 py-3 text-sm font-bold text-orange-600 bg-orange-50 border border-orange-100"
+>
+  Health Profile
+</button>
         </>
       ) : (
         <>
@@ -1691,7 +1714,70 @@ const recordScanToday = () => {
     </div>
   </div>
 )}
+{profileOpen && (
+  <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-6">
+    <div className="bg-white max-w-lg w-full rounded-[32px] p-8 shadow-2xl">
+      <h2 className="text-3xl font-black text-gray-900 mb-3">
+        Health Profile
+      </h2>
 
+      <p className="text-gray-500 mb-6">
+        Personalize PAUSTICA recommendations based on your body and goal.
+      </p>
+
+      <div className="space-y-4">
+        <input
+          value={userAge}
+          onChange={(e) => setUserAge(e.target.value)}
+          placeholder="Age"
+          className="w-full px-5 py-4 rounded-2xl border border-orange-100 bg-orange-50 outline-none font-bold"
+        />
+
+        <input
+          value={userWeight}
+          onChange={(e) => setUserWeight(e.target.value)}
+          placeholder="Weight in kg"
+          className="w-full px-5 py-4 rounded-2xl border border-orange-100 bg-orange-50 outline-none font-bold"
+        />
+
+        <input
+          value={userHeight}
+          onChange={(e) => setUserHeight(e.target.value)}
+          placeholder="Height in cm"
+          className="w-full px-5 py-4 rounded-2xl border border-orange-100 bg-orange-50 outline-none font-bold"
+        />
+      </div>
+
+     <button
+  onClick={async () => {
+    if (userId) {
+      await supabase
+        .from("profiles")
+        .upsert({
+          id: userId,
+          age: Number(userAge),
+          weight: Number(userWeight),
+          height: Number(userHeight),
+          health_goal: selectedGoal,
+        });
+    }
+
+    setProfileOpen(false);
+  }}
+  className="mt-6 w-full py-4 rounded-2xl bg-orange-500 text-white font-black"
+>
+  Save Profile
+</button>
+
+      <button
+        onClick={() => setProfileOpen(false)}
+        className="mt-3 w-full py-4 rounded-2xl bg-gray-100 text-gray-700 font-bold"
+      >
+        Close
+      </button>
+    </div>
+  </div>
+)}
 </main>
     
   );
