@@ -13,7 +13,7 @@ import { getScoreBreakdown } from "../lib/scoreBreakdown";
 import { getProductComparisons } from "../lib/productComparisons";
 import MobileMenu from "../components/MobileMenu";
 import { getConfidenceScore } from "../lib/getConfidenceScore";
-import posthog from "@/lib/posthog";
+import posthog from "posthog-js";
 
 type Product = {
   id: number;
