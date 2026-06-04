@@ -209,4 +209,132 @@ export const ingredientIntelligence: Record<
   scientificView: "Widely accepted as safe.",
   recommendation: "Good alternative to added sugar.",
 },
+
+
+
+"ins 202": {
+  risk: "Low",
+  why: "INS 202 is potassium sorbate, a common preservative.",
+  scientificView: "Allowed in regulated amounts and widely used in packaged foods.",
+  recommendation: "Acceptable occasionally. Choose fresh foods when possible.",
+},
+
+"bha": {
+  risk: "Medium",
+  why: "BHA is an antioxidant preservative used to prevent fats from becoming rancid.",
+  scientificView: "Regulatory views vary, and some consumers prefer avoiding it.",
+  recommendation: "Limit frequent intake of foods containing BHA.",
+},
+
+"bht": {
+  risk: "Medium",
+  why: "BHT is a synthetic antioxidant preservative used in packaged foods.",
+  scientificView: "Approved in some regions within limits, but frequent intake of preservative-heavy foods is not ideal.",
+  recommendation: "Consume occasionally and prefer minimally processed options.",
+},
+
+"tert-butylhydroquinone": {
+  risk: "Medium",
+  why: "TBHQ is a preservative used to extend shelf life of oils and fried snacks.",
+  scientificView: "Approved within limits, but usually found in ultra-processed foods.",
+  recommendation: "Limit frequent consumption of foods containing TBHQ.",
+},
+
+"tbhq": {
+  risk: "Medium",
+  why: "TBHQ is used to preserve oils and prevent oxidation in snacks and fried products.",
+  scientificView: "Permitted in regulated amounts, but often signals heavy processing.",
+  recommendation: "Avoid daily intake of TBHQ-containing packaged snacks.",
+},
+
+"sodium nitrite": {
+  risk: "High",
+  why: "Sodium nitrite is used in processed meats for preservation and color.",
+  scientificView: "Processed meats with nitrites are associated with higher long-term health risk when consumed frequently.",
+  recommendation: "Limit processed meats and choose fresh protein sources more often.",
+},
+
+"sodium nitrate": {
+  risk: "Medium",
+  why: "Sodium nitrate is used as a preservative, especially in cured meats.",
+  scientificView: "Frequent intake of cured and processed meats is generally discouraged.",
+  recommendation: "Consume rarely and prefer fresh, unprocessed foods.",
+},
+
+"potassium nitrate": {
+  risk: "Medium",
+  why: "Potassium nitrate is a curing preservative used in some processed meats.",
+  scientificView: "Usually safe within limits, but cured meats should not be daily staples.",
+  recommendation: "Limit frequent consumption.",
+},
+
+"calcium propionate": {
+  risk: "Low",
+  why: "Calcium propionate is used to prevent mold growth in bread and bakery products.",
+  scientificView: "Generally recognized as safe in permitted amounts.",
+  recommendation: "Usually safe, but choose fresh bakery products when possible.",
+},
+
+"ins 282": {
+  risk: "Low",
+  why: "INS 282 is calcium propionate, commonly used in bread preservation.",
+  scientificView: "Approved in regulated amounts.",
+  recommendation: "Acceptable occasionally; fresh foods are better for daily use.",
+},
+
+"sodium metabisulphite": {
+  risk: "Medium",
+  why: "Sodium metabisulphite is a preservative used in dried foods, juices, and packaged products.",
+  scientificView: "Can trigger sensitivity in some people, especially those sensitive to sulphites.",
+  recommendation: "Avoid if sensitive to sulphites or asthma-prone.",
+},
+
+"sodium metabisulfite": {
+  risk: "Medium",
+  why: "Sodium metabisulfite is a sulphite preservative used to prevent spoilage and browning.",
+  scientificView: "Permitted in foods, but sulphite-sensitive individuals may react.",
+  recommendation: "Limit if you are sensitive to preservatives or sulphites.",
+},
+
+"sulphur dioxide": {
+  risk: "Medium",
+  why: "Sulphur dioxide is a preservative used in dried fruits, juices, and beverages.",
+  scientificView: "Allowed in limits, but may affect sulphite-sensitive people.",
+  recommendation: "Avoid if you have sulphite sensitivity.",
+},
+
+"sulfur dioxide": {
+  risk: "Medium",
+  why: "Sulfur dioxide is used as a preservative in some packaged and dried foods.",
+  scientificView: "Can cause sensitivity reactions in some individuals.",
+  recommendation: "Consume cautiously if sensitive to sulphites.",
+},
+
+"potassium metabisulphite": {
+  risk: "Medium",
+  why: "Potassium metabisulphite is a sulphite preservative used in beverages and processed foods.",
+  scientificView: "Approved in regulated amounts but may trigger sensitivity.",
+  recommendation: "Avoid if sulphite-sensitive.",
+},
+
+"potassium metabisulfite": {
+  risk: "Medium",
+  why: "Potassium metabisulfite is used to preserve color and freshness.",
+  scientificView: "Sulphites are generally safe for most people but may affect sensitive individuals.",
+  recommendation: "Limit if you notice sensitivity.",
+},
+
+"benzoic acid": {
+  risk: "Medium",
+  why: "Benzoic acid is a preservative used in acidic foods and beverages.",
+  scientificView: "Allowed in regulated amounts, but frequent preservative-heavy foods are not ideal.",
+  recommendation: "Consume occasionally and prefer fresher options.",
+},
+
+"sorbic acid": {
+  risk: "Low",
+  why: "Sorbic acid is a preservative used to prevent mold and yeast.",
+  scientificView: "Generally considered safe in approved amounts.",
+  recommendation: "Usually safe for most people.",
+},
 };
