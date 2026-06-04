@@ -3,7 +3,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useState } from "react";
-import BarcodeScanner from "../components/BarcodeScanner";
+import dynamic from "next/dynamic";
+
+const BarcodeScanner = dynamic(
+  () => import("../components/BarcodeScanner"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[420px] bg-black rounded-[28px] flex items-center justify-center text-white font-bold">
+        Loading scanner...
+      </div>
+    ),
+  }
+);
 import { getAlternatives } from "../lib/getAlternatives";
 import { ingredientIntelligence } from "../lib/ingredientIntelligence";
 import { calculateGoalScore, HealthGoal } from "../lib/goalScoring";
@@ -487,6 +499,23 @@ const breakdown = product
       ingredientInsights.length
     )
   : null;
+
+  const bmi =
+  Number(userHeight) > 0
+    ? Number(userWeight) /
+      Math.pow(Number(userHeight) / 100, 2)
+    : 0;
+
+const bmiCategory =
+  bmi === 0
+    ? "Not calculated"
+    : bmi < 18.5
+    ? "Underweight"
+    : bmi < 25
+    ? "Healthy range"
+    : bmi < 30
+    ? "Overweight"
+    : "Obese range";
  
      const analyzeSelectedProduct = async (item: Record<string, unknown>) => {
       if (!item) return;
@@ -1725,28 +1754,44 @@ const recordScanToday = () => {
         Personalize PAUSTICA recommendations based on your body and goal.
       </p>
 
-      <div className="space-y-4">
-        <input
-          value={userAge}
-          onChange={(e) => setUserAge(e.target.value)}
-          placeholder="Age"
-          className="w-full px-5 py-4 rounded-2xl border border-orange-100 bg-orange-50 outline-none font-bold"
-        />
+     <div className="space-y-4">
+  <input
+    value={userAge}
+    onChange={(e) => setUserAge(e.target.value)}
+    placeholder="Age"
+    className="w-full px-5 py-4 rounded-2xl border border-orange-100 bg-orange-50 outline-none font-bold"
+  />
 
-        <input
-          value={userWeight}
-          onChange={(e) => setUserWeight(e.target.value)}
-          placeholder="Weight in kg"
-          className="w-full px-5 py-4 rounded-2xl border border-orange-100 bg-orange-50 outline-none font-bold"
-        />
+  <input
+    value={userWeight}
+    onChange={(e) => setUserWeight(e.target.value)}
+    placeholder="Weight in kg"
+    className="w-full px-5 py-4 rounded-2xl border border-orange-100 bg-orange-50 outline-none font-bold"
+  />
 
-        <input
-          value={userHeight}
-          onChange={(e) => setUserHeight(e.target.value)}
-          placeholder="Height in cm"
-          className="w-full px-5 py-4 rounded-2xl border border-orange-100 bg-orange-50 outline-none font-bold"
-        />
-      </div>
+  <input
+    value={userHeight}
+    onChange={(e) => setUserHeight(e.target.value)}
+    placeholder="Height in cm"
+    className="w-full px-5 py-4 rounded-2xl border border-orange-100 bg-orange-50 outline-none font-bold"
+  />
+
+  {bmi > 0 && (
+    <div className="rounded-2xl bg-orange-50 border border-orange-100 p-5">
+      <p className="text-sm font-bold text-gray-500 mb-1">
+        Estimated BMI
+      </p>
+
+      <p className="text-3xl font-black text-gray-900">
+        {bmi.toFixed(1)}
+      </p>
+
+      <p className="text-sm font-bold text-orange-600 mt-1">
+        {bmiCategory}
+      </p>
+    </div>
+  )}
+</div>
 
      <button
   onClick={async () => {
