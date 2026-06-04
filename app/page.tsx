@@ -14,6 +14,7 @@ import { getProductComparisons } from "../lib/productComparisons";
 import MobileMenu from "../components/MobileMenu";
 import { getConfidenceScore } from "../lib/getConfidenceScore";
 import posthog from "posthog-js";
+import { getPersonalizedWarning } from "../lib/getPersonalizedWarning";
 
 type Product = {
   id: number;
@@ -428,9 +429,19 @@ const breakdown = product
       additiveImpact: 0,
       totalImpact: 0,
     };
-    const confidence = product
+  const confidence = product
   ? getConfidenceScore(product)
-  : { label: "Low", score: 0 };
+  : {
+      label: "Limited",
+      score: 0,
+      checks: {
+        image: false,
+        ingredients: false,
+        nutriscore: false,
+        nova: false,
+        nutrition: false,
+      },
+    };
 
   const healthGrade =
     healthScore >= 85
@@ -450,13 +461,24 @@ const breakdown = product
       ? "This product is moderate. Consume occasionally and check portion size."
       : "This product looks unhealthy due to processing, sugar, salt, fat, or additives.";
        
-    
+      const personalizedWarning = product
+  ? getPersonalizedWarning(
+      selectedGoal,
+      product.sugar,
+      product.fat,
+      product.salt,
+      Number(product.nova),
+      ingredientInsights.length
+    )
+  : null;
  
      const analyzeSelectedProduct = async (item: Record<string, unknown>) => {
       if (!item) return;
 
   setLoading(true);
   setSuggestions([]);
+
+  
 
   const fetchedProduct: Product = {
     id: 0,
@@ -1031,14 +1053,14 @@ const recordScanToday = () => {
 
 <div className="bg-orange-50 rounded-2xl p-4 border border-orange-100">
   <p className="text-xs text-gray-400 mb-1">
-    Confidence
+    Data Quality
   </p>
 
   <p
     className={`text-2xl font-black ${
-      confidence.label === "High"
+      confidence.label === "Excellent" || confidence.label === "Good"
         ? "text-green-600"
-        : confidence.label === "Medium"
+        : confidence.label === "Fair"
         ? "text-yellow-600"
         : "text-red-600"
     }`}
@@ -1047,7 +1069,7 @@ const recordScanToday = () => {
   </p>
 
   <p className="text-xs text-gray-400 mt-1">
-    {confidence.score}%
+    {confidence.score}% complete
   </p>
 </div>
                     </div>
@@ -1185,6 +1207,24 @@ const recordScanToday = () => {
                       {healthVerdict}
                     </p>
 
+                    {personalizedWarning && (
+  <div
+    className={`mb-6 rounded-2xl border p-5 ${
+      personalizedWarning.level === "High"
+        ? "bg-red-50 border-red-200 text-red-700"
+        : "bg-yellow-50 border-yellow-200 text-yellow-700"
+    }`}
+  >
+    <p className="font-black mb-2">
+      {personalizedWarning.title}
+    </p>
+
+    <p className="text-sm leading-relaxed">
+      {personalizedWarning.message}
+    </p>
+  </div>
+)}
+
                     <div className="mt-5 bg-white rounded-2xl border border-orange-100 p-5">
   <p className="font-black text-gray-900 mb-2">
     Why this score?
@@ -1256,9 +1296,26 @@ const recordScanToday = () => {
                             : "Low"}
                         </p>
                       </div>
+
+<div className="mt-4 bg-white rounded-2xl border border-orange-100 p-5 text-left">
+  <p className="font-black text-gray-900 mb-3">
+    Data Availability
+  </p>
+
+  <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
+    <div>{confidence.checks.image ? "Available" : "Missing"} Image</div>
+    <div>{confidence.checks.ingredients ? "Available" : "Missing"} Ingredients</div>
+    <div>{confidence.checks.nutriscore ? "Available" : "Missing"} NutriScore</div>
+    <div>{confidence.checks.nova ? "Available" : "Missing"} NOVA</div>
+    <div>{confidence.checks.nutrition ? "Available" : "Missing"} Nutrition</div>
+  </div>
+</div>
+
                     </div>
                   </div>
                 </div>
+
+                
 
                 <div className="mt-10 text-left">
                   <h3 className="text-xl font-black text-gray-900 mb-4">

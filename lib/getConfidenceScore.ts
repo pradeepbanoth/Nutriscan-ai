@@ -7,17 +7,35 @@ export function getConfidenceScore(product: {
   fat?: number;
   salt?: number;
 }) {
-  let score = 0;
+  const checks = {
+    image: Boolean(product.image),
+    ingredients:
+      Boolean(product.ingredients) &&
+      product.ingredients !== "Ingredients unavailable",
+    nutriscore:
+      Boolean(product.nutriscore) &&
+      product.nutriscore !== "unknown",
+    nova:
+      Boolean(product.nova) &&
+      product.nova !== "N/A",
+    nutrition:
+      product.sugar !== undefined &&
+      product.fat !== undefined &&
+      product.salt !== undefined,
+  };
 
-  if (product.image) score += 20;
-  if (product.ingredients && product.ingredients !== "Ingredients unavailable") score += 30;
-  if (product.nutriscore && product.nutriscore !== "unknown") score += 15;
-  if (product.nova && product.nova !== "N/A") score += 15;
-  if (product.sugar !== undefined) score += 7;
-  if (product.fat !== undefined) score += 6;
-  if (product.salt !== undefined) score += 7;
+  const passed = Object.values(checks).filter(Boolean).length;
+  const score = Math.round((passed / Object.keys(checks).length) * 100);
 
-  if (score >= 80) return { label: "High", score };
-  if (score >= 50) return { label: "Medium", score };
-  return { label: "Low", score };
+  const label =
+    score >= 90 ? "Excellent" :
+    score >= 70 ? "Good" :
+    score >= 50 ? "Fair" :
+    "Limited";
+
+  return {
+    label,
+    score,
+    checks,
+  };
 }
