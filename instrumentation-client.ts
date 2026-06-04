@@ -1,8 +1,13 @@
-import posthog from "posthog-js";
+import * as Sentry from "@sentry/nextjs";
 
-posthog.init(process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN!, {
-  api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
-  defaults: "2026-01-30",
-  capture_pageview: true,
-  capture_pageleave: true,
+Sentry.init({
+  dsn:  "https://ac7adc91e3c4eea4f96dedbd71e56e53@o4511506139381760.ingest.us.sentry.io/4511506146983936",
+  integrations: [Sentry.replayIntegration()],
+  tracesSampleRate: 1,
+  replaysSessionSampleRate: 0.1,
+  replaysOnErrorSampleRate: 1.0,
+  sendDefaultPii: true,
 });
+
+export const onRouterTransitionStart =
+  Sentry.captureRouterTransitionStart;
