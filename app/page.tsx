@@ -81,6 +81,7 @@ export default function Home() {
   const [currentStreak, setCurrentStreak] = useState(0);
   const [bestStreak, setBestStreak] = useState(0);
   const [totalScans, setTotalScans] = useState(0);
+  const [isPremium, setIsPremium] = useState(false);
 
 
   const [dailyScansUsed, setDailyScansUsed] = useState(() => {
@@ -1290,6 +1291,33 @@ const updateScanStats = async () => {
                           {healthScore}/100
                         </h3>
                       </div>
+                      <div className="mt-6 rounded-3xl border border-orange-200 bg-gradient-to-br from-orange-50 to-white p-6">
+  <p className="text-sm font-black uppercase tracking-wider text-orange-600 mb-2">
+    Premium Insights
+  </p>
+
+  {isPremium ? (
+    <div className="space-y-2 text-sm text-gray-700">
+      <p>✓ Personalized nutrition analysis</p>
+      <p>✓ Ingredient risk breakdown</p>
+      <p>✓ Better product alternatives</p>
+      <p>✓ Weekly health reports</p>
+    </div>
+  ) : (
+    <>
+      <p className="text-gray-500 mb-4">
+        Unlock advanced nutrition intelligence and personalized recommendations.
+      </p>
+
+      <button
+  onClick={() => setUpgradeOpen(true)}
+  className="px-5 py-3 rounded-2xl bg-orange-500 text-white font-bold"
+>
+  Upgrade to Premium
+</button>
+    </>
+  )}
+</div>
                       <div className="mt-6 bg-white border border-orange-100 rounded-3xl p-6 shadow-lg">
   <h3 className="text-xl font-black text-gray-900 mb-4">
     Score Breakdown
