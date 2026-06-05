@@ -1218,14 +1218,14 @@ const updateScanStats = async () => {
     Scan Another Product
   </button>
 </div>
-                <div className="flex flex-col gap-5 md:flex-row md:items-start">
+                <div className="flex flex-col md:flex-row gap-5 md:items-start">
                   {product.image && (
                    <Image
     src={product.image}
     alt={product.name}
-  width={140}
-  height={140}
-  className="mx-auto md:mx-0 object-cover rounded-3xl border border-orange-100 shadow-md"
+  width={120}
+  height={120}
+  className="mx-auto md:mx-0 w-32 h-32 md:w-40 md:h-40 object-cover rounded-[28px] border border-orange-100 shadow-md"
   unoptimized
 />
                   )}
@@ -1233,11 +1233,13 @@ const updateScanStats = async () => {
                   <div className="flex-1 text-left">
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                          <h2 className="text-2xl md:text-3xl font-black text-gray-900 mb-2">
+                          <h2 className="text-xl md:text-3xl font-black text-gray-900 mb-2 leading-tight">
                           {product.name}
                         </h2>
 
-                        <p className="text-gray-500 mb-6">{product.brand}</p>
+                        <p className="text-sm md:text-base text-gray-500 mb-4">
+                           {product.brand}
+                           </p>
                       </div>
 
                       <button
@@ -1252,34 +1254,34 @@ const updateScanStats = async () => {
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
-                      <div className="bg-orange-50 rounded-2xl p-4 border border-orange-100">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5">
+                      <div className="bg-orange-50 rounded-2xl p-3 md:p-4 border border-orange-100">
                         <p className="text-xs text-gray-400 mb-1">Sugar</p>
-                        <p className="text-2xl font-black text-orange-600">
+                        <p className="text-xl md:text-2xl font-black text-orange-600">
                           {product.sugar}g
                         </p>
                       </div>
 
                      
 
-                      <div className="bg-orange-50 rounded-2xl p-4 border border-orange-100">
+                      <div className="bg-orange-50 rounded-2xl p-3 md:p-4 border border-orange-100">
                         <p className="text-xs text-gray-400 mb-1">Fat</p>
-                        <p className="text-2xl font-black text-orange-600">
+                        <p className="text-xl md:text-2xl font-black text-orange-600">
                           {product.fat}g
                         </p>
                       </div>
 
-                      <div className="bg-orange-50 rounded-2xl p-4 border border-orange-100">
+                      <div className="bg-orange-50 rounded-2xl p-3 md:p-4 border border-orange-100">
                         <p className="text-xs text-gray-400 mb-1">Salt</p>
-                        <p className="text-2xl font-black text-orange-600">
+                        <p className="text-xl md:text-2xl font-black text-orange-600">
                           {product.salt}g
                         </p>
                       </div>
 
                      
-                      <div className="bg-orange-50 rounded-2xl p-4 border border-orange-100">
+                      <div className="bg-orange-50 rounded-2xl p-3 md:p-4 border border-orange-100">
   <p className="text-xs text-gray-400 mb-1">NOVA</p>
-  <p className="text-2xl font-black text-orange-600">
+  <p className="text-xl md:text-2xl font-black text-orange-600">
     {product.nova}
   </p>
 </div>
@@ -1421,10 +1423,12 @@ healthScore >= 80
   ))}
 </div>
                       </div>
-                      <div className="mt-6 rounded-3xl border border-orange-200 bg-gradient-to-br from-orange-50 to-white p-6">
-  <p className="text-sm font-black uppercase tracking-wider text-orange-600 mb-2">
-    Premium Insights
-  </p>
+                      <details className="mt-5 rounded-3xl border border-orange-200 bg-gradient-to-br from-orange-50 to-white p-5">
+  <summary className="cursor-pointer text-lg font-black text-orange-600">
+  Premium Insights
+</summary>
+
+<div className="mt-4">
 
   {isPremium ? (
     <div className="space-y-2 text-sm text-gray-700">
@@ -1448,10 +1452,11 @@ healthScore >= 80
     </>
   )}
 </div>
-                      <div className="mt-6 bg-white border border-orange-100 rounded-3xl p-6 shadow-lg">
-  <h3 className="text-xl font-black text-gray-900 mb-4">
+</details>
+                      <details className="mt-5 bg-white border border-orange-100 rounded-3xl p-5 shadow-lg">
+  <summary className="cursor-pointer text-lg font-black text-gray-900">
     Score Breakdown
-  </h3>
+  </summary>
 
   <div className="space-y-3">
     <div className="flex justify-between">
@@ -1498,7 +1503,7 @@ healthScore >= 80
       </span>
     </div>
   </div>
-</div>
+</details>
 
                       <div className="text-right">
                         <p className="text-sm text-gray-500 font-semibold">
@@ -1580,8 +1585,8 @@ healthScore >= 80
 </details>
 
 {alternatives.length > 0 && (
-  <details className="mt-5 bg-green-50 rounded-2xl border border-green-200 p-5 text-left">
-    <summary className="cursor-pointer font-black text-green-700">
+  <details className="mt-4 bg-green-50 rounded-2xl border border-green-200 p-4 text-left">
+    <summary className="cursor-pointer text-lg font-black text-green-700">
       Better Alternatives
     </summary>
 
@@ -1669,8 +1674,10 @@ healthScore >= 80
 
                 
 
-                <details className="mt-6 text-left bg-white rounded-3xl border border-orange-100 p-5">
-  <summary className="cursor-pointer text-xl font-black text-gray-900">
+<details
+  className="mt-4 text-left bg-white rounded-3xl border border-orange-100 p-4"
+>
+  <summary className="cursor-pointer text-lg font-black text-gray-900">
     Ingredients
   </summary>
 
@@ -1683,8 +1690,8 @@ healthScore >= 80
                 
 
                 {detectedHarmful.length > 0 && (
-  <details className="mt-6 text-left bg-red-50 border border-red-200 rounded-3xl p-5">
-    <summary className="cursor-pointer text-xl font-black text-red-700">
+  <details className="mt-4 text-left bg-red-50 border border-red-200 rounded-3xl p-4">
+    <summary className="cursor-pointer text-lg font-black text-red-700">
       Harmful Ingredients Detected
     </summary>
 
@@ -1866,7 +1873,7 @@ healthScore >= 80
         )}
 
         {comparisons.length > 0 && (
-  <div className="mt-10 text-left">
+  <div className="hidden md:block mt-10 text-left">
     <div className="bg-white border border-orange-100 rounded-3xl p-8 shadow-xl">
       <h3 className="text-2xl font-black text-gray-900 mb-6">
         Product Comparison
