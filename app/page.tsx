@@ -1483,19 +1483,7 @@ const updateScanStats = async () => {
                         </p>
                       </div>
 
-<div className="mt-4 bg-white rounded-2xl border border-orange-100 p-5 text-left">
-  <p className="font-black text-gray-900 mb-3">
-    Data Availability
-  </p>
 
-  <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
-    <div>{confidence.checks.image ? "Available" : "Missing"} Image</div>
-    <div>{confidence.checks.ingredients ? "Available" : "Missing"} Ingredients</div>
-    <div>{confidence.checks.nutriscore ? "Available" : "Missing"} NutriScore</div>
-    <div>{confidence.checks.nova ? "Available" : "Missing"} NOVA</div>
-    <div>{confidence.checks.nutrition ? "Available" : "Missing"} Nutrition</div>
-  </div>
-</div>
 
                     </div>
                   </div>
