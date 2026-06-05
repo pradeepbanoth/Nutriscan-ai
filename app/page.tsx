@@ -940,14 +940,14 @@ const updateScanStats = async () => {
 </nav>
 
       <section className="relative z-10 max-w-7xl mx-auto px-6 pt-20 pb-20 text-center">
-       <Image
+      <Image
   src="/logo.png"
   alt="PAUSTICA"
-  width={128}
-  height={128}
-  className="mx-auto mb-8 object-contain"
+  width={96}
+  height={96}
+  className="mx-auto mb-6 object-contain"
 />
-        <h1 className="text-6xl sm:text-7xl md:text-8xl font-black tracking-[-0.06em] leading-[0.9] text-gray-900 mb-10">
+        <h1 className="text-4xl sm:text-6xl md:text-8xl font-black tracking-[-0.04em] leading-[0.95] text-gray-900 mb-6">
           Know what's really
 <br />
 <span
@@ -1007,7 +1007,7 @@ const updateScanStats = async () => {
         </div> 
 
         <div className="max-w-2xl mx-auto mt-6">
-  <div className="flex gap-3">
+  <div className="flex flex-col sm:flex-row gap-3">
     <input
       value={searchQuery}
      onChange={(e) => {
@@ -1144,14 +1144,14 @@ const updateScanStats = async () => {
     Scan Another Product
   </button>
 </div>
-                <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
+                <div className="flex flex-col gap-5 md:flex-row md:items-start">
                   {product.image && (
                    <Image
-  src={product.image}
-  alt={product.name}
-  width={176}
-  height={176}
-  className="object-cover rounded-3xl border border-orange-100 shadow-md"
+    src={product.image}
+    alt={product.name}
+  width={140}
+  height={140}
+  className="mx-auto md:mx-0 object-cover rounded-3xl border border-orange-100 shadow-md"
   unoptimized
 />
                   )}
@@ -1202,12 +1202,7 @@ const updateScanStats = async () => {
                         </p>
                       </div>
 
-                      <div className="bg-orange-50 rounded-2xl p-4 border border-orange-100">
-                        <p className="text-xs text-gray-400 mb-1">NOVA</p>
-                        <p className="text-2xl font-black text-orange-600">
-                          {product.nova}
-                        </p>
-                      </div>
+                     
                       <div className="bg-orange-50 rounded-2xl p-4 border border-orange-100">
   <p className="text-xs text-gray-400 mb-1">NOVA</p>
   <p className="text-2xl font-black text-orange-600">
@@ -1281,7 +1276,7 @@ const updateScanStats = async () => {
                         : "bg-red-50 border-red-200"
                     }`}
                   >
-                    <div className="flex items-center justify-between gap-4 mb-4">
+                    <div className="flex flex-col md:flex-row gap-6 mb-4">
                       <div>
                         <p className="text-sm text-gray-500 font-semibold">
                           AI Health Score
@@ -1821,13 +1816,13 @@ const updateScanStats = async () => {
                   onClick={() => setProduct(item)}
                   className="text-left bg-white rounded-3xl border border-orange-100 p-5 shadow-lg hover:shadow-2xl transition-all"
                 >
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-start gap-3">
                     {item.image && (
                      <Image
   src={item.image}
   alt={item.name}
-  width={80}
-  height={80}
+  width={64}
+  height={64}
   className="rounded-2xl object-cover border border-orange-100"
   unoptimized
 />
