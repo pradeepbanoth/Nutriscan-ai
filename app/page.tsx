@@ -491,6 +491,47 @@ const breakdown = product
       },
     };
 
+  const scoreLabel =
+  healthScore >= 85
+    ? "Excellent Choice"
+    : healthScore >= 70
+    ? "Good Choice"
+    : healthScore >= 55
+    ? "Moderate Choice"
+    : healthScore >= 40
+    ? "Poor Choice"
+    : "Avoid Often";
+
+    const topReasons = product
+  ? [
+      {
+        label:
+          product.sugar <= 7
+            ? "Low sugar"
+            : product.sugar > 15
+            ? "High sugar"
+            : "Moderate sugar",
+        type: product.sugar > 15 ? "bad" : "good",
+      },
+      {
+        label:
+          product.salt <= 0.5
+            ? "Low salt"
+            : product.salt > 1.5
+            ? "High salt"
+            : "Moderate salt",
+        type: product.salt > 1.5 ? "bad" : "good",
+      },
+      {
+        label:
+          Number(product.nova) >= 4
+            ? "Ultra processed"
+            : "Lower processing",
+        type: Number(product.nova) >= 4 ? "bad" : "good",
+      },
+    ]
+  : [];
+
   const healthGrade =
     healthScore >= 85
       ? "A"
@@ -1268,13 +1309,15 @@ const updateScanStats = async () => {
 
                 <div className="mt-8 text-left">
                   <div
-                    className={`rounded-3xl p-6 border ${
-                      healthScore >= 75
-                        ? "bg-green-50 border-green-200"
-                        : healthScore >= 50
-                        ? "bg-yellow-50 border-yellow-200"
-                        : "bg-red-50 border-red-200"
-                    }`}
+                   className={`rounded-3xl p-6 border ${
+  healthScore >= 80
+    ? "bg-green-50 border-green-200"
+    : healthScore >= 60
+    ? "bg-yellow-50 border-yellow-200"
+    : healthScore >= 40
+    ? "bg-orange-50 border-orange-200"
+    : "bg-red-50 border-red-200"
+}`}
                   >
                     <div className="flex flex-col md:flex-row gap-6 mb-4">
                       <div>
@@ -1282,9 +1325,42 @@ const updateScanStats = async () => {
                           AI Health Score
                         </p>
 
-                        <h3 className="text-5xl font-black text-gray-900">
-                          {healthScore}/100
-                        </h3>
+                        <h3 className="text-6xl md:text-7xl font-black text-gray-900 tracking-tight">
+  {healthScore}
+  <span className="text-2xl text-gray-400">/100</span>
+</h3>
+
+<p className="mt-2 text-xl font-black text-gray-900">
+  {scoreLabel}
+</p>
+<div className="mt-4 flex flex-wrap gap-2">
+  {topReasons.map((reason) => (
+    <span
+      key={reason.label}
+      className={`px-3 py-2 rounded-full border text-sm font-bold ${
+        reason.type === "bad"
+          ? "bg-red-50 border-red-100 text-red-700"
+          : "bg-green-50 border-green-100 text-green-700"
+      }`}
+    >
+      {reason.type === "bad" ? "!" : "✓"} {reason.label}
+    </span>
+  ))}
+</div>
+<div className="mt-4 flex flex-wrap gap-2">
+  {topReasons.map((reason) => (
+    <span
+      key={reason.label}
+      className={`px-3 py-2 rounded-full border text-sm font-bold ${
+        reason.type === "bad"
+          ? "bg-red-50 border-red-100 text-red-700"
+          : "bg-green-50 border-green-100 text-green-700"
+      }`}
+    >
+      {reason.type === "bad" ? "!" : "✓"} {reason.label}
+    </span>
+  ))}
+</div>
                       </div>
                       <div className="mt-6 rounded-3xl border border-orange-200 bg-gradient-to-br from-orange-50 to-white p-6">
   <p className="text-sm font-black uppercase tracking-wider text-orange-600 mb-2">
@@ -1379,11 +1455,13 @@ const updateScanStats = async () => {
                     <div className="w-full h-4 bg-white rounded-full overflow-hidden mb-6">
                       <div
                         className={`h-full rounded-full ${
-                          healthScore >= 75
-                            ? "bg-green-500"
-                            : healthScore >= 50
-                            ? "bg-yellow-500"
-                            : "bg-red-500"
+                         healthScore >= 80
+  ? "bg-green-500"
+  : healthScore >= 60
+  ? "bg-yellow-500"
+  : healthScore >= 40
+  ? "bg-orange-500"
+  : "bg-red-500"
                         }`}
                         style={{ width: `${healthScore}%` }}
                       />
@@ -1411,10 +1489,10 @@ const updateScanStats = async () => {
   </div>
 )}
 
-                    <div className="mt-5 bg-white rounded-2xl border border-orange-100 p-5">
-  <p className="font-black text-gray-900 mb-2">
-    Why this score?
-  </p>
+                    <details className="mt-5 bg-white rounded-2xl border border-orange-100 p-5">
+ <summary className="cursor-pointer font-black text-gray-900">
+  Why this score?
+</summary>
 
   <ul className="space-y-2 text-gray-700">
     {product.sugar > 15 && <li>High sugar content reduces the score.</li>}
@@ -1430,7 +1508,38 @@ const updateScanStats = async () => {
         <li>No major red flags detected from available data.</li>
       )}
   </ul>
-</div>
+</details>
+
+{alternatives.length > 0 && (
+  <details className="mt-5 bg-green-50 rounded-2xl border border-green-200 p-5 text-left">
+    <summary className="cursor-pointer font-black text-green-700">
+      Better Alternatives
+    </summary>
+
+    <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+      {alternatives.map((alternative, index) => (
+        <div
+          key={index}
+          className="bg-white border border-green-200 rounded-2xl p-5"
+        >
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <p className="font-black text-green-700">
+              {alternative.name}
+            </p>
+
+            <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-black">
+              {alternative.score}/100
+            </span>
+          </div>
+
+          <p className="text-sm text-gray-600 leading-relaxed">
+            {alternative.reason}
+          </p>
+        </div>
+      ))}
+    </div>
+  </details>
+)}
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div className="bg-white rounded-2xl p-4 border border-orange-100">
@@ -1491,24 +1600,24 @@ const updateScanStats = async () => {
 
                 
 
-                <div className="mt-10 text-left">
-                  <h3 className="text-xl font-black text-gray-900 mb-4">
-                    Ingredients
-                  </h3>
+                <details className="mt-6 text-left bg-white rounded-3xl border border-orange-100 p-5">
+  <summary className="cursor-pointer text-xl font-black text-gray-900">
+    Ingredients
+  </summary>
 
-                  <div className="bg-orange-50 rounded-3xl border border-orange-100 p-6">
-                    <p className="text-gray-700 leading-relaxed">
-                      {product.ingredients}
-                    </p>
-                  </div>
-                </div>
+  <div className="mt-4 bg-orange-50 rounded-3xl border border-orange-100 p-5">
+    <p className="text-gray-700 leading-relaxed">
+      {product.ingredients}
+    </p>
+  </div>
+</details>
+                
 
                 {detectedHarmful.length > 0 && (
-                  <div className="mt-10 text-left">
-                    <div className="bg-red-50 border border-red-200 rounded-3xl p-8">
-                      <h3 className="text-2xl font-black text-red-700 mb-6">
-                        Harmful Ingredients Detected
-                      </h3>
+  <details className="mt-6 text-left bg-red-50 border border-red-200 rounded-3xl p-5">
+    <summary className="cursor-pointer text-xl font-black text-red-700">
+      Harmful Ingredients Detected
+    </summary>
 
                       <div className="flex flex-wrap gap-3">
                         {detectedHarmful.map((ingredient, index) => (
@@ -1520,16 +1629,15 @@ const updateScanStats = async () => {
                           </div>
                         ))}
                       </div>
-                    </div>
-                  </div>
-                )}
+                      </details>
+                        )}
 
                 {ingredientInsights.length > 0 && (
-                  <div className="mt-10 text-left">
+                  <details className="mt-6 text-left bg-white rounded-3xl border border-orange-100 p-5">
                     <div className="bg-blue-50 border border-blue-200 rounded-3xl p-8">
-                      <h3 className="text-2xl font-black text-blue-700 mb-6">
-                        AI Ingredient Intelligence
-                      </h3>
+                      <summary className="cursor-pointer text-xl font-black text-gray-900">
+                       AI Ingredient Intelligence
+                         </summary>
 
                       <div className="mb-6 bg-white border border-blue-100 rounded-3xl p-6">
   <p className="text-sm font-bold text-gray-500 mb-2">
@@ -1623,7 +1731,7 @@ const updateScanStats = async () => {
                         ))}
                       </div>
                     </div>
-                  </div>
+                  </details>
                 )}
 
                 {alternatives.length > 0 && (
@@ -1783,11 +1891,11 @@ const updateScanStats = async () => {
         )}
 
         {scanHistory.length > 0 && (
-          <div className="max-w-6xl mx-auto mt-20 text-left">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-3xl font-black text-gray-900">
-                Recent Scans
-              </h2>
+         <details className="max-w-6xl mx-auto mt-8 bg-white rounded-[32px] border border-orange-100 shadow-xl p-6">
+<div className="flex items-center justify-between mb-6">
+              <summary className="cursor-pointer text-2xl font-black text-gray-900">
+             Recent Scans
+               </summary>
 
               <button
                 onClick={clearHistory}
@@ -1833,7 +1941,7 @@ const updateScanStats = async () => {
                 </button>
               ))}
             </div>
-          </div>
+         </details>
         )}
       </section>
 
