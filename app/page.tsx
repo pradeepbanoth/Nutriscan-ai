@@ -84,6 +84,8 @@ export default function Home() {
   const [isPremium, setIsPremium] = useState(false);
 
 
+
+  
   const [dailyScansUsed, setDailyScansUsed] = useState(() => {
   if (typeof window === "undefined") return 0;
 
@@ -96,7 +98,9 @@ export default function Home() {
 
   return data.date === today ? data.count : 0;
 });
-  
+    
+
+
 
   const getDailyScansUsed = () => {
   const today = new Date().toISOString().split("T")[0];
@@ -445,8 +449,10 @@ const ingredientQuality =
     ? "Good"
     : "Excellent";
 
-  const alternatives = product?.name ? getAlternatives(product.name) : [];
-  const comparisons = product?.name
+   const alternatives = product?.name
+  ? getAlternatives(product.name, selectedGoal)
+  : [];
+    const comparisons = product?.name
   ? getProductComparisons(product.name)
   : [];
   
@@ -502,6 +508,33 @@ const breakdown = product
     ? "Poor Choice"
     : "Avoid Often";
 
+    const healthColor =
+  healthScore >= 80
+    ? "green"
+    : healthScore >= 60
+    ? "yellow"
+    : healthScore >= 40
+    ? "orange"
+    : "red";
+
+const confidenceScore = product
+  ? [
+      product.image,
+      product.ingredients,
+      product.nutriscore,
+      product.nova,
+    ].filter(Boolean).length * 25
+  : 0;
+    
+const healthBadgeClass =
+  healthColor === "green"
+    ? "bg-green-100 text-green-700 border-green-200"
+    : healthColor === "yellow"
+    ? "bg-yellow-100 text-yellow-700 border-yellow-200"
+    : healthColor === "orange"
+    ? "bg-orange-100 text-orange-700 border-orange-200"
+    : "bg-red-100 text-red-700 border-red-200";
+
     const topReasons = product
   ? [
       {
@@ -550,7 +583,7 @@ const breakdown = product
       ? "This product is moderate. Consume occasionally and check portion size."
       : "This product looks unhealthy due to processing, sugar, salt, fat, or additives.";
        
-      const personalizedWarning = product
+ const personalizedWarnings = product
   ? getPersonalizedWarning(
       selectedGoal,
       product.sugar,
@@ -559,7 +592,7 @@ const breakdown = product
       Number(product.nova),
       ingredientInsights.length
     )
-  : null;
+  : [];
 
   const bmi =
   Number(userHeight) > 0
@@ -980,7 +1013,7 @@ const updateScanStats = async () => {
   </div>
 </nav>
 
-      <section className="relative z-10 max-w-7xl mx-auto px-6 pt-20 pb-20 text-center">
+<section className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pt-10 sm:pt-16 pb-14 text-center">
       <Image
   src="/logo.png"
   alt="PAUSTICA"
@@ -1172,7 +1205,7 @@ const updateScanStats = async () => {
             <div className="bg-white rounded-[32px] shadow-2xl border border-orange-100 overflow-hidden">
               <div className="h-2 bg-gradient-to-r from-orange-500 to-orange-600" />
 
-              <div className="p-8">
+                <div className="p-4 sm:p-6 md:p-8">
                 <div className="flex justify-end mb-6">
   <button
     onClick={() => {
@@ -1200,7 +1233,7 @@ const updateScanStats = async () => {
                   <div className="flex-1 text-left">
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <h2 className="text-3xl font-black text-gray-900 mb-2">
+                          <h2 className="text-2xl md:text-3xl font-black text-gray-900 mb-2">
                           {product.name}
                         </h2>
 
@@ -1309,8 +1342,8 @@ const updateScanStats = async () => {
 
                 <div className="mt-8 text-left">
                   <div
-                   className={`rounded-3xl p-6 border ${
-  healthScore >= 80
+className={`rounded-3xl p-4 sm:p-6 border ${
+healthScore >= 80
     ? "bg-green-50 border-green-200"
     : healthScore >= 60
     ? "bg-yellow-50 border-yellow-200"
@@ -1325,14 +1358,40 @@ const updateScanStats = async () => {
                           AI Health Score
                         </p>
 
-                        <h3 className="text-6xl md:text-7xl font-black text-gray-900 tracking-tight">
+<h3
+  className={`text-7xl md:text-8xl font-black tracking-tight ${
+    healthScore >= 80
+      ? "text-green-600"
+      : healthScore >= 60
+      ? "text-yellow-600"
+      : healthScore >= 40
+      ? "text-orange-600"
+      : "text-red-600"
+  }`}
+>
   {healthScore}
   <span className="text-2xl text-gray-400">/100</span>
 </h3>
 
-<p className="mt-2 text-xl font-black text-gray-900">
+<p className={`mt-2 inline-flex px-4 py-2 rounded-full border text-lg font-black ${healthBadgeClass}`}>
   {scoreLabel}
 </p>
+<p className="mt-3 text-sm text-gray-500 font-medium">
+  Based on sugar, salt, fat, processing level, and ingredient risk.
+</p>
+<div className="mt-4">
+  <div className="flex justify-between text-xs text-gray-500 mb-1">
+    <span>Analysis Confidence</span>
+    <span>{confidenceScore}%</span>
+  </div>
+
+  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+    <div
+      className="h-full bg-blue-500 rounded-full"
+      style={{ width: `${confidenceScore}%` }}
+    />
+  </div>
+</div>
 <div className="mt-4 flex flex-wrap gap-2">
   {topReasons.map((reason) => (
     <span
@@ -1446,9 +1505,19 @@ const updateScanStats = async () => {
                           Grade
                         </p>
 
-                        <div className="text-5xl font-black text-orange-600">
-                          {healthGrade}
-                        </div>
+                       <div
+  className={`text-6xl font-black ${
+    healthScore >= 80
+      ? "text-green-600"
+      : healthScore >= 60
+      ? "text-yellow-600"
+      : healthScore >= 40
+      ? "text-orange-600"
+      : "text-red-600"
+  }`}
+>
+  {healthGrade}
+</div>
                       </div>
                     </div>
 
@@ -1467,25 +1536,25 @@ const updateScanStats = async () => {
                       />
                     </div>
 
-                    <p className="text-gray-700 leading-relaxed mb-6">
+                      <p className="text-lg font-semibold text-gray-700 leading-relaxed mb-6">
                       {healthVerdict}
                     </p>
 
-                    {personalizedWarning && (
-  <div
-    className={`mb-6 rounded-2xl border p-5 ${
-      personalizedWarning.level === "High"
-        ? "bg-red-50 border-red-200 text-red-700"
-        : "bg-yellow-50 border-yellow-200 text-yellow-700"
-    }`}
-  >
-    <p className="font-black mb-2">
-      {personalizedWarning.title}
-    </p>
-
-    <p className="text-sm leading-relaxed">
-      {personalizedWarning.message}
-    </p>
+                   {personalizedWarnings.length > 0 && (
+  <div className="space-y-3 mb-6">
+    {personalizedWarnings.map((warning, index) => (
+      <div
+        key={index}
+        className={`rounded-2xl border p-5 ${
+          warning.level === "High"
+            ? "bg-red-50 border-red-200 text-red-700"
+            : "bg-yellow-50 border-yellow-200 text-yellow-700"
+        }`}
+      >
+        <p className="font-black mb-2">{warning.title}</p>
+        <p className="text-sm leading-relaxed">{warning.message}</p>
+      </div>
+    ))}
   </div>
 )}
 
@@ -1748,18 +1817,38 @@ const updateScanStats = async () => {
     className="bg-white border border-green-200 rounded-2xl p-5"
   >
     <div className="flex items-center justify-between gap-3 mb-3">
-      <p className="font-black text-green-700">
-        {alternative.name}
-      </p>
+    <div className="flex items-center justify-between mb-2">
+  <div>
+    <p className="font-black text-gray-900">
+      {alternative.name}
+    </p>
+
+    <p className="text-xs text-green-600 font-bold uppercase tracking-wide">
+      {alternative.category}
+    </p>
+  </div>
+
+  <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+    <span className="font-black text-green-700">
+      {alternative.score}
+    </span>
+  </div>
+</div>
 
       <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-black">
         {alternative.score}/100
       </span>
     </div>
 
-    <p className="text-sm text-gray-600 leading-relaxed">
-      {alternative.reason}
-    </p>
+  <p className="text-sm text-gray-600 leading-relaxed mb-3">
+  {alternative.reason}
+</p>
+
+<button
+  className="w-full rounded-xl bg-green-600 text-white py-2 text-sm font-bold"
+>
+  Better Choice
+</button>
   </div>
 ))}
                       </div>
