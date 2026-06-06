@@ -1419,12 +1419,46 @@ healthScore >= 80
   </div>
 </div>
 
-<p className={`mt-2 inline-flex px-4 py-2 rounded-full border text-lg font-black ${healthBadgeClass}`}>
-  {scoreLabel}
-</p>
+<div className="mt-3 flex justify-center md:justify-start">
+  <span className={`px-5 py-2 rounded-full border text-lg font-black ${healthBadgeClass}`}>
+    {scoreLabel}
+  </span>
+</div>
 <p className="mt-3 text-sm text-gray-500 font-medium">
   Based on sugar, salt, fat, processing level, and ingredient risk.
 </p>
+
+{alternatives.length > 0 && (
+  <details className="mt-4 bg-green-50 rounded-2xl border border-green-200 p-4 text-left">
+    <summary className="cursor-pointer text-lg font-black text-green-700">
+      Better Alternatives
+    </summary>
+
+    <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+      {alternatives.map((alternative, index) => (
+        <div
+          key={index}
+          className="bg-white border border-green-200 rounded-2xl p-5"
+        >
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <p className="font-black text-green-700">
+              {alternative.name}
+            </p>
+
+            <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-black">
+              {alternative.score}/100
+            </span>
+          </div>
+
+          <p className="text-sm text-gray-600 leading-relaxed">
+            {alternative.reason}
+          </p>
+        </div>
+      ))}
+    </div>
+  </details>
+)}
+
 <div className="mt-4">
   <div className="flex justify-between text-xs text-gray-500 mb-1">
     <span>Analysis Confidence</span>
@@ -1733,36 +1767,7 @@ healthScore >= 80
                       </details>
                         )}
 
-{alternatives.length > 0 && (
-  <details className="mt-4 bg-green-50 rounded-2xl border border-green-200 p-4 text-left">
-    <summary className="cursor-pointer text-lg font-black text-green-700">
-      Better Alternatives
-    </summary>
 
-    <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-      {alternatives.map((alternative, index) => (
-        <div
-          key={index}
-          className="bg-white border border-green-200 rounded-2xl p-5"
-        >
-          <div className="flex items-center justify-between gap-3 mb-3">
-            <p className="font-black text-green-700">
-              {alternative.name}
-            </p>
-
-            <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-black">
-              {alternative.score}/100
-            </span>
-          </div>
-
-          <p className="text-sm text-gray-600 leading-relaxed">
-            {alternative.reason}
-          </p>
-        </div>
-      ))}
-    </div>
-  </details>
-)}
 
                 {ingredientInsights.length > 0 && (
                   <details className="mt-6 text-left bg-white rounded-3xl border border-orange-100 p-5">
