@@ -1584,36 +1584,7 @@ healthScore >= 80
   </ul>
 </details>
 
-{alternatives.length > 0 && (
-  <details className="mt-4 bg-green-50 rounded-2xl border border-green-200 p-4 text-left">
-    <summary className="cursor-pointer text-lg font-black text-green-700">
-      Better Alternatives
-    </summary>
 
-    <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-      {alternatives.map((alternative, index) => (
-        <div
-          key={index}
-          className="bg-white border border-green-200 rounded-2xl p-5"
-        >
-          <div className="flex items-center justify-between gap-3 mb-3">
-            <p className="font-black text-green-700">
-              {alternative.name}
-            </p>
-
-            <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-black">
-              {alternative.score}/100
-            </span>
-          </div>
-
-          <p className="text-sm text-gray-600 leading-relaxed">
-            {alternative.reason}
-          </p>
-        </div>
-      ))}
-    </div>
-  </details>
-)}
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div className="bg-white rounded-2xl p-4 border border-orange-100">
@@ -1708,9 +1679,40 @@ healthScore >= 80
                       </details>
                         )}
 
+{alternatives.length > 0 && (
+  <details className="mt-4 bg-green-50 rounded-2xl border border-green-200 p-4 text-left">
+    <summary className="cursor-pointer text-lg font-black text-green-700">
+      Better Alternatives
+    </summary>
+
+    <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+      {alternatives.map((alternative, index) => (
+        <div
+          key={index}
+          className="bg-white border border-green-200 rounded-2xl p-5"
+        >
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <p className="font-black text-green-700">
+              {alternative.name}
+            </p>
+
+            <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-black">
+              {alternative.score}/100
+            </span>
+          </div>
+
+          <p className="text-sm text-gray-600 leading-relaxed">
+            {alternative.reason}
+          </p>
+        </div>
+      ))}
+    </div>
+  </details>
+)}
+
                 {ingredientInsights.length > 0 && (
                   <details className="mt-6 text-left bg-white rounded-3xl border border-orange-100 p-5">
-                    <div className="bg-blue-50 border border-blue-200 rounded-3xl p-8">
+                    <div className="bg-blue-50 border border-blue-200 rounded-3xl p-5">
                       <summary className="cursor-pointer text-xl font-black text-gray-900">
                        AI Ingredient Intelligence
                          </summary>
@@ -1812,8 +1814,8 @@ healthScore >= 80
 
                 {alternatives.length > 0 && (
                   <div className="mt-10 text-left">
-                    <div className="bg-green-50 border border-green-200 rounded-3xl p-8">
-                      <h3 className="text-2xl font-black text-green-700 mb-6">
+                    <div className="bg-green-50 border border-green-200 rounded-3xl p-5">
+                      <h3 className="text-xl font-black text-green-700 mb-4">
                         Better Alternatives
                       </h3>
 
@@ -1860,7 +1862,7 @@ healthScore >= 80
 ))}
                       </div>
 
-                      <p className="mt-6 text-gray-700">
+                      <p className="mt-4 text-sm text-gray-700">
                         These alternatives are generally less processed and may
                         offer better nutritional value.
                       </p>
