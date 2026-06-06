@@ -508,6 +508,19 @@ const breakdown = product
     ? "Poor Choice"
     : "Avoid Often";
 
+    const scoreRingColor =
+  healthScore >= 80
+    ? "#16a34a"
+    : healthScore >= 60
+    ? "#ca8a04"
+    : healthScore >= 40
+    ? "#ea580c"
+    : "#dc2626";
+
+const scoreCircumference = 2 * Math.PI * 54;
+const scoreOffset =
+  scoreCircumference - (healthScore / 100) * scoreCircumference;
+
     const healthColor =
   healthScore >= 80
     ? "green"
@@ -546,6 +559,9 @@ const healthBadgeClass =
             : "Moderate sugar",
         type: product.sugar > 15 ? "bad" : "good",
       },
+
+     
+
       {
         label:
           product.salt <= 0.5
@@ -1013,15 +1029,15 @@ const updateScanStats = async () => {
   </div>
 </nav>
 
-<section className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pt-10 sm:pt-16 pb-14 text-center">
+<section className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pt-6 sm:pt-12 pb-10 text-center">
       <Image
   src="/logo.png"
   alt="PAUSTICA"
-  width={96}
-  height={96}
+  width={72}
+  height={72}
   className="mx-auto mb-6 object-contain"
 />
-        <h1 className="text-4xl sm:text-6xl md:text-8xl font-black tracking-[-0.04em] leading-[0.95] text-gray-900 mb-6">
+        <h1 className="text-3xl sm:text-5xl md:text-7xl font-black tracking-[-0.04em] leading-[0.95] text-gray-900 mb-6">
           Know what's really
 <br />
 <span
@@ -1360,20 +1376,48 @@ healthScore >= 80
                           AI Health Score
                         </p>
 
-<h3
-  className={`text-7xl md:text-8xl font-black tracking-tight ${
-    healthScore >= 80
-      ? "text-green-600"
-      : healthScore >= 60
-      ? "text-yellow-600"
-      : healthScore >= 40
-      ? "text-orange-600"
-      : "text-red-600"
-  }`}
->
-  {healthScore}
-  <span className="text-2xl text-gray-400">/100</span>
-</h3>
+<div className="relative w-40 h-40 mx-auto md:mx-0">
+  <svg className="w-40 h-40 -rotate-90" viewBox="0 0 120 120">
+    <circle
+      cx="60"
+      cy="60"
+      r="54"
+      stroke="#e5e7eb"
+      strokeWidth="10"
+      fill="none"
+    />
+
+    <circle
+      cx="60"
+      cy="60"
+      r="54"
+      stroke={scoreRingColor}
+      strokeWidth="10"
+      fill="none"
+      strokeLinecap="round"
+      strokeDasharray={scoreCircumference}
+      strokeDashoffset={scoreOffset}
+    />
+  </svg>
+
+  <div className="absolute inset-0 flex flex-col items-center justify-center">
+    <p
+      className={`text-4xl font-black ${
+        healthScore >= 80
+          ? "text-green-600"
+          : healthScore >= 60
+          ? "text-yellow-600"
+          : healthScore >= 40
+          ? "text-orange-600"
+          : "text-red-600"
+      }`}
+    >
+      {healthScore}
+    </p>
+
+    <p className="text-xs font-bold text-gray-400">/100</p>
+  </div>
+</div>
 
 <p className={`mt-2 inline-flex px-4 py-2 rounded-full border text-lg font-black ${healthBadgeClass}`}>
   {scoreLabel}
@@ -1562,6 +1606,16 @@ healthScore >= 80
     ))}
   </div>
 )}
+
+<details className="mt-5 bg-white rounded-2xl border border-orange-100 p-5">
+  <summary className="cursor-pointer font-black text-gray-900">
+    Nutrition Details
+  </summary>
+
+  <div className="mt-4">
+    {/* your Good/Bad or risk section goes here */}
+  </div>
+</details>
 
                     <details className="mt-5 bg-white rounded-2xl border border-orange-100 p-5">
  <summary className="cursor-pointer font-black text-gray-900">
@@ -1814,12 +1868,12 @@ healthScore >= 80
 
                 {alternatives.length > 0 && (
                   <div className="mt-10 text-left">
-                    <div className="bg-green-50 border border-green-200 rounded-3xl p-5">
-                      <h3 className="text-xl font-black text-green-700 mb-4">
+                    <div className="bg-green-50 border border-green-200 rounded-3xl p-4">
+                      <h3 className="text-lg font-black text-green-700 mb-3">
                         Better Alternatives
                       </h3>
 
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 gap-3">
                         {alternatives.map((alternative, index) => (
   <div
     key={index}
