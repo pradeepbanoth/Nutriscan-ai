@@ -37,7 +37,6 @@ const [open, setOpen] = useState(false);
 >
   <div>
     <p className="font-black text-gray-900">Health Profile</p>
-    <p className="text-xs text-gray-500">Goals, BMI & achievements</p>
   </div>
 
   <span className="text-orange-500 font-black">→</span>

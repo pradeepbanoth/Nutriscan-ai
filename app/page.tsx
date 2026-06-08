@@ -2372,17 +2372,12 @@ healthScore >= 80
 <div className="bg-white max-w-lg w-full max-h-[85vh] overflow-y-auto rounded-[36px] p-6 sm:p-8 shadow-2xl border border-orange-100">
     <div className="sticky top-0 bg-white z-20 flex justify-between items-start pb-4 border-b border-gray-100 mb-6">
   <div>
-    <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500 mb-2">
-      Personalized Nutrition
-    </p>
 
     <h2 className="text-3xl font-black text-gray-900">
       Health Profile
     </h2>
 
-    <p className="text-sm text-gray-500 mt-2">
-      Tune PAUSTICA around your body, goals, and progress.
-    </p>
+    
   </div>
 
   <button
@@ -2400,33 +2395,53 @@ healthScore >= 80
   <div className="flex items-center justify-between">
     <div>
 
-<div className="mb-6 rounded-3xl border border-gray-200 bg-gray-50 p-5">
-  <p className="text-sm font-black text-gray-500 mb-3">
-    Body Insights
-  </p>
+<div className="mb-6 rounded-[28px] border border-orange-100 bg-white p-4 shadow-sm">
+  <div className="flex items-center justify-between mb-4">
+    <div>
+      <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-500">
+        Body Insights
+      </p>
+      <p className="text-sm text-gray-500 mt-1">
+        Based on your height, weight, age, and goal.
+      </p>
+    </div>
+
+    <div className="w-10 h-10 rounded-2xl bg-orange-50 border border-orange-100 flex items-center justify-center text-orange-600 font-black">
+      P
+    </div>
+  </div>
 
   <div className="grid grid-cols-2 gap-3">
-    <div className="bg-white rounded-2xl p-4 border border-gray-200">
-      <p className="text-xs text-gray-400">BMI</p>
-      <p className="text-2xl font-black text-gray-900">
+    <div className="rounded-3xl bg-gradient-to-br from-orange-50 to-white border border-orange-100 p-4">
+      <p className="text-xs font-bold text-gray-400 mb-2">
+        BMI
+      </p>
+
+      <p className="text-4xl font-black text-gray-900 leading-none">
         {bmi > 0 ? bmi.toFixed(1) : "—"}
       </p>
-      <p className="text-xs text-orange-600 font-bold">
+
+      <p className="mt-2 text-xs font-black text-orange-600">
         {bmiCategory}
       </p>
     </div>
 
-    <div className="bg-white rounded-2xl p-4 border border-gray-200">
-      <p className="text-xs text-gray-400">Daily Target</p>
-      <p className="text-2xl font-black text-gray-900">
+    <div className="rounded-3xl bg-gradient-to-br from-gray-50 to-white border border-gray-200 p-4">
+      <p className="text-xs font-bold text-gray-400 mb-2">
+        Daily Target
+      </p>
+
+      <p className="text-4xl font-black text-gray-900 leading-none">
         {dailyCalorieTarget || "—"}
       </p>
-      <p className="text-xs text-gray-500 font-bold">
+
+      <p className="mt-2 text-xs font-black text-gray-500">
         kcal/day
       </p>
-      <p className="mt-2 text-xs text-gray-400 leading-relaxed">
-  Estimated from your age, height, weight, and selected goal.
-</p>
+
+      <p className="mt-3 text-[11px] leading-relaxed text-gray-400">
+        Estimated from your profile.
+      </p>
     </div>
   </div>
 </div>
@@ -2456,10 +2471,6 @@ healthScore >= 80
       <p className="font-black text-gray-900">{currentStreak}</p>
     </div>
 
-    <div className="bg-white rounded-2xl p-3 border border-orange-100">
-      <p className="text-xs text-gray-400">Best</p>
-      <p className="font-black text-gray-900">{bestStreak}</p>
-    </div>
   </div>
 </div>
 
@@ -2544,7 +2555,7 @@ healthScore >= 80
 
           setProfileOpen(false);
         }}
-className="w-full mt-6 py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 text-white font-black shadow-lg"
+className="w-full mt-6 py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 text-white font-black shadow-lg" 
 >
         Save Profile
       </button>
