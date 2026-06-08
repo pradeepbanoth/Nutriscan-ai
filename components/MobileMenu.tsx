@@ -5,10 +5,15 @@ import { useState } from "react";
 type MobileMenuProps = {
   loggedIn: boolean;
   onLogout: () => void;
+  onOpenProfile: () => void;
 };
 
-export default function MobileMenu({ loggedIn, onLogout }: MobileMenuProps) {
-  const [open, setOpen] = useState(false);
+export default function MobileMenu({
+  loggedIn,
+  onLogout,
+  onOpenProfile,
+}: MobileMenuProps) {
+const [open, setOpen] = useState(false);
 
   return (
     <div className="md:hidden relative">
@@ -25,6 +30,13 @@ export default function MobileMenu({ loggedIn, onLogout }: MobileMenuProps) {
             <a className="block px-4 py-3 rounded-2xl font-bold text-gray-800 hover:bg-orange-50" href="/">
               Home Scanner
             </a>
+
+            <button
+  onClick={onOpenProfile}
+  className="w-full text-left px-4 py-3 rounded-xl font-bold text-gray-800 hover:bg-orange-50"
+>
+  Health Profile
+</button>
 
             <a className="block px-4 py-3 rounded-2xl font-bold text-gray-800 hover:bg-orange-50" href="/dashboard">
               Dashboard

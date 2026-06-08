@@ -1016,7 +1016,11 @@ setRealAlternatives(realItems);
       </span>
     </div>
 
-    <MobileMenu loggedIn={!!userEmail} onLogout={logout} />
+    <MobileMenu
+  loggedIn={!!userEmail}
+  onLogout={logout}
+  onOpenProfile={() => setProfileOpen(true)}
+/>
 
     <div className="hidden md:flex items-center gap-3">
       {userEmail ? (
@@ -1051,12 +1055,7 @@ setRealAlternatives(realItems);
             Logout
           </button>
 
-          <button
-  onClick={() => setProfileOpen(true)}
-  className="rounded-full px-5 py-3 text-sm font-bold text-orange-600 bg-orange-50 border border-orange-100"
->
-  Health Profile
-</button>
+         
         </>
       ) : (
         <>
