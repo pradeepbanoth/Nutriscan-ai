@@ -604,6 +604,27 @@ const healthBadgeClass =
       ? "This product is moderate. Consume occasionally and check portion size."
       : "This product looks unhealthy due to processing, sugar, salt, fat, or additives.";
        
+const nutritionSummary = (() => {
+  const messages = [];
+
+  if ((product?.protein || 0) >= 10)
+    messages.push("Good source of protein");
+
+  if ((product?.sugar || 0) > 15)
+    messages.push("High in sugar");
+
+  if ((product?.salt || 0) > 1.5)
+    messages.push("High in salt");
+
+  if (Number(product?.nova || 0) >= 4)
+    messages.push("Ultra-processed");
+
+  if ((product?.calories || 0) > 300)
+    messages.push("Calorie dense");
+
+  return messages.slice(0, 3);
+})();
+
  const personalizedWarnings = product
   ? getPersonalizedWarning(
       selectedGoal,
@@ -664,11 +685,25 @@ const bmiCategory =
       if (!item) return;
 
   setLoading(true);
-  setSuggestions([]);
-
   
+setSuggestions([]);
 
-  const fetchedProduct: Product = {
+const fatsecretRes = await fetch(
+  `/api/fatsecret/search?query=${encodeURIComponent(
+    String(item.product_name ?? "")
+  )}`
+);
+
+const fatsecretData = await fatsecretRes.json();
+
+const firstFood = fatsecretData?.foods?.food?.[0];
+
+const nutrition = firstFood
+  ? parseFatSecretNutrition(firstFood.food_description)
+  : null;
+
+const fetchedProduct: Product = {
+
     id: 0,
     name: String(item.product_name ?? "Unknown Product"),
     brand: String(item.brands ?? "Unknown Brand"),
@@ -679,6 +714,10 @@ const bmiCategory =
     sugar: Number(
   (item as any).nutriments?.sugars_100g ?? 0
 ),
+
+calories: nutrition?.calories || 0,
+protein: nutrition?.protein || 0,
+carbs: nutrition?.carbs || 0,
 
 fat: Number(
   (item as any).nutriments?.fat_100g ?? 0
@@ -1287,7 +1326,26 @@ const fetchedProduct: Product = {
                         </p>
                       </div>
 
-                     
+                     <div className="bg-orange-50 rounded-2xl p-3 md:p-4 border border-orange-100">
+  <p className="text-xs text-gray-400 mb-1">Calories</p>
+  <p className="text-xl md:text-2xl font-black text-orange-600">
+    {product.calories || 0}
+  </p>
+</div>
+
+<div className="bg-orange-50 rounded-2xl p-3 md:p-4 border border-orange-100">
+  <p className="text-xs text-gray-400 mb-1">Protein</p>
+  <p className="text-xl md:text-2xl font-black text-orange-600">
+    {product.protein || 0}g
+  </p>
+</div>
+
+<div className="bg-orange-50 rounded-2xl p-3 md:p-4 border border-orange-100">
+  <p className="text-xs text-gray-400 mb-1">Carbs</p>
+  <p className="text-xl md:text-2xl font-black text-orange-600">
+    {product.carbs || 0}g
+  </p>
+</div>
 
                       <div className="bg-orange-50 rounded-2xl p-3 md:p-4 border border-orange-100">
                         <p className="text-xs text-gray-400 mb-1">Fat</p>
@@ -1601,6 +1659,17 @@ healthScore >= 80
                       <p className="text-lg font-semibold text-gray-700 leading-relaxed mb-6">
                       {healthVerdict}
                     </p>
+
+                    <div className="flex flex-wrap gap-2 mb-6">
+  {nutritionSummary.map((item, index) => (
+    <span
+      key={index}
+      className="px-3 py-2 rounded-full bg-white border border-orange-100 text-sm font-bold text-gray-700"
+    >
+      {item}
+    </span>
+  ))}
+</div>
 
                     {alternatives.length > 0 && (
   <details className="mt-4 bg-green-50 rounded-2xl border border-green-200 p-4 text-left">
