@@ -29,6 +29,7 @@ import posthog from "posthog-js";
 import { getPersonalizedWarning } from "../lib/getPersonalizedWarning";
 import Image from "next/image";
 import { parseFatSecretNutrition } from "../lib/parseFatSecretNutrition";
+import { getRealAlternatives } from "../lib/getRealAlternatives";
 
 
 type Product = {
@@ -87,7 +88,7 @@ export default function Home() {
   const [bestStreak, setBestStreak] = useState(0);
   const [totalScans, setTotalScans] = useState(0);
   const [isPremium, setIsPremium] = useState(false);
-
+  const [realAlternatives, setRealAlternatives] = useState<any[]>([]);
 
 
   
@@ -729,6 +730,8 @@ salt: Number(
   };
 
   setProduct(fetchedProduct);
+  const realItems = await getRealAlternatives(fetchedProduct.name);
+  setRealAlternatives(realItems);
   posthog.capture("barcode_scan_success", {
   product_name: fetchedProduct.name,
   brand: fetchedProduct.brand,
@@ -961,6 +964,9 @@ const fetchedProduct: Product = {
 
       setScannerOpen(false);
       setProduct(fetchedProduct);
+
+      const realItems = await getRealAlternatives(fetchedProduct.name);
+setRealAlternatives(realItems);
 
       await saveHistory(fetchedProduct);
     } else {
@@ -1702,6 +1708,54 @@ healthScore >= 80
   </details>
 )}
 
+{realAlternatives.length > 0 && (
+  <div className="mt-6">
+    <h4 className="font-black text-green-700 mb-4">
+      Real Product Alternatives
+    </h4>
+
+    <div className="space-y-3">
+      {realAlternatives.map((item, index) => (
+        <div
+          key={index}
+          className="flex items-center gap-4 bg-white border border-green-200 rounded-2xl p-4"
+        >
+          {item.image && (
+            <Image
+              src={item.image}
+              alt={item.name}
+              width={64}
+              height={64}
+              className="rounded-xl object-cover"
+              unoptimized
+            />
+          )}
+
+          <div className="flex-1">
+            <p className="font-black text-gray-900">
+              {item.name}
+            </p>
+
+            <p className="text-sm text-gray-500">
+              {item.brand}
+            </p>
+          </div>
+
+          <div className="text-right">
+            <p className="font-black text-green-600">
+              {item.nutriscore?.toUpperCase()}
+            </p>
+
+            <p className="text-xs text-gray-400">
+              NOVA {item.nova}
+            </p>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
 
                    {personalizedWarnings.length > 0 && (
   <div className="space-y-3 mb-6">
@@ -2043,6 +2097,55 @@ healthScore >= 80
                       <p className="mt-4 text-sm text-gray-700">
                         These alternatives are generally less processed and may
                         offer better nutritional value.
+
+                         {realAlternatives.length > 0 && (
+  <div className="mt-6">
+    <h4 className="font-black text-green-700 mb-4">
+      Real Product Alternatives
+    </h4>
+
+    <div className="space-y-3">
+      {realAlternatives.map((item, index) => (
+        <div
+          key={index}
+          className="flex items-center gap-4 bg-white border border-green-200 rounded-2xl p-4"
+        >
+          {item.image && (
+            <Image
+              src={item.image}
+              alt={item.name}
+              width={64}
+              height={64}
+              className="rounded-xl object-cover"
+              unoptimized
+            />
+          )}
+
+          <div className="flex-1">
+            <p className="font-black text-gray-900">
+              {item.name}
+            </p>
+
+            <p className="text-sm text-gray-500">
+              {item.brand}
+            </p>
+          </div>
+
+          <div className="text-right">
+            <p className="font-black text-green-600">
+              {item.nutriscore?.toUpperCase()}
+            </p>
+
+            <p className="text-xs text-gray-400">
+              NOVA {item.nova}
+            </p>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
                       </p>
                     </div>
                   </div>
