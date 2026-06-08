@@ -6,12 +6,15 @@ import { getUserPlan } from "../../lib/getUserPlan";
 import { supabase } from "../lib/supabase";
 
 type FoodResult = {
-  name: string;
-  calories: string;
-  processing: string;
-  score: number;
-  risks: string[];
-  alternatives: string[];
+  foodName: string;
+  confidence: number;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  healthScore: number;
+  verdict: string;
+  healthierSuggestion: string;
 };
 
 export default function FoodPhotoPage() {
@@ -26,10 +29,10 @@ export default function FoodPhotoPage() {
       const { data } = await supabase.auth.getUser();
 
       if (!data.user) {
-  setCheckingPlan(false);
-  window.location.href = "/auth";
-  return;
-}
+        setCheckingPlan(false);
+        window.location.href = "/auth";
+        return;
+      }
 
       const plan = await getUserPlan(data.user.id);
       setIsPremium(plan === "premium");
@@ -50,7 +53,7 @@ export default function FoodPhotoPage() {
       const formData = new FormData();
       formData.append("image", file);
 
-      const response = await fetch("/api/food-analysis", {
+      const response = await fetch("/api/food-photo-analyze", {
         method: "POST",
         body: formData,
       });
@@ -64,7 +67,7 @@ export default function FoodPhotoPage() {
       setResult(data);
     } catch (error) {
       console.error("Food analysis error:", error);
-      alert(String(error));
+      alert("Food photo analysis failed. Please try another image.");
     } finally {
       setLoading(false);
     }
@@ -90,39 +93,28 @@ export default function FoodPhotoPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#fff7ed] px-6 py-10">
+    <main className="min-h-screen bg-[#fff7ed] px-4 py-8">
       <div className="max-w-5xl mx-auto">
-        <nav className="flex items-center justify-between mb-12">
+        <nav className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
-            <img
-              src="/logo.png"
-              alt="PAUSTICA"
-              className="w-12 h-12 object-contain"
-            />
-
-            <h1 className="text-3xl font-black text-gray-900">PAUSTICA</h1>
+            <img src="/logo.png" alt="PAUSTICA" className="w-10 h-10 object-contain" />
+            <h1 className="text-2xl font-black text-gray-900">PAUSTICA</h1>
           </div>
 
-          <a
-            href="/"
-            className="px-5 py-3 rounded-2xl bg-orange-500 text-white font-bold"
-          >
+          <a href="/" className="px-5 py-3 rounded-2xl bg-orange-500 text-white font-bold">
             Home
           </a>
         </nav>
 
-        <div className="bg-white border border-orange-100 rounded-[36px] shadow-2xl p-8 text-center mb-8">
-          <p className="text-orange-600 font-bold mb-2">
-            Food Photo Recognition
-          </p>
+        <div className="bg-white border border-orange-100 rounded-[32px] shadow-xl p-6 text-center mb-8">
+          <p className="text-orange-600 font-bold mb-2">Food Photo AI</p>
 
-          <h2 className="text-4xl font-black text-gray-900 mb-4">
+          <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-4">
             Analyze Food From a Photo
           </h2>
 
           <p className="text-gray-500 max-w-2xl mx-auto mb-8">
-            Upload a food or snack image. PAUSTICA will estimate food type,
-            processing risk, health score, and better alternatives.
+            Upload any meal photo. PAUSTICA estimates calories, macros, health score, and a healthier suggestion.
           </p>
 
           <input
@@ -143,93 +135,86 @@ export default function FoodPhotoPage() {
 
         {loading && (
           <div className="bg-white rounded-3xl border border-orange-100 shadow-lg p-8 text-center">
-            <div className="w-14 h-14 border-4 border-orange-200 border-t-orange-500 rounded-full animate-spin mx-auto mb-4"></div>
-
-            <p className="text-gray-500 font-bold">
-              AI analyzing food photo...
-            </p>
+            <div className="w-14 h-14 border-4 border-orange-200 border-t-orange-500 rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-gray-500 font-bold">AI analyzing food photo...</p>
           </div>
         )}
 
         {image && !loading && result && (
-          <div className="grid md:grid-cols-2 gap-8">
-            <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-lg">
-              <h3 className="text-2xl font-black text-gray-900 mb-4">
-                Uploaded Food
-              </h3>
-
-              <img
-                src={image}
-                alt="Uploaded food"
-                className="w-full rounded-2xl border border-orange-100"
-              />
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="bg-white border border-orange-100 rounded-3xl p-5 shadow-lg">
+              <h3 className="text-xl font-black text-gray-900 mb-4">Uploaded Food</h3>
+              <img src={image} alt="Uploaded food" className="w-full rounded-2xl border border-orange-100" />
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-5">
               <div
-                className={`rounded-3xl p-8 border ${
-                  result.score >= 75
+                className={`rounded-3xl p-6 border ${
+                  result.healthScore >= 80
                     ? "bg-green-50 border-green-200"
-                    : result.score >= 50
+                    : result.healthScore >= 60
                     ? "bg-yellow-50 border-yellow-200"
+                    : result.healthScore >= 40
+                    ? "bg-orange-50 border-orange-200"
                     : "bg-red-50 border-red-200"
                 }`}
               >
-                <p className="text-gray-500 font-bold mb-2">
-                  Estimated Health Score
-                </p>
+                <p className="text-gray-500 font-bold mb-2">Estimated Health Score</p>
 
                 <h3 className="text-6xl font-black text-gray-900">
-                  {result.score}/100
+                  {result.healthScore}
+                  <span className="text-2xl text-gray-400">/100</span>
                 </h3>
 
-                <p className="text-gray-700 mt-4">{result.processing}</p>
+                <p className="text-gray-700 mt-4 font-bold">{result.verdict}</p>
+                <p className="text-sm text-gray-500 mt-2">Confidence: {result.confidence}%</p>
               </div>
 
-              <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-lg">
-                <h3 className="text-2xl font-black text-gray-900 mb-3">
-                  Detected Food Type
+              <div className="bg-white border border-orange-100 rounded-3xl p-5 shadow-lg">
+                <h3 className="text-xl font-black text-gray-900 mb-3">
+                  Detected Food
                 </h3>
 
-                <p className="text-gray-700 font-bold">{result.name}</p>
-
-                <p className="text-gray-500 mt-2">{result.calories}</p>
+                <p className="text-gray-800 font-black text-lg">{result.foodName}</p>
               </div>
 
-              <div className="bg-red-50 border border-red-200 rounded-3xl p-6">
-                <h3 className="text-2xl font-black text-red-700 mb-4">
-                  Possible Risks
-                </h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-white border border-orange-100 rounded-2xl p-4">
+                  <p className="text-xs text-gray-400">Calories</p>
+                  <p className="text-2xl font-black text-orange-600">{result.calories}</p>
+                </div>
 
-                <div className="space-y-2">
-                  {result.risks.map((risk) => (
-                    <p key={risk} className="text-gray-700">
-                      {risk}
-                    </p>
-                  ))}
+                <div className="bg-white border border-orange-100 rounded-2xl p-4">
+                  <p className="text-xs text-gray-400">Protein</p>
+                  <p className="text-2xl font-black text-orange-600">{result.protein}g</p>
+                </div>
+
+                <div className="bg-white border border-orange-100 rounded-2xl p-4">
+                  <p className="text-xs text-gray-400">Carbs</p>
+                  <p className="text-2xl font-black text-orange-600">{result.carbs}g</p>
+                </div>
+
+                <div className="bg-white border border-orange-100 rounded-2xl p-4">
+                  <p className="text-xs text-gray-400">Fat</p>
+                  <p className="text-2xl font-black text-orange-600">{result.fat}g</p>
                 </div>
               </div>
 
-              <div className="bg-green-50 border border-green-200 rounded-3xl p-6">
-                <h3 className="text-2xl font-black text-green-700 mb-4">
-                  Better Alternatives
+              <div className="bg-green-50 border border-green-200 rounded-3xl p-5">
+                <h3 className="text-xl font-black text-green-700 mb-3">
+                  Healthier Suggestion
                 </h3>
 
-                <div className="space-y-2">
-                  {result.alternatives.map((item) => (
-                    <p key={item} className="text-gray-700 font-bold">
-                      {item}
-                    </p>
-                  ))}
-                </div>
+                <p className="text-gray-700 font-bold">
+                  {result.healthierSuggestion}
+                </p>
               </div>
             </div>
           </div>
         )}
 
         <p className="text-center text-gray-400 text-sm mt-10">
-          Food photo analysis uses AI and may not always be perfect. Please
-          verify labels when possible.
+          Food photo analysis uses AI estimates and may not always be perfect. Verify labels when possible.
         </p>
       </div>
     </main>
