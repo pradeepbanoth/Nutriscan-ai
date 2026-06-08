@@ -654,16 +654,24 @@ const bmiCategory =
     ? "Overweight"
     : "Obese range";
 
+const bmr =
+  Number(userWeight) > 0 &&
+  Number(userHeight) > 0 &&
+  Number(userAge) > 0
+    ? 10 * Number(userWeight) +
+      6.25 * Number(userHeight) -
+      5 * Number(userAge) +
+      5
+    : 0;
+
 const dailyCalorieTarget =
-  bmi === 0
+  bmr === 0
     ? 0
     : selectedGoal === "Weight Loss"
-    ? 1800
+    ? Math.round(bmr + 200)
     : selectedGoal === "Muscle Gain"
-    ? 2600
-    : selectedGoal === "Heart Health"
-    ? 2000
-    : 2200;
+    ? Math.round(bmr + 700)
+    : Math.round(bmr + 400);
 
    const achievements = [
   {
@@ -2408,6 +2416,9 @@ healthScore >= 80
       <p className="text-xs text-gray-500 font-bold">
         kcal/day
       </p>
+      <p className="mt-2 text-xs text-gray-400 leading-relaxed">
+  Estimated from your age, height, weight, and selected goal.
+</p>
     </div>
   </div>
 </div>
