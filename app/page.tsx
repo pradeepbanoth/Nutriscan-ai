@@ -2369,21 +2369,29 @@ healthScore >= 80
 )}
 {profileOpen && (
   <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-6">
-    <div className="bg-white max-w-lg w-full rounded-[36px] p-6 sm:p-8 shadow-2xl border border-orange-100">
-     <div className="mb-6">
-  <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500 mb-2">
-    Personalized Nutrition
-  </p>
+<div className="bg-white max-w-lg w-full max-h-[85vh] overflow-y-auto rounded-[36px] p-6 sm:p-8 shadow-2xl border border-orange-100">
+    <div className="sticky top-0 bg-white z-20 flex justify-between items-start pb-4 border-b border-gray-100 mb-6">
+  <div>
+    <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500 mb-2">
+      Personalized Nutrition
+    </p>
 
-  <h2 className="text-3xl font-black text-gray-900">
-    Health Profile
-  </h2>
+    <h2 className="text-3xl font-black text-gray-900">
+      Health Profile
+    </h2>
 
-  <p className="text-sm text-gray-500 mt-2">
-    Tune PAUSTICA around your body, goals, and progress.
-  </p>
+    <p className="text-sm text-gray-500 mt-2">
+      Tune PAUSTICA around your body, goals, and progress.
+    </p>
+  </div>
+
+  <button
+    onClick={() => setProfileOpen(false)}
+    className="w-10 h-10 rounded-full border border-gray-200 bg-white shadow-sm flex items-center justify-center text-gray-600 hover:bg-gray-50"
+  >
+    ✕
+  </button>
 </div>
-
       <p className="text-gray-500 mb-6">
         Personalize PAUSTICA recommendations based on your body and goal.
       </p>
@@ -2536,8 +2544,8 @@ healthScore >= 80
 
           setProfileOpen(false);
         }}
-        className="mt-6 w-full py-4 rounded-2xl bg-orange-500 text-white font-black"
-      >
+className="w-full mt-6 py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 text-white font-black shadow-lg"
+>
         Save Profile
       </button>
 
