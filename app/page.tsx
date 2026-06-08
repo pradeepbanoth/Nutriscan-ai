@@ -28,6 +28,7 @@ import { getConfidenceScore } from "../lib/getConfidenceScore";
 import posthog from "posthog-js";
 import { getPersonalizedWarning } from "../lib/getPersonalizedWarning";
 import Image from "next/image";
+import { parseFatSecretNutrition } from "../lib/parseFatSecretNutrition";
 
 
 type Product = {
@@ -41,6 +42,10 @@ type Product = {
   sugar: number;
   fat: number;
   salt: number;
+
+  calories?: number;
+protein?: number;
+carbs?: number;
 };
 
 type ProductRow = {
@@ -514,7 +519,7 @@ const breakdown = product
     : healthScore >= 60
     ? "#ca8a04"
     : healthScore >= 40
-    ? "#ea580c"
+    ? "#ca8a04"
     : "#dc2626";
 
 const scoreCircumference = 2 * Math.PI * 54;
@@ -545,7 +550,7 @@ const healthBadgeClass =
     : healthColor === "yellow"
     ? "bg-yellow-100 text-yellow-700 border-yellow-200"
     : healthColor === "orange"
-    ? "bg-orange-100 text-orange-700 border-orange-200"
+    ? "bg-orange-100 text-yellow-700 border-orange-200"
     : "bg-red-100 text-red-700 border-red-200";
 
     const topReasons = product
@@ -892,7 +897,10 @@ const updateScanStats = async () => {
     const data = await res.json();
 
     if (data.status === 1) {
-      const fetchedProduct: Product = {
+     
+    
+
+const fetchedProduct: Product = {
         id: Date.now(),
         name: data.product.product_name || "Unknown Product",
         brand: data.product.brands || "Unknown Brand",
@@ -904,6 +912,7 @@ const updateScanStats = async () => {
         sugar: data.product.nutriments?.sugars_100g ?? 0,
         fat: data.product.nutriments?.fat_100g ?? 0,
         salt: data.product.nutriments?.salt_100g ?? 0,
+        
       };
 
       localStorage.setItem(
@@ -1428,36 +1437,6 @@ healthScore >= 80
   Based on sugar, salt, fat, processing level, and ingredient risk.
 </p>
 
-{alternatives.length > 0 && (
-  <details className="mt-4 bg-green-50 rounded-2xl border border-green-200 p-4 text-left">
-    <summary className="cursor-pointer text-lg font-black text-green-700">
-      Better Alternatives
-    </summary>
-
-    <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-      {alternatives.map((alternative, index) => (
-        <div
-          key={index}
-          className="bg-white border border-green-200 rounded-2xl p-5"
-        >
-          <div className="flex items-center justify-between gap-3 mb-3">
-            <p className="font-black text-green-700">
-              {alternative.name}
-            </p>
-
-            <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-black">
-              {alternative.score}/100
-            </span>
-          </div>
-
-          <p className="text-sm text-gray-600 leading-relaxed">
-            {alternative.reason}
-          </p>
-        </div>
-      ))}
-    </div>
-  </details>
-)}
 
 <div className="mt-4">
   <div className="flex justify-between text-xs text-gray-500 mb-1">
@@ -1595,7 +1574,7 @@ healthScore >= 80
       : healthScore >= 60
       ? "text-yellow-600"
       : healthScore >= 40
-      ? "text-orange-600"
+      ? "text-yellow-600"
       : "text-red-600"
   }`}
 >
@@ -1623,6 +1602,38 @@ healthScore >= 80
                       {healthVerdict}
                     </p>
 
+                    {alternatives.length > 0 && (
+  <details className="mt-4 bg-green-50 rounded-2xl border border-green-200 p-4 text-left">
+    <summary className="cursor-pointer text-lg font-black text-green-700">
+      Better Alternatives
+    </summary>
+
+    <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+      {alternatives.map((alternative, index) => (
+        <div
+          key={index}
+          className="bg-white border border-green-200 rounded-2xl p-5"
+        >
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <p className="font-black text-green-700">
+              {alternative.name}
+            </p>
+
+            <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-black">
+              {alternative.score}/100
+            </span>
+          </div>
+
+          <p className="text-sm text-gray-600 leading-relaxed">
+            {alternative.reason}
+          </p>
+        </div>
+      ))}
+    </div>
+  </details>
+)}
+
+
                    {personalizedWarnings.length > 0 && (
   <div className="space-y-3 mb-6">
     {personalizedWarnings.map((warning, index) => (
@@ -1645,6 +1656,45 @@ healthScore >= 80
   <summary className="cursor-pointer font-black text-gray-900">
     Nutrition Details
   </summary>
+
+<div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+
+  <div className="bg-orange-50 rounded-2xl p-4 border border-orange-100">
+    <p className="text-xs text-gray-400">Calories</p>
+    <p className="font-black text-orange-600">
+      {product.calories || 0}
+    </p>
+  </div>
+
+  <div className="bg-orange-50 rounded-2xl p-4 border border-orange-100">
+    <p className="text-xs text-gray-400">Protein</p>
+    <p className="font-black text-orange-600">
+      {product.protein || 0}g
+    </p>
+  </div>
+
+  <div className="bg-orange-50 rounded-2xl p-4 border border-orange-100">
+    <p className="text-xs text-gray-400">Carbs</p>
+    <p className="font-black text-orange-600">
+      {product.carbs || 0}g
+    </p>
+  </div>
+
+  <div className="bg-orange-50 rounded-2xl p-4 border border-orange-100">
+    <p className="text-xs text-gray-400">Sugar</p>
+    <p className="font-black text-orange-600">
+      {product.sugar}g
+    </p>
+  </div>
+
+  <div className="bg-orange-50 rounded-2xl p-4 border border-orange-100">
+    <p className="text-xs text-gray-400">Fat</p>
+    <p className="font-black text-orange-600">
+      {product.fat}g
+    </p>
+  </div>
+
+</div>
 
   <div className="mt-4">
     {/* your Good/Bad or risk section goes here */}
