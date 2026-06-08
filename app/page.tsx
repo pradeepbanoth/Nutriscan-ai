@@ -654,6 +654,17 @@ const bmiCategory =
     ? "Overweight"
     : "Obese range";
 
+const dailyCalorieTarget =
+  bmi === 0
+    ? 0
+    : selectedGoal === "Weight Loss"
+    ? 1800
+    : selectedGoal === "Muscle Gain"
+    ? 2600
+    : selectedGoal === "Heart Health"
+    ? 2000
+    : 2200;
+
    const achievements = [
   {
     title: "First Scan",
@@ -2350,19 +2361,116 @@ healthScore >= 80
 )}
 {profileOpen && (
   <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-6">
-    <div className="bg-white max-w-lg w-full rounded-[32px] p-8 shadow-2xl">
-      <h2 className="text-3xl font-black text-gray-900 mb-3">
-        Health Profile
-      </h2>
+    <div className="bg-white max-w-lg w-full rounded-[36px] p-6 sm:p-8 shadow-2xl border border-orange-100">
+     <div className="mb-6">
+  <p className="text-xs font-black uppercase tracking-[0.25em] text-orange-500 mb-2">
+    Personalized Nutrition
+  </p>
+
+  <h2 className="text-3xl font-black text-gray-900">
+    Health Profile
+  </h2>
+
+  <p className="text-sm text-gray-500 mt-2">
+    Tune PAUSTICA around your body, goals, and progress.
+  </p>
+</div>
 
       <p className="text-gray-500 mb-6">
         Personalize PAUSTICA recommendations based on your body and goal.
       </p>
 
+      <div className="mb-6 rounded-3xl border border-orange-100 bg-gradient-to-br from-orange-50 via-white to-orange-50 p-5">
+  <div className="flex items-center justify-between">
+    <div>
+
+<div className="mb-6 rounded-3xl border border-gray-200 bg-gray-50 p-5">
+  <p className="text-sm font-black text-gray-500 mb-3">
+    Body Insights
+  </p>
+
+  <div className="grid grid-cols-2 gap-3">
+    <div className="bg-white rounded-2xl p-4 border border-gray-200">
+      <p className="text-xs text-gray-400">BMI</p>
+      <p className="text-2xl font-black text-gray-900">
+        {bmi > 0 ? bmi.toFixed(1) : "—"}
+      </p>
+      <p className="text-xs text-orange-600 font-bold">
+        {bmiCategory}
+      </p>
+    </div>
+
+    <div className="bg-white rounded-2xl p-4 border border-gray-200">
+      <p className="text-xs text-gray-400">Daily Target</p>
+      <p className="text-2xl font-black text-gray-900">
+        {dailyCalorieTarget || "—"}
+      </p>
+      <p className="text-xs text-gray-500 font-bold">
+        kcal/day
+      </p>
+    </div>
+  </div>
+</div>
+
+      <p className="text-sm text-gray-500 font-semibold">
+        Current Goal
+      </p>
+
+      <p className="text-2xl font-black text-gray-900">
+        {selectedGoal}
+      </p>
+    </div>
+
+    <div className="h-14 w-14 rounded-2xl bg-orange-500 text-white flex items-center justify-center text-2xl font-black">
+      P
+    </div>
+  </div>
+
+  <div className="grid grid-cols-3 gap-3 mt-5">
+    <div className="bg-white rounded-2xl p-3 border border-orange-100">
+      <p className="text-xs text-gray-400">Scans</p>
+      <p className="font-black text-gray-900">{totalScans}</p>
+    </div>
+
+    <div className="bg-white rounded-2xl p-3 border border-orange-100">
+      <p className="text-xs text-gray-400">Streak</p>
+      <p className="font-black text-gray-900">{currentStreak}</p>
+    </div>
+
+    <div className="bg-white rounded-2xl p-3 border border-orange-100">
+      <p className="text-xs text-gray-400">Best</p>
+      <p className="font-black text-gray-900">{bestStreak}</p>
+    </div>
+  </div>
+</div>
+
       <div className="space-y-4">
+       
+       <div className="bg-gray-50 rounded-3xl p-5 border border-gray-200 mb-4">
+
+  <label className="block text-sm font-bold text-gray-500 mb-3">
+    Age
+  </label>
         <input value={userAge} onChange={(e) => setUserAge(e.target.value)} placeholder="Age" className="w-full px-5 py-4 rounded-2xl border border-orange-100 bg-orange-50 outline-none font-bold" />
+       </div>
+
+       <div className="bg-gray-50 rounded-3xl p-5 border border-gray-200 mb-4">
+
+  <label className="block text-sm font-bold text-gray-500 mb-3">
+    Weight
+  </label>
+
         <input value={userWeight} onChange={(e) => setUserWeight(e.target.value)} placeholder="Weight in kg" className="w-full px-5 py-4 rounded-2xl border border-orange-100 bg-orange-50 outline-none font-bold" />
+       </div>
+       
+        <div className="bg-gray-50 rounded-3xl p-5 border border-gray-200 mb-4">
+
+  <label className="block text-sm font-bold text-gray-500 mb-3">
+    Height
+  </label>
         <input value={userHeight} onChange={(e) => setUserHeight(e.target.value)} placeholder="Height in cm" className="w-full px-5 py-4 rounded-2xl border border-orange-100 bg-orange-50 outline-none font-bold" />
+            </div>
+
 
         {bmi > 0 && (
           <div className="rounded-2xl bg-orange-50 border border-orange-100 p-5">
