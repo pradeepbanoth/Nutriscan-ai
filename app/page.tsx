@@ -729,6 +729,11 @@ salt: Number(
 ),
   };
 
+  posthog.capture("search_result_opened", {
+  product_name: String(item.product_name ?? "Unknown Product"),
+  brand: String(item.brands ?? "Unknown Brand"),
+});
+
   setProduct(fetchedProduct);
   const realItems = await getRealAlternatives(fetchedProduct.name);
   setRealAlternatives(realItems);
@@ -1092,7 +1097,7 @@ setRealAlternatives(realItems);
   className="mx-auto mb-6 object-contain"
 />
         <h1 className="text-3xl sm:text-5xl md:text-7xl font-black tracking-[-0.04em] leading-[0.95] text-gray-900 mb-6">
-          Know what's really
+        Scan Food
 <br />
 <span
   style={{
@@ -1102,13 +1107,12 @@ setRealAlternatives(realItems);
     WebkitTextFillColor: "transparent",
   }}
 >
-  inside your food
+  Smarter
 </span>
         </h1>
 
         <p className="max-w-3xl mx-auto text-lg md:text-xl leading-relaxed text-gray-500 mb-12">
-          Scan packaged foods and instantly understand health risks, additives,
-          processing levels, and better alternatives.
+          Instantly understand ingredients, additives, nutrition and healthier alternatives.
         </p>
 
         <div className="flex flex-col md:flex-row gap-4 justify-center mb-10">
@@ -1126,14 +1130,14 @@ setRealAlternatives(realItems);
           </button>
 
           <button
-            onClick={() => {
-  posthog.capture("scanner_opened");
-  setScannerOpen(true);
-}}
-              className="..."
-               >
-               Scan Product
-               </button> 
+  onClick={() => {
+    posthog.capture("scanner_opened");
+    setScannerOpen(true);
+  }}
+  className="px-8 py-5 rounded-2xl bg-white border border-orange-100 text-gray-900 font-bold text-lg shadow-sm hover:bg-orange-50 transition"
+>
+  Scan Product
+</button>
           <input
   value={barcode}
   onChange={(e) => setBarcode(e.target.value)}
@@ -1375,27 +1379,7 @@ setRealAlternatives(realItems);
   </p>
 </div>
 
-<div className="bg-orange-50 rounded-2xl p-4 border border-orange-100">
-  <p className="text-xs text-gray-400 mb-1">
-    Data Quality
-  </p>
 
-  <p
-    className={`text-2xl font-black ${
-      confidence.label === "Excellent" || confidence.label === "Good"
-        ? "text-green-600"
-        : confidence.label === "Fair"
-        ? "text-yellow-600"
-        : "text-red-600"
-    }`}
-  >
-    {confidence.label}
-  </p>
-
-  <p className="text-xs text-gray-400 mt-1">
-    {confidence.score}% complete
-  </p>
-</div>
                     </div>
                   </div>
                 </div>
@@ -1492,13 +1476,13 @@ healthScore >= 80
   </div>
 </div>
 
-<div className="mt-3 flex justify-center md:justify-start">
-  <span className={`px-5 py-2 rounded-full border text-lg font-black ${healthBadgeClass}`}>
+<div className="mt-4 flex justify-center md:justify-start">
+  <span className={`inline-flex items-center px-5 py-2 rounded-full border text-lg font-black shadow-sm ${healthBadgeClass}`}>
     {scoreLabel}
   </span>
 </div>
-<p className="mt-3 text-sm text-gray-500 font-medium">
-  Based on sugar, salt, fat, processing level, and ingredient risk.
+<p className="mt-3 max-w-sm text-sm text-gray-600 font-medium leading-relaxed text-center md:text-left">
+  Based on sugar, salt, fat, processing level, calories, protein, and ingredient risk.
 </p>
 
 
@@ -1685,10 +1669,17 @@ healthScore >= 80
 
     <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
       {alternatives.map((alternative, index) => (
-        <div
-          key={index}
-          className="bg-white border border-green-200 rounded-2xl p-5"
-        >
+       <div
+  key={index}
+  onClick={() =>
+    posthog.capture("alternative_clicked", {
+      product_name: product?.name,
+      alternative_name: alternative.name,
+      alternative_score: alternative.score,
+    })
+  }
+  className="bg-white border border-green-200 rounded-2xl p-5 cursor-pointer hover:shadow-md transition"
+>
           <div className="flex items-center justify-between gap-3 mb-3">
             <p className="font-black text-green-700">
               {alternative.name}
