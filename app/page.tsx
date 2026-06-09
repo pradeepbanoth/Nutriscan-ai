@@ -128,15 +128,27 @@ export default function Home() {
   }
 
   try {
-    const res = await fetch(
-      `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(
-        query
-      )}&search_simple=1&action=process&json=1&page_size=5`
-    );
+   const res = await fetch(
+  `/api/search?q=${encodeURIComponent(query)}`
+);
 
-    const data = await res.json();
+const data = await res.json();
 
-    setSuggestions(data.products || []);
+setSuggestions(
+  (data.products || []).map((p: any) => ({
+    product_name: p.name,
+    brands: p.brand,
+    image_front_url: p.image,
+    ingredients_text: p.ingredients,
+    nutriscore_grade: p.nutriscore,
+    nova_group: p.nova,
+    nutriments: {
+      sugars_100g: p.sugar,
+      fat_100g: p.fat,
+      salt_100g: p.salt,
+    },
+  }))
+);
   } catch {
     setSuggestions([]);
   }
@@ -796,14 +808,13 @@ salt: Number(
   setLoading(true);
 
   try {
-    const res = await fetch(
-      `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(
-        searchQuery
-      )}&search_simple=1&action=process&json=1&page_size=8`
-    );
+   const res = await fetch(
+  `/api/search?q=${encodeURIComponent(searchQuery)}`
+);
 
-    const data = await res.json();
-    const results = data.products || [];
+const data = await res.json();
+
+const results = data.products || [];
 
     if (results.length === 0) {
       alert("No product found. Try a more specific name.");
@@ -811,7 +822,21 @@ salt: Number(
       return;
     }
 
-    setSearchResults(results);
+    setSearchResults(
+  results.map((p: any) => ({
+    product_name: p.name,
+    brands: p.brand,
+    image_front_url: p.image,
+    ingredients_text: p.ingredients,
+    nutriscore_grade: p.nutriscore,
+    nova_group: p.nova,
+    nutriments: {
+      sugars_100g: p.sugar,
+      fat_100g: p.fat,
+      salt_100g: p.salt,
+    },
+  }))
+);
     setSuggestions([]);
     setScannerOpen(false);
     setProduct(null);
@@ -1172,73 +1197,72 @@ setRealAlternatives(realItems);
            </button>
         </div> 
 
-        <div className="max-w-2xl mx-auto mt-6">
-  <div className="flex flex-col sm:flex-row gap-3">
-    <input
-      value={searchQuery}
-     onChange={(e) => {
-  setSearchQuery(e.target.value);
-}}
-      onKeyDown={(e) => {
- if (e.key === "Enter") {
-  setSuggestions([]);
-  searchProduct();
-}
-}}
-      placeholder="Search product name..."
-      className="flex-1 px-6 py-4 rounded-2xl border border-orange-100 bg-white outline-none font-medium"
-    />
+       <div className="max-w-2xl mx-auto mt-6">
+  <div className="relative">
+    <div className="flex flex-col sm:flex-row gap-3">
+      <input
+        value={searchQuery}
+        onChange={(e) => {
+          setSearchQuery(e.target.value);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            setSuggestions([]);
+            searchProduct();
+          }
+        }}
+        placeholder="Search product name..."
+        className="flex-1 px-6 py-4 rounded-2xl border border-orange-100 bg-white outline-none font-medium"
+      />
 
-    <button
-  disabled={loading}
-  onClick={searchProduct}
-  className="px-6 py-4 rounded-2xl bg-orange-500 text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
->
-  {loading ? "Searching..." : "Search"}
-</button>
+      <button
+        disabled={loading}
+        onClick={searchProduct}
+        className="px-6 py-4 rounded-2xl bg-orange-500 text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {loading ? "Searching..." : "Search"}
+      </button>
+    </div>
+
+    {suggestions.length > 0 && (
+      <div className="absolute left-0 right-0 top-full z-50 mt-3 overflow-hidden rounded-3xl border border-orange-100 bg-white shadow-2xl">
+        {suggestions.slice(0, 5).map((item: any, index: number) => (
+          <button
+            key={index}
+            onClick={() => {
+              setSearchQuery(item.product_name || "");
+              analyzeSelectedProduct(item);
+              setSuggestions([]);
+            }}
+            className="flex w-full items-center gap-4 px-5 py-4 text-left hover:bg-orange-50"
+          >
+            {item.image_front_url ? (
+              <Image
+                src={item.image_front_url}
+                alt={item.product_name}
+                width={48}
+                height={48}
+                className="rounded-2xl object-cover border border-orange-100"
+                unoptimized
+              />
+            ) : (
+              <div className="h-12 w-12 rounded-2xl bg-orange-50 border border-orange-100" />
+            )}
+
+            <div>
+              <p className="font-bold text-gray-900">
+                {item.product_name || "Unknown Product"}
+              </p>
+              <p className="text-sm text-gray-500">
+                {item.brands || "Unknown Brand"}
+              </p>
+            </div>
+          </button>
+        ))}
+      </div>
+    )}
   </div>
 </div>
-  {searchResults.length > 0 && !product && (
-  <div className="max-w-4xl mx-auto mt-8 bg-white rounded-[32px] border border-orange-100 shadow-xl p-6 text-left">
-    <h2 className="text-2xl font-black text-gray-900 mb-5">
-      Search Results
-    </h2>
-
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {searchResults.map((item, index) => (
-        <button
-          key={index}
-          onClick={() => {
-            analyzeSelectedProduct(item);
-            setSearchResults([]);
-          }}
-          className="flex items-center gap-4 text-left p-4 rounded-2xl border border-orange-100 hover:bg-orange-50 transition"
-        >
-          {item.image_front_url && (
-            <Image
-  src={item.image_front_url}
-  alt={item.product_name}
-  width={64}
-  height={64}
-  className="rounded-xl object-cover border border-orange-100"
-  unoptimized
-/>
-          )}
-
-          <div>
-            <h3 className="font-black text-gray-900 line-clamp-2">
-              {item.product_name || "Unknown Product"}
-            </h3>
-
-            <p className="text-sm text-gray-400">
-              {item.brands || "Unknown Brand"}
-            </p>
-          </div>
-        </button>
-      ))}
-    </div>
-  </div>
-)}
 
   <p className="mt-4 text-sm text-gray-500 font-medium">
   {dailyScansUsed} / {FREE_DAILY_SCAN_LIMIT} scans used today
