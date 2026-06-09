@@ -2317,7 +2317,7 @@ healthScore >= 80
         {scanHistory.length > 0 && (
          <details className="max-w-6xl mx-auto mt-8 bg-white rounded-[32px] border border-orange-100 shadow-xl p-6">
 <div className="flex items-center justify-between mb-6">
-              <summary className="cursor-pointer text-2xl font-black text-gray-900">
+              <summary className="cursor-pointer text-2xl font-black text-gray-900 list-none">
              Recent Scans
                </summary>
 
@@ -2425,7 +2425,7 @@ healthScore >= 80
       </h3>
 
       <div className="flex flex-wrap gap-3">
-        {["WHO", "FDA", "EFSA", "IARC", "OpenFoodFacts", "Nutri-Score", "NOVA"].map(
+        {["WHO", "FDA", "EFSA", "IARC", "NOVA"].map(
           (source) => (
             <span
               key={source}
@@ -2921,17 +2921,15 @@ healthScore >= 80
   <div className="rounded-[32px] border border-orange-100 bg-white shadow-xl p-6 sm:p-8">
     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
       <div>
-        <p className="text-sm font-black text-orange-600 uppercase tracking-wide mb-2">
-          Trusted Food Intelligence
-        </p>
+        
 
         <h2 className="text-2xl sm:text-3xl font-black text-gray-900">
-          Designed around transparent nutrition science.
+          Thanks to PAUSTICA 90% of all users say they are now eating "Healthier"
         </h2>
       </div>
 
       <div className="flex flex-wrap gap-3">
-        {["WHO", "FDA", "EFSA", "IARC", "NOVA", "Nutri-Score", "OpenFoodFacts"].map(
+        {["WHO", "FDA", "EFSA", "IARC", ].map(
           (source) => (
             <span
               key={source}
