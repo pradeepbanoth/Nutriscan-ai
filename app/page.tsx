@@ -30,6 +30,8 @@ import { getPersonalizedWarning } from "../lib/getPersonalizedWarning";
 import Image from "next/image";
 import { parseFatSecretNutrition } from "../lib/parseFatSecretNutrition";
 import { getRealAlternatives } from "../lib/getRealAlternatives";
+import { createSlug } from "../lib/createSlug";
+import Link from "next/link";
 
 
 type Product = {
@@ -89,7 +91,8 @@ export default function Home() {
   const [totalScans, setTotalScans] = useState(0);
   const [isPremium, setIsPremium] = useState(false);
   const [realAlternatives, setRealAlternatives] = useState<any[]>([]);
-
+  const [showDemo, setShowDemo] = useState(false);
+  const [showScoreFactors, setShowScoreFactors] = useState(false);
 
   
   const [dailyScansUsed, setDailyScansUsed] = useState(() => {
@@ -1789,6 +1792,15 @@ healthScore >= 80
   </div>
 )}
 
+<div className="mt-6">
+  <Link
+    href={`/product/${createSlug(product.name)}`}
+    className="inline-flex rounded-2xl bg-gray-900 px-6 py-4 text-white font-black"
+  >
+    View Full Analysis
+  </Link>
+</div>
+
 
                    {personalizedWarnings.length > 0 && (
   <div className="space-y-3 mb-6">
@@ -2356,6 +2368,583 @@ healthScore >= 80
          </details>
         )}
       </section>
+
+      <section className="mt-16 max-w-7xl mx-auto px-4 sm:px-6 text-left">
+  <div className="bg-white rounded-[36px] border border-orange-100 shadow-xl p-6 sm:p-10">
+    <p className="text-sm font-black text-orange-600 uppercase tracking-wide mb-3">
+      Scientific Methodology
+    </p>
+
+    <h2 className="text-3xl sm:text-5xl font-black text-gray-900 tracking-tight mb-5">
+      Built on transparent food science, not guesswork.
+    </h2>
+
+    <p className="max-w-4xl text-lg text-gray-500 leading-relaxed">
+      PAUSTICA explains food quality using nutrition data, processing level,
+      ingredient risk, additive evidence, and personalized health goals. Every
+      warning is designed to be understandable, balanced, and traceable to
+      trusted scientific or regulatory sources.
+    </p>
+
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-10">
+      <div className="rounded-3xl bg-orange-50 border border-orange-100 p-6">
+        <p className="text-4xl font-black text-orange-600 mb-3">60%</p>
+        <h3 className="text-xl font-black text-gray-900 mb-2">
+          Nutrition Quality
+        </h3>
+        <p className="text-gray-600 leading-relaxed">
+          Sugar, salt, fat, calories, protein, and nutrition balance.
+        </p>
+      </div>
+
+      <div className="rounded-3xl bg-red-50 border border-red-100 p-6">
+        <p className="text-4xl font-black text-red-600 mb-3">30%</p>
+        <h3 className="text-xl font-black text-gray-900 mb-2">
+          Ingredient Risk
+        </h3>
+        <p className="text-gray-600 leading-relaxed">
+          Additives, preservatives, artificial sweeteners, colors, and risky
+          ingredient signals.
+        </p>
+      </div>
+
+      <div className="rounded-3xl bg-green-50 border border-green-100 p-6">
+        <p className="text-4xl font-black text-green-600 mb-3">10%</p>
+        <h3 className="text-xl font-black text-gray-900 mb-2">
+          Processing Context
+        </h3>
+        <p className="text-gray-600 leading-relaxed">
+          NOVA processing level, product completeness, and goal-based adjustment.
+        </p>
+      </div>
+    </div>
+
+    <div className="mt-10 rounded-3xl border border-orange-100 bg-orange-50 p-6">
+      <h3 className="text-xl font-black text-gray-900 mb-4">
+        Trusted References
+      </h3>
+
+      <div className="flex flex-wrap gap-3">
+        {["WHO", "FDA", "EFSA", "IARC", "OpenFoodFacts", "Nutri-Score", "NOVA"].map(
+          (source) => (
+            <span
+              key={source}
+              className="px-4 py-2 rounded-full bg-white border border-orange-100 text-gray-700 font-bold"
+            >
+              {source}
+            </span>
+          )
+        )}
+      </div>
+
+      <p className="mt-5 text-sm text-gray-500 leading-relaxed">
+        PAUSTICA is for educational food transparency. It does not replace
+        medical advice, diagnosis, or treatment.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section className="mt-16 max-w-7xl mx-auto px-4 sm:px-6 text-left">
+  <div className="rounded-[36px] bg-gray-950 p-6 sm:p-10 shadow-2xl">
+    <div className="max-w-3xl">
+      <p className="text-sm font-black text-orange-400 uppercase tracking-wide mb-3">
+        Why PAUSTICA is Different
+      </p>
+
+      <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight mb-5">
+        Food labels show data. PAUSTICA explains what it means.
+      </h2>
+
+      <p className="text-lg text-gray-300 leading-relaxed">
+        Most people see calories, sugar, salt, additives, and ingredients — but
+        still do not know whether a product is actually good for them.
+        PAUSTICA turns confusing food labels into simple, personalized health
+        intelligence.
+      </p>
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-10">
+      {[
+        {
+          title: "Ingredient Intelligence",
+          text: "Explains additives, preservatives, sweeteners, colors, and risky ingredients in simple language.",
+        },
+        {
+          title: "Personalized Scoring",
+          text: "Adjusts analysis for goals like weight loss, diabetes-friendly eating, heart health, muscle gain, and kids nutrition.",
+        },
+        {
+          title: "Processing Detection",
+          text: "Uses NOVA-style processing signals to identify ultra-processed foods more clearly.",
+        },
+        {
+          title: "Transparent Reasons",
+          text: "Every score is supported by visible reasons like sugar, salt, fat, processing level, and ingredient risk.",
+        },
+        {
+          title: "Better Alternatives",
+          text: "Does not only warn users — it helps them discover cleaner and healthier product choices.",
+        },
+        {
+          title: "Built for Daily Decisions",
+          text: "Designed for quick supermarket, hostel, home, and daily snack decisions — not complicated nutrition lectures.",
+        },
+      ].map((item) => (
+        <div
+          key={item.title}
+          className="rounded-3xl border border-white/10 bg-white/5 p-6"
+        >
+          <h3 className="text-xl font-black text-white mb-3">
+            {item.title}
+          </h3>
+
+          <p className="text-gray-300 leading-relaxed">
+            {item.text}
+          </p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<section className="mt-16 max-w-5xl mx-auto px-4 sm:px-6">
+  <details className="group bg-white rounded-[36px] border border-orange-100 shadow-xl overflow-hidden">
+
+    <summary className="cursor-pointer list-none p-8 flex items-center justify-between">
+
+      <div>
+        <p className="text-sm font-black text-orange-600 uppercase tracking-wide mb-2">
+          Product Walkthrough
+        </p>
+
+        <h2 className="text-3xl font-black text-gray-900">
+          How PAUSTICA Works
+        </h2>
+
+        <p className="mt-2 text-gray-500">
+          Understand how your food is analyzed in seconds.
+        </p>
+      </div>
+
+      <div className="w-12 h-12 rounded-full bg-orange-50 border border-orange-100 flex items-center justify-center text-orange-600 font-black text-2xl group-open:rotate-45 transition">
+        +
+      </div>
+
+    </summary>
+
+    <div className="px-8 pb-8">
+
+      <div className="grid md:grid-cols-4 gap-5">
+
+        <div className="rounded-3xl bg-orange-50 border border-orange-100 p-5">
+          <div className="text-3xl font-black text-orange-600 mb-3">
+            01
+          </div>
+
+          <h3 className="font-black text-gray-900 mb-2">
+            Scan or Search
+          </h3>
+
+          <p className="text-gray-600">
+            Scan a barcode or search a product manually.
+          </p>
+        </div>
+
+        <div className="rounded-3xl bg-orange-50 border border-orange-100 p-5">
+          <div className="text-3xl font-black text-orange-600 mb-3">
+            02
+          </div>
+
+          <h3 className="font-black text-gray-900 mb-2">
+            AI Analysis
+          </h3>
+
+          <p className="text-gray-600">
+            Ingredients, additives, nutrition and processing are analyzed.
+          </p>
+        </div>
+
+        <div className="rounded-3xl bg-orange-50 border border-orange-100 p-5">
+          <div className="text-3xl font-black text-orange-600 mb-3">
+            03
+          </div>
+
+          <h3 className="font-black text-gray-900 mb-2">
+            Health Score
+          </h3>
+
+          <p className="text-gray-600">
+            A personalized score is generated based on your health goal.
+          </p>
+        </div>
+
+        <div className="rounded-3xl bg-orange-50 border border-orange-100 p-5">
+          <div className="text-3xl font-black text-orange-600 mb-3">
+            04
+          </div>
+
+          <h3 className="font-black text-gray-900 mb-2">
+            Better Choices
+          </h3>
+
+          <p className="text-gray-600">
+            Get healthier alternatives and clear explanations.
+          </p>
+        </div>
+      
+      <div className="mt-8 text-center">
+  <button
+    onClick={() => setShowDemo(!showDemo)}
+    className="px-6 py-4 rounded-2xl bg-orange-500 text-white font-bold shadow-lg hover:scale-105 transition"
+  >
+    {showDemo ? "Hide Sample Analysis" : "View Sample Analysis"}
+  </button>
+</div>
+
+{showDemo && (
+  <div className="mt-8 rounded-3xl border border-orange-100 bg-orange-50 p-6">
+
+    <div className="grid md:grid-cols-3 gap-5">
+
+      <div className="bg-white rounded-3xl p-5 border border-orange-100">
+        <p className="text-sm text-gray-500 mb-2">
+          Sample Product
+        </p>
+
+        <h3 className="text-xl font-black text-gray-900">
+          Cola Soft Drink
+        </h3>
+
+        <p className="text-gray-500 mt-2">
+          Ultra-processed carbonated beverage
+        </p>
+      </div>
+
+      <div className="bg-red-50 rounded-3xl p-5 border border-red-100">
+        <p className="text-sm text-gray-500 mb-2">
+          AI Health Score
+        </p>
+
+        <div className="text-6xl font-black text-red-600">
+          38
+        </div>
+
+        <p className="font-black text-red-700 mt-2">
+          Avoid Often
+        </p>
+      </div>
+
+      <div className="bg-green-50 rounded-3xl p-5 border border-green-100">
+        <p className="text-sm text-gray-500 mb-2">
+          Better Alternative
+        </p>
+
+        <h3 className="font-black text-green-700">
+          Sparkling Water
+        </h3>
+
+        <p className="text-gray-600 mt-2">
+          Lower sugar and less processed.
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+)}
+      
+      </div>
+    </div>
+
+  </details>
+</section>  
+
+<section className="mt-16 max-w-7xl mx-auto px-4 sm:px-6 text-left">
+  <div className="rounded-[36px] bg-white border border-orange-100 shadow-xl p-6 sm:p-10">
+    <p className="text-sm font-black text-orange-600 uppercase tracking-wide mb-3">
+      User Outcomes
+    </p>
+
+    <h2 className="text-3xl sm:text-5xl font-black text-gray-900 tracking-tight mb-5">
+      Make better food choices without overthinking.
+    </h2>
+
+    <p className="max-w-3xl text-lg text-gray-500 leading-relaxed mb-10">
+      PAUSTICA helps users quickly understand what they are buying, why it
+      matters, and what they can choose instead.
+    </p>
+
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+      {[
+        {
+          title: "Avoid misleading labels",
+          text: "See beyond claims like natural, low-fat, or zero sugar by checking ingredients and processing.",
+        },
+        {
+          title: "Understand risky ingredients",
+          text: "Know why additives, sweeteners, preservatives, and colors may matter for your health goals.",
+        },
+        {
+          title: "Find better alternatives",
+          text: "Replace highly processed products with cleaner options when available.",
+        },
+      ].map((item) => (
+        <div
+          key={item.title}
+          className="rounded-3xl bg-orange-50 border border-orange-100 p-6"
+        >
+          <h3 className="text-xl font-black text-gray-900 mb-3">
+            {item.title}
+          </h3>
+
+          <p className="text-gray-600 leading-relaxed">
+            {item.text}
+          </p>
+        </div>
+      ))}
+    </div>
+    <div className="mt-8 text-center">
+  <button
+    onClick={() => setShowScoreFactors(!showScoreFactors)}
+    className="px-6 py-4 rounded-2xl bg-gray-900 text-white font-bold shadow-lg hover:scale-105 transition"
+  >
+    {showScoreFactors
+      ? "Hide Score Factors"
+      : "How Scores Are Calculated"}
+  </button>
+</div>
+
+{showScoreFactors && (
+  <div className="mt-8 grid md:grid-cols-5 gap-4">
+
+    <div className="rounded-3xl bg-orange-50 border border-orange-100 p-5">
+      <h3 className="font-black text-gray-900 mb-2">
+        Sugar
+      </h3>
+
+      <p className="text-gray-600 text-sm">
+        Higher sugar levels can lower the health score.
+      </p>
+    </div>
+
+    <div className="rounded-3xl bg-orange-50 border border-orange-100 p-5">
+      <h3 className="font-black text-gray-900 mb-2">
+        Salt
+      </h3>
+
+      <p className="text-gray-600 text-sm">
+        Excess sodium may reduce nutritional quality.
+      </p>
+    </div>
+
+    <div className="rounded-3xl bg-orange-50 border border-orange-100 p-5">
+      <h3 className="font-black text-gray-900 mb-2">
+        Fat
+      </h3>
+
+      <p className="text-gray-600 text-sm">
+        Certain fat levels influence the overall score.
+      </p>
+    </div>
+
+    <div className="rounded-3xl bg-orange-50 border border-orange-100 p-5">
+      <h3 className="font-black text-gray-900 mb-2">
+        Processing
+      </h3>
+
+      <p className="text-gray-600 text-sm">
+        Ultra-processed foods generally score lower.
+      </p>
+    </div>
+
+    <div className="rounded-3xl bg-orange-50 border border-orange-100 p-5">
+      <h3 className="font-black text-gray-900 mb-2">
+        Ingredients
+      </h3>
+
+      <p className="text-gray-600 text-sm">
+        Additives and ingredient quality affect ratings.
+      </p>
+    </div>
+
+  </div>
+)}
+
+  </div>
+</section>
+
+<section className="mt-16 max-w-7xl mx-auto px-4 sm:px-6 text-left">
+  <div className="rounded-[36px] bg-gray-950 p-6 sm:p-10 shadow-2xl">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+      <div>
+        <p className="text-sm font-black text-orange-400 uppercase tracking-wide mb-3">
+          PAUSTICA Premium
+        </p>
+
+        <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight mb-5">
+          Unlock deeper food intelligence.
+        </h2>
+
+        <p className="text-lg text-gray-300 leading-relaxed">
+          Go beyond basic scans with unlimited analysis, deeper personalization,
+          smarter alternatives, and advanced nutrition reports.
+        </p>
+      </div>
+
+      <div className="rounded-3xl bg-white border border-white/10 p-6">
+        <div className="space-y-4">
+          {[
+            "Unlimited product scans",
+            "Advanced ingredient intelligence",
+            "Personalized health goal reports",
+            "Smarter healthy alternatives",
+            "Family and daily food history insights",
+          ].map((item) => (
+            <div key={item} className="flex items-center gap-3">
+              <span className="h-6 w-6 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center font-black">
+                ✓
+              </span>
+
+              <p className="font-bold text-gray-800">{item}</p>
+            </div>
+          ))}
+        </div>
+
+        <button
+          onClick={() => setUpgradeOpen(true)}
+          className="mt-8 w-full rounded-2xl bg-orange-500 px-6 py-4 text-white font-black shadow-lg hover:scale-[1.02] transition"
+        >
+          Upgrade to Premium
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section className="mt-16 max-w-6xl mx-auto px-4 sm:px-6 text-center">
+  <div className="rounded-[36px] border border-orange-100 bg-white shadow-xl p-8 sm:p-12">
+    <h2 className="text-3xl sm:text-5xl font-black text-gray-900 tracking-tight mb-5">
+      Ready to know what you’re eating?
+    </h2>
+
+    <p className="max-w-2xl mx-auto text-lg text-gray-500 leading-relaxed mb-8">
+      Scan a barcode, search a product, and get instant food intelligence before
+      you decide what to buy.
+    </p>
+
+    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+      <button
+        onClick={() => {
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          setScannerOpen(true);
+        }}
+        className="px-8 py-5 rounded-2xl text-white font-black shadow-xl"
+        style={{
+          background: "linear-gradient(135deg, #f97316, #ea580c)",
+        }}
+      >
+        Start Scanning
+      </button>
+
+      <button
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        className="px-8 py-5 rounded-2xl bg-orange-50 border border-orange-100 text-orange-600 font-black"
+      >
+        Search a Product
+      </button>
+    </div>
+  </div>
+</section>
+
+<section className="mt-16 max-w-5xl mx-auto px-4 sm:px-6 text-left">
+  <div className="bg-white rounded-[36px] border border-orange-100 shadow-xl p-6 sm:p-10">
+    <p className="text-sm font-black text-orange-600 uppercase tracking-wide mb-3">
+      Questions
+    </p>
+
+    <h2 className="text-3xl sm:text-5xl font-black text-gray-900 tracking-tight mb-8">
+      Food intelligence, explained clearly.
+    </h2>
+
+    <div className="space-y-4">
+      {[
+        {
+          q: "How is PAUSTICA different from a normal nutrition label?",
+          a: "A nutrition label only shows numbers. PAUSTICA explains what those numbers mean using sugar, salt, fat, processing level, ingredients, additives, and your personal health goal.",
+        },
+        {
+          q: "How is the health score calculated?",
+          a: "The score is based on nutrition quality, ingredient risk, processing level, and goal-based personalization. Higher sugar, salt, fat, ultra-processing, or risky additives can reduce the score.",
+        },
+        {
+          q: "Does PAUSTICA use AI?",
+          a: "Yes. PAUSTICA uses AI-style food intelligence to simplify ingredients, detect risky signals, explain concerns, and suggest better alternatives in a way users can understand quickly.",
+        },
+        {
+          q: "Can people with diabetes use PAUSTICA?",
+          a: "PAUSTICA includes a diabetes-friendly goal that pays closer attention to sugar, carbohydrates, processing level, and ingredients. It is educational and should not replace medical advice.",
+        },
+        {
+          q: "What data powers PAUSTICA?",
+          a: "PAUSTICA can use product data from sources like OpenFoodFacts, nutrition APIs, ingredient intelligence, NOVA-style processing signals, Nutri-Score-style grading, and scientific references.",
+        },
+        {
+          q: "Is PAUSTICA free?",
+          a: "PAUSTICA can be used for basic scans and food analysis. Premium features may include advanced reports, unlimited scans, deeper personalization, family profiles, and smarter alternatives.",
+        },
+      ].map((item) => (
+        <details
+          key={item.q}
+          className="group rounded-3xl border border-orange-100 bg-orange-50/50 p-5"
+        >
+          <summary className="cursor-pointer list-none flex items-center justify-between gap-4">
+            <span className="text-lg font-black text-gray-900">
+              {item.q}
+            </span>
+
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white border border-orange-100 text-orange-600 font-black group-open:rotate-45 transition">
+              +
+            </span>
+          </summary>
+
+          <p className="mt-4 text-gray-600 leading-relaxed">
+            {item.a}
+          </p>
+        </details>
+      ))}
+    </div>
+  </div>
+</section>
+
+<section className="mt-16 max-w-7xl mx-auto px-4 sm:px-6">
+  <div className="rounded-[32px] border border-orange-100 bg-white shadow-xl p-6 sm:p-8">
+    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+      <div>
+        <p className="text-sm font-black text-orange-600 uppercase tracking-wide mb-2">
+          Trusted Food Intelligence
+        </p>
+
+        <h2 className="text-2xl sm:text-3xl font-black text-gray-900">
+          Designed around transparent nutrition science.
+        </h2>
+      </div>
+
+      <div className="flex flex-wrap gap-3">
+        {["WHO", "FDA", "EFSA", "IARC", "NOVA", "Nutri-Score", "OpenFoodFacts"].map(
+          (source) => (
+            <span
+              key={source}
+              className="rounded-full border border-orange-100 bg-orange-50 px-4 py-2 text-sm font-black text-gray-700"
+            >
+              {source}
+            </span>
+          )
+        )}
+      </div>
+    </div>
+  </div>
+</section>
 
 {upgradeOpen && (
   <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-6">
