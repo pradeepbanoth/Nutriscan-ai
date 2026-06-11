@@ -9,7 +9,9 @@ export async function GET(req: Request) {
   req.headers.get("x-real-ip") ||
   "anonymous";
 
-const rate = await barcodeRateLimit.limit(ip);
+  const rate = barcodeRateLimit
+  ? await barcodeRateLimit.limit(ip)
+  : { success: true };
 
 if (!rate.success) {
   return NextResponse.json(

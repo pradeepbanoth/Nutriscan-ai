@@ -1,29 +1,32 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
+function createRedisClient() {
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
 
-export const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-});
+  if (!url || !token || !url.startsWith("https://")) {
+    return null;
+  }
 
-export const searchRateLimit = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(30, "1 m"),
-  analytics: true,
-  prefix: "paustica:search",
-});
+  return new Redis({ url, token });
+}
 
-export const nutritionRateLimit = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(20, "1 m"),
-  analytics: true,
-  prefix: "paustica:nutrition",
-});
+const redis = createRedisClient();
 
-export const barcodeRateLimit = new Ratelimit({
-  redis,
-  limiter: Ratelimit.slidingWindow(30, "1 m"),
-  analytics: true,
-  prefix: "paustica:barcode",
-});
+function createRateLimit(prefix: string, requests: number) {
+  if (!redis) {
+    return null;
+  }
+
+  return new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(requests, "1 m"),
+    analytics: true,
+    prefix,
+  });
+}
+
+export const searchRateLimit = createRateLimit("paustica:search", 30);
+export const nutritionRateLimit = createRateLimit("paustica:nutrition", 20);
+export const barcodeRateLimit = createRateLimit("paustica:barcode", 30);

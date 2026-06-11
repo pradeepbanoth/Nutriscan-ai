@@ -26,7 +26,9 @@ export async function GET(request: Request) {
   request.headers.get("x-real-ip") ||
   "anonymous";
 
-const rate = await searchRateLimit.limit(ip);
+const rate = searchRateLimit
+  ? await searchRateLimit.limit(ip)
+  : { success: true };
 
 if (!rate.success) {
   return NextResponse.json(

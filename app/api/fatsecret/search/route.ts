@@ -7,7 +7,9 @@ export async function GET(req: Request) {
   req.headers.get("x-real-ip") ||
   "anonymous";
 
-const rate = await nutritionRateLimit.limit(ip);
+const rate = nutritionRateLimit
+  ? await nutritionRateLimit.limit(ip)
+  : { success: true };
 
 if (!rate.success) {
   return Response.json(
