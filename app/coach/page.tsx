@@ -21,6 +21,9 @@ export default function CoachPage() {
   const [scans, setScans] = useState<ScanRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [isPremium, setIsPremium] = useState(false);
+  const [question, setQuestion] = useState("");
+  const [coachAnswer, setCoachAnswer] = useState("");
+  const [asking, setAsking] = useState(false);
 
   useEffect(() => {
     const loadCoach = async () => {
@@ -79,6 +82,45 @@ export default function CoachPage() {
       : averageScore >= 50
       ? "Your recent scans are mixed. Try reducing high-sugar snacks, salty packaged foods, and ultra-processed products."
       : "Your recent scans show higher risk patterns. Focus on whole foods, fresh snacks, home-cooked meals, and lower-sugar alternatives.";
+
+const askCoach = async () => {
+  if (!question.trim()) return;
+
+  setAsking(true);
+  setCoachAnswer("");
+
+  const recentScans = scoredScans.slice(0, 8).map((item) => ({
+    name: item.product_name,
+    brand: item.brand,
+    score: item.score,
+    sugar: item.sugar,
+    fat: item.fat,
+    salt: item.salt,
+    nova: item.nova,
+  }));
+
+  const res = await fetch("/api/coach", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      message: question,
+      context: {
+        averageScore,
+        highSugar,
+        highSalt,
+        ultraProcessed,
+        recentScans,
+      },
+    }),
+  });
+
+  const data = await res.json();
+
+  setCoachAnswer(data.answer || data.error || "No answer received.");
+  setAsking(false);
+};
 
   if (loading) {
     return (
@@ -193,6 +235,44 @@ export default function CoachPage() {
           <h3 className="text-3xl font-black text-gray-900 mb-6">
             AI Recommendations
           </h3>
+
+          <div className="bg-white border border-orange-100 rounded-[36px] shadow-xl p-8 mb-8">
+  <h3 className="text-3xl font-black text-gray-900 mb-4">
+    Ask PAUSTICA AI Coach
+  </h3>
+
+  <p className="text-gray-500 mb-6">
+    Ask anything about your recent scans, sugar, salt, processing level, or
+    healthier food choices.
+  </p>
+
+  <textarea
+    value={question}
+    onChange={(e) => setQuestion(e.target.value)}
+    placeholder="Example: Based on my recent scans, what should I reduce this week?"
+    className="w-full min-h-[140px] rounded-3xl border border-orange-200 bg-orange-50 p-5 text-gray-900 outline-none focus:border-orange-500 resize-none"
+  />
+
+  <button
+    onClick={askCoach}
+    disabled={asking}
+    className="mt-5 rounded-full bg-orange-600 px-8 py-4 font-bold text-white shadow-lg hover:bg-orange-700 disabled:opacity-60"
+  >
+    {asking ? "Thinking..." : "Ask Coach"}
+  </button>
+
+  {coachAnswer && (
+    <div className="mt-8 rounded-3xl border border-orange-100 bg-orange-50 p-6">
+      <h4 className="text-xl font-black text-gray-900 mb-3">
+        Coach Answer
+      </h4>
+
+      <p className="whitespace-pre-line text-gray-700 leading-relaxed">
+        {coachAnswer}
+      </p>
+    </div>
+  )}
+</div>
 
           <div className="grid md:grid-cols-3 gap-6">
             <div className="bg-green-50 border border-green-200 rounded-3xl p-6">

@@ -111,7 +111,7 @@ export default async function IngredientPage({
               Ingredient Guide
             </p>
 
-            <h1 className="text-4xl sm:text-6xl font-black text-gray-900 tracking-tight mb-5">
+            <h1 className="heading-font text-4xl sm:text-6xl font-black text-gray-900 tracking-tight mb-5">
               {ingredient?.name || ingredientName}
             </h1>
 

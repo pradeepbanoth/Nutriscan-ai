@@ -20,20 +20,69 @@ type OFFProduct = {
   };
 };
 
-const seedQueries = ["coke", "maggi", "lays"];
+const seedQueries = [
+  "coke",
+  "pepsi",
+  "lays",
+  "doritos",
+  "kurkure",
+  "maggi",
+  "oreo",
+  "kitkat",
+  "amul",
+  "nestle",
+];
 
-async function fetchWithTimeout(url: string, timeoutMs = 10000) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+async function fetchWithRetry(
+  url: string,
+  retries = 3,
+  timeoutMs = 15000
+) {
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
-  try {
-    return await fetch(url, {
-      signal: controller.signal,
-      cache: "no-store",
-    });
-  } finally {
-    clearTimeout(timeout);
+    try {
+      const response = await fetch(url, {
+        signal: controller.signal,
+        cache: "no-store",
+        headers: {
+          "User-Agent":
+            "PAUSTICA/1.0 (https://paustica.app; support@paustica.app)",
+          Accept: "application/json",
+        },
+      });
+
+      if (response.ok) {
+        return response;
+      }
+
+      if (
+        response.status === 429 ||
+        response.status === 500 ||
+        response.status === 502 ||
+        response.status === 503
+      ) {
+        if (attempt < retries) {
+          await new Promise((r) => setTimeout(r, attempt * 2000));
+          continue;
+        }
+      }
+
+      return response;
+    } catch (error) {
+      if (attempt < retries) {
+        await new Promise((r) => setTimeout(r, attempt * 2000));
+        continue;
+      }
+
+      throw error;
+    } finally {
+      clearTimeout(timeout);
+    }
   }
+
+  throw new Error("Fetch failed");
 }
 
 export async function POST(request: Request) {
@@ -52,7 +101,7 @@ export async function POST(request: Request) {
         query
       )}&json=1&page_size=10`;
 
-      const response = await fetchWithTimeout(url);
+      const response = await fetchWithRetry(url);
 
       if (!response.ok) {
         errors.push(`${query}: OpenFoodFacts failed ${response.status}`);

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
-import { calculateGoalScore } from "../../lib/goalScoring";
+import { analyzeHealth } from "../../lib/healthEngine";
 
 type ScanRow = {
   id: number;
@@ -53,17 +53,23 @@ export default function DashboardPage() {
     loadDashboard();
   }, []);
 
-  const scoredScans = scans.map((scan) => ({
+ const scoredScans = scans.map((scan) => {
+  const analysis = analyzeHealth({
+    sugar: scan.sugar || 0,
+    fat: scan.fat || 0,
+    salt: scan.salt || 0,
+    nova: scan.nova || "N/A",
+    ingredients: "",
+    healthGoal: "General Wellness",
+  });
+
+  return {
     ...scan,
-    score: calculateGoalScore(
-      "General Wellness",
-      scan.sugar || 0,
-      scan.fat || 0,
-      scan.salt || 0,
-      Number(scan.nova),
-      0
-    ),
-  }));
+    score: analysis.score,
+    grade: analysis.grade,
+    label: analysis.label,
+  };
+});
 
   const averageScore =
     scoredScans.length > 0
@@ -72,6 +78,47 @@ export default function DashboardPage() {
             scoredScans.length
         )
       : 0;
+
+      const recentScores = scoredScans.slice(0, 5).map((item) => item.score);
+const olderScores = scoredScans.slice(5, 10).map((item) => item.score);
+
+const recentAverage =
+  recentScores.length > 0
+    ? Math.round(
+        recentScores.reduce((sum, score) => sum + score, 0) /
+          recentScores.length
+      )
+    : 0;
+
+const olderAverage =
+  olderScores.length > 0
+    ? Math.round(
+        olderScores.reduce((sum, score) => sum + score, 0) /
+          olderScores.length
+      )
+    : 0;
+
+const healthTrend =
+  olderScores.length === 0
+    ? "Not enough data yet"
+    : recentAverage > olderAverage
+    ? "Improving"
+    : recentAverage < olderAverage
+    ? "Declining"
+    : "Stable";
+
+    const brandCounts = scans.reduce<Record<string, number>>((acc, scan) => {
+  const brand = scan.brand || "Unknown Brand";
+
+  acc[brand] = (acc[brand] || 0) + 1;
+
+  return acc;
+}, {});
+
+const mostScannedBrand =
+  Object.entries(brandCounts)
+    .sort((a, b) => b[1] - a[1])[0]?.[0] ||
+  "Not enough data";
 
   const bestProduct =
     scoredScans.length > 0
@@ -149,7 +196,7 @@ const streak = uniqueDays.length;
 
         <section className="bg-white border border-orange-100 rounded-[36px] shadow-2xl p-8 mb-8">
           <p className="text-orange-600 font-bold mb-2">Dashboard</p>
-          <h2 className="text-4xl font-black text-gray-900 mb-2">
+          <h2 className="heading-font text-4xl font-black text-gray-900 mb-2">
             Your Nutrition Overview
           </h2>
           <p className="text-gray-500">{email}</p>
@@ -163,12 +210,15 @@ const streak = uniqueDays.length;
             </h3>
           </div>
 
-          <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-lg">
-            <p className="text-gray-500 font-semibold mb-2">Favorites</p>
-            <h3 className="text-5xl font-black text-orange-600">
-              {favoritesCount}
-            </h3>
-          </div>
+         <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-lg">
+  <p className="text-gray-500 font-semibold mb-2">
+    Most Scanned Brand
+  </p>
+
+  <h3 className="text-3xl font-black text-orange-600 line-clamp-2">
+    {mostScannedBrand}
+  </h3>
+</div>
 
           <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-lg">
             <p className="text-gray-500 font-semibold mb-2">Average Score</p>
@@ -185,18 +235,19 @@ const streak = uniqueDays.length;
           </div>
           <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-lg">
   <p className="text-gray-500 font-semibold mb-2">
-    Health Streak
-  </p>
+  Health Trend
+</p>
 
-  <h3 className="text-5xl font-black text-green-600">
-     {streak}
-  </h3>
+<h3 className="text-4xl font-black text-green-600">
+  {healthTrend}
+</h3>
 </div>
+
         </section>
 
         <section className="grid md:grid-cols-2 gap-6 mb-8">
           <div className="bg-green-50 border border-green-200 rounded-3xl p-6">
-            <h3 className="text-2xl font-black text-green-700 mb-4">
+            <h3 className="heading-font text-2xl font-black text-green-700 mb-4">
               Best Product
             </h3>
             {bestProduct ? (
@@ -214,7 +265,7 @@ const streak = uniqueDays.length;
           </div>
 
           <div className="bg-red-50 border border-red-200 rounded-3xl p-6">
-            <h3 className="text-2xl font-black text-red-700 mb-4">
+            <h3 className="heading-font text-2xl font-black text-red-700 mb-4">
               Worst Product
             </h3>
             {worstProduct ? (
@@ -233,14 +284,14 @@ const streak = uniqueDays.length;
         </section>
 
         <section className="bg-white border border-orange-100 rounded-[36px] shadow-xl p-8 mb-8">
-          <h3 className="text-3xl font-black text-gray-900 mb-4">
+          <h3 className="heading-font text-3xl font-black text-gray-900 mb-4">
             AI Insight
           </h3>
           <p className="text-gray-700 text-lg leading-relaxed">{insight}</p>
         </section>
 
         <section className="bg-white border border-orange-100 rounded-[36px] shadow-xl p-8">
-          <h3 className="text-3xl font-black text-gray-900 mb-6">
+          <h3 className="heading-font text-3xl font-black text-gray-900 mb-6">
             Recent Activity
           </h3>
 

@@ -1,29 +1,51 @@
 @import "tailwindcss";
 
 :root {
-  --background: #F6F3EE;
-  --foreground: #1F2937;
+  --background: #f6f3ee;
+  --foreground: #1f2937;
 
-  --primary: #F97316;
-  --primary-dark: #EA580C;
+  --primary: #f97316;
+  --primary-dark: #ea580c;
 
-  --card: #FFFFFF;
-  --border: #E7E5E4;
-  --muted: #6B7280;
+  --card: #ffffff;
+  --border: #e7e5e4;
+  --muted: #6b7280;
 
-  --success: #22C55E;
-  --warning: #EAB308;
-  --danger: #F97316;
+  --success: #22c55e;
+  --warning: #eab308;
+  --danger: #f97316;
 
-  --surface-soft: #FFF7ED;
-  --surface-muted: #FAFAF9;
+  --surface-soft: #fff7ed;
+  --surface-muted: #fafaf9;
+
+  --font-heading: "Chelsea Market", cursive;
+  --font-body: "Livvic", sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-inter), system-ui, sans-serif;
+  font-family: var(--font-body);
 }
+
+h1,
+h2 {
+  font-family: var(--font-heading);
+}
+
+.heading-font {
+  font-family: var(--font-heading);
+  letter-spacing: -0.02em;
+}
+
+.body-font {
+  font-family: var(--font-body);
+}
+
 @keyframes scan {
   0% {
     top: 0%;

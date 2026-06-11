@@ -39,16 +39,11 @@ const menuItems = [
     description: "Compare free and premium PAUSTICA plans.",
     href: "/pricing",
   },
-  {
-    title: "Privacy Policy",
-    description: "Learn how PAUSTICA handles your data.",
-    href: "/privacy",
-  },
-  {
-    title: "Terms of Service",
-    description: "Read PAUSTICA usage terms.",
-    href: "/terms",
-  },
+ {
+  title: "Got a Question?",
+  description: "View FAQs, privacy details, terms, and support information.",
+  href: "/trust",
+},
 ];
 
 export default function MenuPage() {
@@ -79,7 +74,7 @@ export default function MenuPage() {
             App Menu
           </p>
 
-          <h2 className="text-5xl font-black text-gray-900 mb-5">
+          <h2 className="heading-font text-5xl font-black text-gray-900 mb-5">
             Explore PAUSTICA
           </h2>
 

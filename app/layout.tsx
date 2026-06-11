@@ -1,12 +1,18 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { PostHogProvider } from "./providers";
+import { Chelsea_Market, Livvic } from "next/font/google";
 
-const inter = Inter({
-  variable: "--font-inter",
+const chelsea = Chelsea_Market({
+  weight: "400",
   subsets: ["latin"],
-  display: "swap",
+  variable: "--font-heading",
+});
+
+const livvic = Livvic({
+  weight: ["400", "500", "600", "700"],
+  subsets: ["latin"],
+  variable: "--font-body",
 });
 
 export const metadata: Metadata = {
@@ -14,7 +20,8 @@ export const metadata: Metadata = {
     default: "PAUSTICA — Know What You're Eating",
     template: "%s | PAUSTICA",
   },
-  description: "Scan any packaged food and get instant AI health analysis — ingredients, additives, nutrition score, and personalized recommendations in seconds.",
+  description:
+    "Scan any packaged food and get instant AI health analysis — ingredients, additives, nutrition score, and personalized recommendations in seconds.",
   keywords: [
     "food scanner",
     "nutrition analysis",
@@ -27,11 +34,11 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "PAUSTICA" }],
   creator: "PAUSTICA",
-  metadataBase: new URL("https://PAUSTICA-ai-orpin.vercel.app"),
+  metadataBase: new URL("https://nutriscan-ai-orpin.vercel.app"),
   openGraph: {
     type: "website",
     locale: "en_IN",
-    url: "https://PAUSTICA-ai-orpin.vercel.app",
+    url: "https://nutriscan-ai-orpin.vercel.app",
     title: "PAUSTICA — Know What You're Eating",
     description:
       "Scan any packaged food and get instant AI health analysis — ingredients, additives, nutrition score, and personalized recommendations in seconds.",
@@ -68,15 +75,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} h-full antialiased`}>
-      <head>
-        <link rel="preconnect" href="https://api.fontshare.com" />
-        <link
-          href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body className="min-h-full flex flex-col" style={{ fontFamily: "var(--font-inter), system-ui, sans-serif" }}>
+    <html
+      lang="en"
+      className={`${chelsea.variable} ${livvic.variable} h-full antialiased`}
+    >
+      <body>
         <PostHogProvider>{children}</PostHogProvider>
       </body>
     </html>

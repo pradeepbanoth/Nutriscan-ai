@@ -30,7 +30,7 @@ export default function PricingPage() {
             Simple Pricing
           </p>
 
-          <h2 className="text-5xl font-black text-gray-900 mb-5">
+          <h2 className="heading-font text-5xl font-black text-gray-900 mb-5">
             Choose your PAUSTICA plan
           </h2>
 
@@ -42,7 +42,7 @@ export default function PricingPage() {
 
         <div className="grid md:grid-cols-2 gap-8">
           <div className="bg-white border border-orange-100 rounded-[36px] shadow-xl p-8">
-            <h3 className="text-3xl font-black text-gray-900 mb-2">
+            <h3 className="heading-font text-3xl font-black text-gray-900 mb-2">
               {plans.free.name}
             </h3>
 
@@ -59,7 +59,7 @@ export default function PricingPage() {
               <li>Basic health score</li>
               <li>Favorites</li>
               <li>Scan history</li>
-              <li>20 scans/day</li>
+              <li>10 scans/day</li>
             </ul>
 
             <a
@@ -75,7 +75,7 @@ export default function PricingPage() {
               Recommended
             </div>
 
-            <h3 className="text-3xl font-black mb-2">
+            <h3 className="heading-font text-3xl font-black mb-2">
               {plans.premium.name}
             </h3>
 

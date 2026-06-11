@@ -1232,7 +1232,7 @@ const logFood = async () => {
   </div>
 </nav>
 
-<section className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pt-6 sm:pt-12 pb-10 text-center">
+<section className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pt-10 sm:pt-16 pb-14 text-center">
       <Image
   src="/logo.png"
   alt="PAUSTICA"
@@ -1240,7 +1240,7 @@ const logFood = async () => {
   height={72}
   className="mx-auto mb-6 object-contain"
 />
-        <h1 className="text-3xl sm:text-5xl md:text-7xl font-black tracking-[-0.04em] leading-[0.95] text-gray-900 mb-6">
+        <h1 className="heading-font text-3xl sm:text-5xl md:text-7xl font-black tracking-[-0.04em] leading-[0.95] text-gray-900 mb-6">
         Scan Food
 <br />
 <span
@@ -1255,17 +1255,17 @@ const logFood = async () => {
 </span>
         </h1>
 
-        <p className="max-w-3xl mx-auto text-lg md:text-xl leading-relaxed text-gray-500 mb-12">
+        <p className="max-w-2xl mx-auto text-lg md:text-xl leading-relaxed text-gray-500 mb-10">
           Instantly understand ingredients, additives, nutrition and healthier alternatives.
         </p>
 
-        <div className="flex flex-col md:flex-row gap-4 justify-center mb-10">
+        <div className="flex flex-col md:flex-row gap-3 justify-center mb-8">
           <button
             onClick={() => {
              posthog.capture("scanner_opened");
              setScannerOpen(true);
             }}
-            className="px-8 py-5 rounded-2xl text-white font-bold text-lg shadow-xl"
+            className="px-8 py-5 rounded-[20px] text-white font-bold text-lg shadow-xl"
             style={{
               background: "linear-gradient(135deg, #f97316, #ea580c)",
             }}
@@ -1278,7 +1278,7 @@ const logFood = async () => {
     posthog.capture("scanner_opened");
     setScannerOpen(true);
   }}
-  className="px-8 py-5 rounded-2xl bg-white border border-orange-100 text-gray-900 font-bold text-lg shadow-sm hover:bg-orange-50 transition"
+  className="px-8 py-5 rounded-20px bg-white border border-orange-100 text-gray-900 font-bold text-lg shadow-sm hover:bg-orange-50 transition"
 >
   Scan Product
 </button>
@@ -1286,19 +1286,19 @@ const logFood = async () => {
   value={barcode}
   onChange={(e) => setBarcode(e.target.value)}
   placeholder="Enter barcode manually"
-  className="px-6 py-5 rounded-2xl bg-white border border-orange-100 text-gray-900 font-bold outline-none"
+  className="px-6 py-5 rounded-[20px] bg-white border border-orange-100 text-gray-900 font-bold outline-none"
 />
 
        <button
         disabled={loading}
         onClick={() => fetchProduct()}
-        className="px-8 py-5 rounded-2xl bg-gray-900 text-white font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+        className="px-8 py-5 rounded-[20px] bg-gray-900 text-white font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
         >
         {loading ? "Analyzing..." : "Analyze Barcode"}
            </button>
         </div> 
 
-       <div className="max-w-2xl mx-auto mt-6">
+       <div className="max-w-2xl mx-auto mt-4">
   <div className="relative">
     <div className="flex flex-col sm:flex-row gap-3">
       <input
@@ -1313,20 +1313,20 @@ const logFood = async () => {
           }
         }}
         placeholder="Search product name..."
-        className="flex-1 px-6 py-4 rounded-2xl border border-orange-100 bg-white outline-none font-medium"
+        className="flex-1 px-6 py-4 rounded-[20px] border border-orange-100 bg-white outline-none font-semibold shadow-sm"
       />
 
       <button
         disabled={loading}
         onClick={searchProduct}
-        className="px-6 py-4 rounded-2xl bg-orange-500 text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+        className="px-6 py-4 rounded-[20px] bg-orange-500 text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading ? "Searching..." : "Search"}
       </button>
     </div>
 
     {suggestions.length > 0 && (
-      <div className="absolute left-0 right-0 top-full z-50 mt-3 overflow-hidden rounded-3xl border border-orange-100 bg-white shadow-2xl">
+      <div className="absolute left-0 right-0 top-full z-50 mt-3 overflow-hidden rounded-[32px] border border-orange-100 bg-white shadow-2xl">
         {suggestions.slice(0, 5).map((item: any, index: number) => (
           <button
             key={index}
@@ -1343,11 +1343,11 @@ const logFood = async () => {
                 alt={item.product_name}
                 width={48}
                 height={48}
-                className="rounded-2xl object-cover border border-orange-100"
+                className="rounded-[20px] object-cover border border-orange-100"
                 unoptimized
               />
             ) : (
-              <div className="h-12 w-12 rounded-2xl bg-orange-50 border border-orange-100" />
+              <div className="h-12 w-12 rounded-[20px] bg-orange-50 border border-orange-100" />
             )}
 
             <div>
@@ -1374,7 +1374,7 @@ const logFood = async () => {
 </p>
 
         {scannerOpen && (
-          <div className="max-w-2xl mx-auto bg-white p-6 rounded-[32px] border border-orange-100 shadow-2xl mb-10">
+          <div className="max-w-2xl mx-auto bg-white p-6 rounded-[32px] border border-orange-100 mb-10">
            <BarcodeScanner
               onScan={(code) => {
               setBarcode(code);
@@ -1401,9 +1401,9 @@ const logFood = async () => {
          
          {!product && !loading && !scannerOpen && (
   <div className="mt-10 max-w-2xl mx-auto bg-white rounded-[32px] border border-orange-100 shadow-xl p-8">
-    <h2 className="text-2xl font-black text-gray-900 mb-3">
+    <h3 className="heading-font text-xl font-black text-gray-900 mb-3">
       Ready to analyze your food
-    </h2>
+    </h3>
 
     <p className="text-gray-500 mb-6">
       Open the scanner or enter a barcode manually to get instant health insights.
@@ -1411,7 +1411,7 @@ const logFood = async () => {
 
     <button
       onClick={() => setScannerOpen(true)}
-      className="px-8 py-4 rounded-2xl text-white font-bold shadow-lg"
+      className="px-8 py-4 rounded-[20px] text-white font-bold shadow-lg"
       style={{
         background: "linear-gradient(135deg, #f97316, #ea580c)",
       }}
@@ -1454,7 +1454,7 @@ const logFood = async () => {
                   <div className="flex-1 text-left">
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                          <h2 className="text-xl md:text-3xl font-black text-gray-900 mb-2 leading-tight">
+                          <h2 className="heading-font text-xl md:text-3xl font-black text-gray-900 mb-2 leading-tight">
                           {product.name}
                         </h2>
 
@@ -1469,7 +1469,7 @@ const logFood = async () => {
 
                       <button
                         onClick={toggleFavorite}
-                        className={`px-4 py-3 rounded-2xl font-bold border transition-all ${
+                        className={`px-4 py-3 rounded-[20px] font-bold border transition-all ${
                           isFavorite
                             ? "bg-orange-500 text-white border-orange-500"
                             : "bg-orange-50 text-orange-600 border-orange-100"
@@ -1480,42 +1480,42 @@ const logFood = async () => {
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5">
-                      <div className="bg-orange-50 rounded-2xl p-3 md:p-4 border border-orange-100">
+                      <div className="bg-orange-50 rounded-[24px] p-3 md:p-4 border border-orange-100">
                         <p className="text-xs text-gray-400 mb-1">Sugar</p>
                         <p className="text-xl md:text-2xl font-black text-orange-600">
                           {product.sugar}g
                         </p>
                       </div>
 
-                     <div className="bg-orange-50 rounded-2xl p-3 md:p-4 border border-orange-100">
+                     <div className="bg-orange-50 rounded-[24px] p-3 md:p-4 border border-orange-100">
   <p className="text-xs text-gray-400 mb-1">Calories</p>
   <p className="text-xl md:text-2xl font-black text-orange-600">
     {product.calories || 0}
   </p>
 </div>
 
-<div className="bg-orange-50 rounded-2xl p-3 md:p-4 border border-orange-100">
+<div className="bg-orange-50 rounded-[24px] p-3 md:p-4 border border-orange-100">
   <p className="text-xs text-gray-400 mb-1">Protein</p>
   <p className="text-xl md:text-2xl font-black text-orange-600">
     {product.protein || 0}g
   </p>
 </div>
 
-<div className="bg-orange-50 rounded-2xl p-3 md:p-4 border border-orange-100">
+<div className="bg-orange-50 rounded-[24px] p-3 md:p-4 border border-orange-100">
   <p className="text-xs text-gray-400 mb-1">Carbs</p>
   <p className="text-xl md:text-2xl font-black text-orange-600">
     {product.carbs || 0}g
   </p>
 </div>
 
-                      <div className="bg-orange-50 rounded-2xl p-3 md:p-4 border border-orange-100">
+                      <div className="bg-orange-50 rounded-[24px] p-3 md:p-4 border border-orange-100">
                         <p className="text-xs text-gray-400 mb-1">Fat</p>
                         <p className="text-xl md:text-2xl font-black text-orange-600">
                           {product.fat}g
                         </p>
                       </div>
 
-                      <div className="bg-orange-50 rounded-2xl p-3 md:p-4 border border-orange-100">
+                      <div className="bg-orange-50 rounded-[24px] p-3 md:p-4 border border-orange-100">
                         <p className="text-xs text-gray-400 mb-1">Salt</p>
                         <p className="text-xl md:text-2xl font-black text-orange-600">
                           {product.salt}g
@@ -1523,7 +1523,7 @@ const logFood = async () => {
                       </div>
 
                      
-                      <div className="bg-orange-50 rounded-2xl p-3 md:p-4 border border-orange-100">
+                      <div className="bg-orange-50 rounded-[24px] p-3 md:p-4 border border-orange-100">
   <p className="text-xs text-gray-400 mb-1">NOVA</p>
   <p className="text-xl md:text-2xl font-black text-orange-600">
     {product.nova}
@@ -1555,7 +1555,7 @@ const logFood = async () => {
         });
     }
   }}
-                    className="w-full rounded-2xl border border-orange-100 bg-orange-50 px-5 py-4 font-bold text-gray-800 outline-none"
+                    className="w-full rounded-[20px] border border-orange-100 bg-orange-50 px-5 py-4 font-bold text-gray-800 outline-none"
                   >
                     <option>General Wellness</option>
                     <option>Weight Loss</option>
@@ -1568,7 +1568,7 @@ const logFood = async () => {
 
                 <div className="mt-8 text-left">
                   <div
-className={`rounded-3xl p-4 sm:p-6 border ${
+className={`rounded-[32px] p-4 sm:p-6 border ${
 healthScore >= 80
     ? "bg-green-50 border-green-200"
     : healthScore >= 60
@@ -1580,9 +1580,9 @@ healthScore >= 80
                   >
                     <div className="flex flex-col md:flex-row gap-6 mb-4">
                       <div>
-                        <p className="text-sm text-gray-500 font-semibold">
-                          AI Health Score
-                        </p>
+                        <p className="heading-font text-sm text-gray-500 font-semibold">
+                         AI Health Score
+                           </p>
 
 <div className="relative w-40 h-40 mx-auto md:mx-0">
   <svg className="w-40 h-40 -rotate-90" viewBox="0 0 120 120">
@@ -1679,7 +1679,7 @@ healthScore >= 80
   ))}
 </div>
                       </div>
-                      <details className="mt-5 rounded-3xl border border-orange-200 bg-gradient-to-br from-orange-50 to-white p-5">
+                      <details className="mt-5 rounded-[32px] border border-orange-200 bg-gradient-to-br from-orange-50 to-white p-5">
   <summary className="cursor-pointer text-lg font-black text-orange-600">
   Premium Insights
 </summary>
@@ -1701,7 +1701,7 @@ healthScore >= 80
 
       <button
   onClick={() => setUpgradeOpen(true)}
-  className="px-5 py-3 rounded-2xl bg-orange-500 text-white font-bold"
+  className="px-5 py-3 rounded-[20px] bg-orange-500 text-white font-bold"
 >
   Upgrade to Premium
 </button>
@@ -1709,7 +1709,7 @@ healthScore >= 80
   )}
 </div>
 </details>
-                   <details className="mt-5 bg-white border border-orange-100 rounded-3xl p-5 shadow-lg">
+                   <details className="mt-5 bg-white border border-orange-100 rounded-[32px] p-5 shadow-lg">
   <summary className="cursor-pointer text-lg font-black text-gray-900">
     Score Breakdown
   </summary>
@@ -1804,7 +1804,7 @@ healthScore >= 80
 </div>
 
                     {alternatives.length > 0 && (
-  <details className="mt-4 bg-green-50 rounded-2xl border border-green-200 p-4 text-left">
+  <details className="mt-4 bg-green-50 rounded-[20px] border border-green-200 p-4 text-left">
     <summary className="cursor-pointer text-lg font-black text-green-700">
       Better Alternatives
     </summary>
@@ -1820,7 +1820,7 @@ healthScore >= 80
       alternative_score: alternative.score,
     })
   }
-  className="bg-white border border-green-200 rounded-2xl p-5 cursor-pointer hover:shadow-md transition"
+  className="bg-white border border-green-200 rounded-[20px] p-5 cursor-pointer hover:shadow-md transition"
 >
           <div className="flex items-center justify-between gap-3 mb-3">
             <p className="font-black text-green-700">
@@ -1851,7 +1851,7 @@ healthScore >= 80
       {realAlternatives.map((item, index) => (
         <div
           key={index}
-          className="flex items-center gap-4 bg-white border border-green-200 rounded-2xl p-4"
+          className="flex items-center gap-4 bg-white border border-green-200 rounded-[20px] p-4"
         >
           {item.image && (
             <Image
@@ -1893,14 +1893,14 @@ healthScore >= 80
   <div className="mt-6 flex flex-col sm:flex-row gap-3">
   <button
     onClick={logFood}
-    className="inline-flex justify-center rounded-2xl bg-orange-500 px-6 py-4 text-white font-black"
+    className="inline-flex justify-center rounded-[20px] bg-orange-500 px-6 py-4 text-white font-black"
   >
     Log Food
   </button>
 
   <Link
     href={`/product/${createSlug(product.name)}`}
-    className="inline-flex justify-center rounded-2xl bg-gray-900 px-6 py-4 text-white font-black"
+    className="inline-flex justify-center rounded-[20px] bg-gray-900 px-6 py-4 text-white font-black"
   >
     View Full Analysis
   </Link>
@@ -1913,7 +1913,7 @@ healthScore >= 80
     {personalizedWarnings.map((warning, index) => (
       <div
         key={index}
-        className={`rounded-2xl border p-5 ${
+        className={`rounded-[20px] border p-5 ${
           warning.level === "High"
             ? "bg-red-50 border-red-200 text-red-700"
             : "bg-yellow-50 border-yellow-200 text-yellow-700"
@@ -1926,42 +1926,42 @@ healthScore >= 80
   </div>
 )}
 
-<details className="mt-5 bg-white rounded-2xl border border-orange-100 p-5">
+<details className="mt-5 bg-white rounded-[20px] border border-orange-100 p-5">
   <summary className="cursor-pointer font-black text-gray-900">
     Nutrition Details
   </summary>
 
 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
 
-  <div className="bg-orange-50 rounded-2xl p-4 border border-orange-100">
+  <div className="bg-orange-50 rounded-[20px] p-4 border border-orange-100">
     <p className="text-xs text-gray-400">Calories</p>
     <p className="font-black text-orange-600">
       {product.calories || 0}
     </p>
   </div>
 
-  <div className="bg-orange-50 rounded-2xl p-4 border border-orange-100">
+  <div className="bg-orange-50 rounded-[20px] p-4 border border-orange-100">
     <p className="text-xs text-gray-400">Protein</p>
     <p className="font-black text-orange-600">
       {product.protein || 0}g
     </p>
   </div>
 
-  <div className="bg-orange-50 rounded-2xl p-4 border border-orange-100">
+  <div className="bg-orange-50 rounded-[20px] p-4 border border-orange-100">
     <p className="text-xs text-gray-400">Carbs</p>
     <p className="font-black text-orange-600">
       {product.carbs || 0}g
     </p>
   </div>
 
-  <div className="bg-orange-50 rounded-2xl p-4 border border-orange-100">
+  <div className="bg-orange-50 rounded-[20px] p-4 border border-orange-100">
     <p className="text-xs text-gray-400">Sugar</p>
     <p className="font-black text-orange-600">
       {product.sugar}g
     </p>
   </div>
 
-  <div className="bg-orange-50 rounded-2xl p-4 border border-orange-100">
+  <div className="bg-orange-50 rounded-[20px] p-4 border border-orange-100">
     <p className="text-xs text-gray-400">Fat</p>
     <p className="font-black text-orange-600">
       {product.fat}g
@@ -1975,13 +1975,13 @@ healthScore >= 80
   </div>
 </details>
 
-                   <details className="mt-5 bg-white rounded-2xl border border-orange-100 p-5">
+                   <details className="mt-5 bg-white rounded-[20px] border border-orange-100 p-5">
   <summary className="cursor-pointer font-black text-gray-900">
     Why this score?
   </summary>
 
   {(healthAnalysis?.additiveInsights?.length ?? 0) > 0 && (
-  <details className="mt-5 bg-white rounded-2xl border border-orange-100 p-5">
+  <details className="mt-5 bg-white rounded-[] border border-orange-100 p-5">
     <summary className="cursor-pointer font-black text-gray-900">
       Additive Intelligence
     </summary>
@@ -1990,7 +1990,7 @@ healthScore >= 80
       {(healthAnalysis?.additiveInsights || []).map((item) => (
         <div
           key={item.code}
-          className="rounded-2xl border border-orange-100 bg-orange-50 p-4"
+          className="rounded-[20px] border border-orange-100 bg-orange-50 p-4"
         >
           <div className="flex items-center justify-between">
             <h4 className="font-black text-gray-900">
@@ -2024,13 +2024,13 @@ healthScore >= 80
 )}
 
 {loadingAlternatives && (
-  <div className="mt-5 rounded-2xl border border-orange-100 bg-white p-5">
+  <div className="mt-5 rounded-[20px] border border-orange-100 bg-white p-5">
     Finding healthier alternatives...
   </div>
 )}
 
 {alternatives.length > 0 && (
-  <div className="mt-5 rounded-2xl border border-green-100 bg-green-50 p-5">
+  <div className="mt-5 rounded-[20px] border border-green-100 bg-green-50 p-5">
     <h3 className="text-lg font-black text-green-700 mb-4">
       Healthier Alternatives
     </h3>
@@ -2055,7 +2055,7 @@ healthScore >= 80
 )}
 
   <div className="mt-4 grid md:grid-cols-2 gap-4">
-    <div className="rounded-2xl bg-green-50 border border-green-100 p-5">
+    <div className="rounded-[20px] bg-green-50 border border-green-100 p-5">
       <h4 className="font-black text-green-700 mb-3">
         Positives
       </h4>
@@ -2069,7 +2069,7 @@ healthScore >= 80
       </ul>
     </div>
 
-    <div className="rounded-2xl bg-red-50 border border-red-100 p-5">
+    <div className="rounded-[20px] bg-red-50 border border-red-100 p-5">
       <h4 className="font-black text-red-700 mb-3">
         Warnings
       </h4>
@@ -2088,7 +2088,7 @@ healthScore >= 80
 
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      <div className="bg-white rounded-2xl p-4 border border-orange-100">
+                      <div className="bg-white rounded-[20px] p-4 border border-orange-100">
                         <p className="text-xs text-gray-400 mb-1">
                           Sugar Risk
                         </p>
@@ -2101,7 +2101,7 @@ healthScore >= 80
                         </p>
                       </div>
 
-                      <div className="bg-white rounded-2xl p-4 border border-orange-100">
+                      <div className="bg-white rounded-[20px] p-4 border border-orange-100">
                         <p className="text-xs text-gray-400 mb-1">Fat Risk</p>
                         <p className="font-black text-orange-600">
                           {product.fat > 20
@@ -2112,7 +2112,7 @@ healthScore >= 80
                         </p>
                       </div>
 
-                      <div className="bg-white rounded-2xl p-4 border border-orange-100">
+                      <div className="bg-white rounded-[20px] p-4 border border-orange-100">
                         <p className="text-xs text-gray-400 mb-1">
                           Salt Risk
                         </p>
@@ -2125,7 +2125,7 @@ healthScore >= 80
                         </p>
                       </div>
 
-                      <div className="bg-white rounded-2xl p-4 border border-orange-100">
+                      <div className="bg-white rounded-[20px] p-4 border border-orange-100">
                         <p className="text-xs text-gray-400 mb-1">
                           Processing
                         </p>
@@ -2147,13 +2147,13 @@ healthScore >= 80
                 
 
 <details
-  className="mt-4 text-left bg-white rounded-3xl border border-orange-100 p-4"
+  className="mt-4 text-left bg-white rounded-[32px] border border-orange-100 p-4"
 >
   <summary className="cursor-pointer text-lg font-black text-gray-900">
     Ingredients
   </summary>
 
-  <div className="mt-4 bg-orange-50 rounded-3xl border border-orange-100 p-5">
+  <div className="mt-4 bg-orange-50 rounded-[32px] border border-orange-100 p-5">
     <p className="text-gray-700 leading-relaxed">
       {product.ingredients}
     </p>
@@ -2162,7 +2162,7 @@ healthScore >= 80
                 
 
                 {detectedHarmful.length > 0 && (
-  <details className="mt-4 text-left bg-red-50 border border-red-200 rounded-3xl p-4">
+  <details className="mt-4 text-left bg-red-50 border border-red-200 rounded-[32px] p-4">
     <summary className="cursor-pointer text-lg font-black text-red-700">
       Harmful Ingredients Detected
     </summary>
@@ -2171,7 +2171,7 @@ healthScore >= 80
                         {detectedHarmful.map((ingredient, index) => (
                           <div
                             key={index}
-                            className="px-4 py-3 rounded-2xl bg-white border border-red-200 text-red-700 font-semibold"
+                            className="px-4 py-3 rounded-[20px] bg-white border border-red-200 text-red-700 font-semibold"
                           >
                             {ingredient}
                           </div>
@@ -2183,13 +2183,13 @@ healthScore >= 80
 
 
                 {ingredientInsights.length > 0 && (
-                  <details className="mt-6 text-left bg-white rounded-3xl border border-orange-100 p-5">
-                    <div className="bg-blue-50 border border-blue-200 rounded-3xl p-5">
+                  <details className="mt-6 text-left bg-white rounded-[32px] border border-orange-100 p-5">
+                    <div className="bg-blue-50 border border-blue-200 rounded-[32px] p-5">
                       <summary className="cursor-pointer text-xl font-black text-gray-900">
                        AI Ingredient Intelligence
                          </summary>
 
-                      <div className="mb-6 bg-white border border-blue-100 rounded-3xl p-6">
+                      <div className="mb-6 bg-white border border-blue-100 rounded-[32px] p-6">
   <p className="text-sm font-bold text-gray-500 mb-2">
     Ingredient Quality
   </p>
@@ -2199,21 +2199,21 @@ healthScore >= 80
   </h4>
 
   <div className="grid grid-cols-3 gap-3">
-    <div className="rounded-2xl bg-red-50 border border-red-100 p-4">
+    <div className="rounded-[20px] bg-red-50 border border-red-100 p-4">
       <p className="text-xs text-red-400 font-bold">High Risk</p>
       <p className="text-2xl font-black text-red-600">
         {highRiskIngredients}
       </p>
     </div>
 
-    <div className="rounded-2xl bg-yellow-50 border border-yellow-100 p-4">
+    <div className="rounded-[20px] bg-yellow-50 border border-yellow-100 p-4">
       <p className="text-xs text-yellow-500 font-bold">Medium Risk</p>
       <p className="text-2xl font-black text-yellow-600">
         {mediumRiskIngredients}
       </p>
     </div>
 
-    <div className="rounded-2xl bg-green-50 border border-green-100 p-4">
+    <div className="rounded-[20px] bg-green-50 border border-green-100 p-4">
       <p className="text-xs text-green-500 font-bold">Low Risk</p>
       <p className="text-2xl font-black text-green-600">
         {lowRiskIngredients}
@@ -2226,7 +2226,7 @@ healthScore >= 80
                         {ingredientInsights.map((item, index) => (
                           <div
                             key={index}
-                            className="bg-white border border-blue-100 rounded-3xl p-6"
+                            className="bg-white border border-blue-100 rounded-[32px] p-6"
                           >
                             <div className="flex items-center justify-between mb-4">
                               <h4 className="text-xl font-black text-gray-900">
@@ -2286,7 +2286,7 @@ healthScore >= 80
 
                 {alternatives.length > 0 && (
                   <div className="mt-10 text-left">
-                    <div className="bg-green-50 border border-green-200 rounded-3xl p-4">
+                    <div className="bg-green-50 border border-green-200 rounded-[32px] p-4">
                       <h3 className="text-lg font-black text-green-700 mb-3">
                         Better Alternatives
                       </h3>
@@ -2295,7 +2295,7 @@ healthScore >= 80
                         {alternatives.map((alternative, index) => (
   <div
     key={index}
-    className="bg-white border border-green-200 rounded-2xl p-5"
+    className="bg-white border border-green-200 rounded-[20px] p-5"
   >
     <div className="flex items-center justify-between gap-3 mb-3">
     <div className="flex items-center justify-between mb-2">
@@ -2348,7 +2348,7 @@ healthScore >= 80
       {realAlternatives.map((item, index) => (
         <div
           key={index}
-          className="flex items-center gap-4 bg-white border border-green-200 rounded-2xl p-4"
+          className="flex items-center gap-4 bg-white border border-green-200 rounded-[20px] p-4"
         >
           {item.image && (
             <Image
@@ -2397,7 +2397,7 @@ healthScore >= 80
 
         {comparisons.length > 0 && (
   <div className="hidden md:block mt-10 text-left">
-    <div className="bg-white border border-orange-100 rounded-3xl p-8 shadow-xl">
+    <div className="bg-white border border-orange-100 rounded-[32px] p-8 shadow-xl">
       <h3 className="text-2xl font-black text-gray-900 mb-6">
         Product Comparison
       </h3>
@@ -2463,7 +2463,7 @@ healthScore >= 80
               {favorites.map((item) => (
                 <div
                   key={item.id}
-                  className="bg-white rounded-3xl border border-orange-100 p-5 shadow-lg"
+                  className="bg-white rounded-[32px] border border-orange-100 p-5 shadow-lg"
                 >
                   <button
                     onClick={() => setProduct(item)}
@@ -2476,7 +2476,7 @@ healthScore >= 80
   alt={item.name}
   width={80}
   height={80}
-  className="rounded-2xl object-cover border border-orange-100"
+  className="rounded-[20px] object-cover border border-orange-100"
   unoptimized
 />
                       )}
@@ -2529,7 +2529,7 @@ healthScore >= 80
                 <button
                   key={item.id}
                   onClick={() => setProduct(item)}
-                  className="text-left bg-white rounded-3xl border border-orange-100 p-5 shadow-lg hover:shadow-2xl transition-all"
+                  className="text-left bg-white rounded-[32px] border border-orange-100 p-5 shadow-lg hover: transition-all"
                 >
                   <div className="flex items-start gap-3">
                     {item.image && (
@@ -2538,7 +2538,7 @@ healthScore >= 80
   alt={item.name}
   width={64}
   height={64}
-  className="rounded-2xl object-cover border border-orange-100"
+  className="rounded-[20px] object-cover border border-orange-100"
   unoptimized
 />
                     )}
@@ -2570,7 +2570,7 @@ healthScore >= 80
       Scientific Methodology
     </p>
 
-    <h2 className="text-3xl sm:text-5xl font-black text-gray-900 tracking-tight mb-5">
+    <h2 className="heading-font text-3xl sm:text-5xl font-black text-gray-900 tracking-tight mb-5">
       Built on transparent food science, not guesswork.
     </h2>
 
@@ -2582,7 +2582,7 @@ healthScore >= 80
     </p>
 
     <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-10">
-      <div className="rounded-3xl bg-orange-50 border border-orange-100 p-6">
+      <div className="rounded-[32px] bg-orange-50 border border-orange-100 p-6">
         <p className="text-4xl font-black text-orange-600 mb-3">60%</p>
         <h3 className="text-xl font-black text-gray-900 mb-2">
           Nutrition Quality
@@ -2592,7 +2592,7 @@ healthScore >= 80
         </p>
       </div>
 
-      <div className="rounded-3xl bg-red-50 border border-red-100 p-6">
+      <div className="rounded-[32px] bg-red-50 border border-red-100 p-6">
         <p className="text-4xl font-black text-red-600 mb-3">30%</p>
         <h3 className="text-xl font-black text-gray-900 mb-2">
           Ingredient Risk
@@ -2603,7 +2603,7 @@ healthScore >= 80
         </p>
       </div>
 
-      <div className="rounded-3xl bg-green-50 border border-green-100 p-6">
+      <div className="rounded-[32px] bg-green-50 border border-green-100 p-6">
         <p className="text-4xl font-black text-green-600 mb-3">10%</p>
         <h3 className="text-xl font-black text-gray-900 mb-2">
           Processing Context
@@ -2614,7 +2614,7 @@ healthScore >= 80
       </div>
     </div>
 
-    <div className="mt-10 rounded-3xl border border-orange-100 bg-orange-50 p-6">
+    <div className="mt-10 rounded-[32px] border border-orange-100 bg-orange-50 p-6">
       <h3 className="text-xl font-black text-gray-900 mb-4">
         Trusted References
       </h3>
@@ -2641,13 +2641,13 @@ healthScore >= 80
 </section>
 
 <section className="mt-16 max-w-7xl mx-auto px-4 sm:px-6 text-left">
-  <div className="rounded-[36px] bg-gray-950 p-6 sm:p-10 shadow-2xl">
+  <div className="rounded-[36px] bg-gray-950 p-6 sm:p-10 ">
     <div className="max-w-3xl">
       <p className="text-sm font-black text-orange-400 uppercase tracking-wide mb-3">
         Why PAUSTICA is Different
       </p>
 
-      <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight mb-5">
+      <h2 className="heading-font text-3xl sm:text-5xl font-black text-white tracking-tight mb-5">
         Food labels show data. PAUSTICA explains what it means.
       </h2>
 
@@ -2688,7 +2688,7 @@ healthScore >= 80
       ].map((item) => (
         <div
           key={item.title}
-          className="rounded-3xl border border-white/10 bg-white/5 p-6"
+          className="rounded-[32px] border border-white/10 bg-white/5 p-6"
         >
           <h3 className="text-xl font-black text-white mb-3">
             {item.title}
@@ -2732,7 +2732,7 @@ healthScore >= 80
 
       <div className="grid md:grid-cols-4 gap-5">
 
-        <div className="rounded-3xl bg-orange-50 border border-orange-100 p-5">
+        <div className="rounded-[32px] bg-orange-50 border border-orange-100 p-5">
           <div className="text-3xl font-black text-orange-600 mb-3">
             01
           </div>
@@ -2746,7 +2746,7 @@ healthScore >= 80
           </p>
         </div>
 
-        <div className="rounded-3xl bg-orange-50 border border-orange-100 p-5">
+        <div className="rounded-[32px] bg-orange-50 border border-orange-100 p-5">
           <div className="text-3xl font-black text-orange-600 mb-3">
             02
           </div>
@@ -2760,7 +2760,7 @@ healthScore >= 80
           </p>
         </div>
 
-        <div className="rounded-3xl bg-orange-50 border border-orange-100 p-5">
+        <div className="rounded-[32px] bg-orange-50 border border-orange-100 p-5">
           <div className="text-3xl font-black text-orange-600 mb-3">
             03
           </div>
@@ -2774,7 +2774,7 @@ healthScore >= 80
           </p>
         </div>
 
-        <div className="rounded-3xl bg-orange-50 border border-orange-100 p-5">
+        <div className="rounded-[32px] bg-orange-50 border border-orange-100 p-5">
           <div className="text-3xl font-black text-orange-600 mb-3">
             04
           </div>
@@ -2791,18 +2791,18 @@ healthScore >= 80
       <div className="mt-8 text-center">
   <button
     onClick={() => setShowDemo(!showDemo)}
-    className="px-6 py-4 rounded-2xl bg-orange-500 text-white font-bold shadow-lg hover:scale-105 transition"
+    className="px-6 py-4 rounded-[20px] bg-orange-500 text-white font-bold shadow-lg hover:scale-105 transition"
   >
     {showDemo ? "Hide Sample Analysis" : "View Sample Analysis"}
   </button>
 </div>
 
 {showDemo && (
-  <div className="mt-8 rounded-3xl border border-orange-100 bg-orange-50 p-6">
+  <div className="mt-8 rounded-[32px] border border-orange-100 bg-orange-50 p-6">
 
     <div className="grid md:grid-cols-3 gap-5">
 
-      <div className="bg-white rounded-3xl p-5 border border-orange-100">
+      <div className="bg-white rounded-[32px] p-5 border border-orange-100">
         <p className="text-sm text-gray-500 mb-2">
           Sample Product
         </p>
@@ -2816,7 +2816,7 @@ healthScore >= 80
         </p>
       </div>
 
-      <div className="bg-red-50 rounded-3xl p-5 border border-red-100">
+      <div className="bg-red-50 rounded-[32px] p-5 border border-red-100">
         <p className="text-sm text-gray-500 mb-2">
           AI Health Score
         </p>
@@ -2830,7 +2830,7 @@ healthScore >= 80
         </p>
       </div>
 
-      <div className="bg-green-50 rounded-3xl p-5 border border-green-100">
+      <div className="bg-green-50 rounded-[32px] p-5 border border-green-100">
         <p className="text-sm text-gray-500 mb-2">
           Better Alternative
         </p>
@@ -2861,7 +2861,7 @@ healthScore >= 80
       User Outcomes
     </p>
 
-    <h2 className="text-3xl sm:text-5xl font-black text-gray-900 tracking-tight mb-5">
+    <h2 className="heading-font text-3xl sm:text-5xl font-black text-gray-900 tracking-tight mb-5">
       Make better food choices without overthinking.
     </h2>
 
@@ -2887,7 +2887,7 @@ healthScore >= 80
       ].map((item) => (
         <div
           key={item.title}
-          className="rounded-3xl bg-orange-50 border border-orange-100 p-6"
+          className="rounded-[32px] bg-orange-50 border border-orange-100 p-6"
         >
           <h3 className="text-xl font-black text-gray-900 mb-3">
             {item.title}
@@ -2902,7 +2902,7 @@ healthScore >= 80
     <div className="mt-8 text-center">
   <button
     onClick={() => setShowScoreFactors(!showScoreFactors)}
-    className="px-6 py-4 rounded-2xl bg-gray-900 text-white font-bold shadow-lg hover:scale-105 transition"
+    className="px-6 py-4 rounded-[20px] bg-gray-900 text-white font-bold shadow-lg hover:scale-105 transition"
   >
     {showScoreFactors
       ? "Hide Score Factors"
@@ -2913,7 +2913,7 @@ healthScore >= 80
 {showScoreFactors && (
   <div className="mt-8 grid md:grid-cols-5 gap-4">
 
-    <div className="rounded-3xl bg-orange-50 border border-orange-100 p-5">
+    <div className="rounded-[32px] bg-orange-50 border border-orange-100 p-5">
       <h3 className="font-black text-gray-900 mb-2">
         Sugar
       </h3>
@@ -2923,7 +2923,7 @@ healthScore >= 80
       </p>
     </div>
 
-    <div className="rounded-3xl bg-orange-50 border border-orange-100 p-5">
+    <div className="rounded-[32px] bg-orange-50 border border-orange-100 p-5">
       <h3 className="font-black text-gray-900 mb-2">
         Salt
       </h3>
@@ -2933,7 +2933,7 @@ healthScore >= 80
       </p>
     </div>
 
-    <div className="rounded-3xl bg-orange-50 border border-orange-100 p-5">
+    <div className="rounded-[32px] bg-orange-50 border border-orange-100 p-5">
       <h3 className="font-black text-gray-900 mb-2">
         Fat
       </h3>
@@ -2943,7 +2943,7 @@ healthScore >= 80
       </p>
     </div>
 
-    <div className="rounded-3xl bg-orange-50 border border-orange-100 p-5">
+    <div className="rounded-[32px] bg-orange-50 border border-orange-100 p-5">
       <h3 className="font-black text-gray-900 mb-2">
         Processing
       </h3>
@@ -2953,7 +2953,7 @@ healthScore >= 80
       </p>
     </div>
 
-    <div className="rounded-3xl bg-orange-50 border border-orange-100 p-5">
+    <div className="rounded-[32px] bg-orange-50 border border-orange-100 p-5">
       <h3 className="font-black text-gray-900 mb-2">
         Ingredients
       </h3>
@@ -2977,7 +2977,7 @@ healthScore >= 80
           PAUSTICA Premium
         </p>
 
-        <h2 className="text-3xl sm:text-5xl font-black text-white tracking-tight mb-5">
+        <h2 className="heading-font text-3xl sm:text-5xl font-black text-white tracking-tight mb-5">
           Unlock deeper food intelligence.
         </h2>
 
@@ -2987,7 +2987,7 @@ healthScore >= 80
         </p>
       </div>
 
-      <div className="rounded-3xl bg-white border border-white/10 p-6">
+      <div className="rounded-[32px] bg-white border border-white/10 p-6">
         <div className="space-y-4">
           {[
             "Unlimited product scans",
@@ -3008,7 +3008,7 @@ healthScore >= 80
 
         <button
           onClick={() => setUpgradeOpen(true)}
-          className="mt-8 w-full rounded-2xl bg-orange-500 px-6 py-4 text-white font-black shadow-lg hover:scale-[1.02] transition"
+          className="mt-8 w-full rounded-[20px] bg-orange-500 px-6 py-4 text-white font-black shadow-lg hover:scale-[1.02] transition"
         >
           Upgrade to Premium
         </button>
@@ -3017,9 +3017,9 @@ healthScore >= 80
   </div>
 </section>
 
-<section className="mt-16 max-w-6xl mx-auto px-4 sm:px-6 text-center">
-  <div className="rounded-[36px] border border-orange-100 bg-white shadow-xl p-8 sm:p-12">
-    <h2 className="text-3xl sm:text-5xl font-black text-gray-900 tracking-tight mb-5">
+<section className="mt-20 max-w-6xl mx-auto px-4 sm:px-6 text-center">
+  <div className="rounded-[36px] border border-orange-100 bg-white shadow-lg p-8 sm:p-12">
+    <h2 className="heading-font text-3xl sm:text-5xl font-black text-gray-900 tracking-tight mb-5">
       Ready to know what you’re eating?
     </h2>
 
@@ -3034,7 +3034,7 @@ healthScore >= 80
           window.scrollTo({ top: 0, behavior: "smooth" });
           setScannerOpen(true);
         }}
-        className="px-8 py-5 rounded-2xl text-white font-black shadow-xl"
+        className="px-8 py-5 rounded-[20px] text-white font-black shadow-xl"
         style={{
           background: "linear-gradient(135deg, #f97316, #ea580c)",
         }}
@@ -3044,7 +3044,7 @@ healthScore >= 80
 
       <button
         onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-        className="px-8 py-5 rounded-2xl bg-orange-50 border border-orange-100 text-orange-600 font-black"
+        className="px-8 py-5 rounded-[20px] bg-orange-50 border border-orange-100 text-orange-600 font-black"
       >
         Search a Product
       </button>
@@ -3052,13 +3052,20 @@ healthScore >= 80
   </div>
 </section>
 
-<section className="mt-16 max-w-5xl mx-auto px-4 sm:px-6 text-left">
-  <div className="bg-white rounded-[36px] border border-orange-100 shadow-xl p-6 sm:p-10">
-    <p className="text-sm font-black text-orange-600 uppercase tracking-wide mb-3">
-      Questions
-    </p>
 
-    <h2 className="text-3xl sm:text-5xl font-black text-gray-900 tracking-tight mb-8">
+
+<section className="mt-20 max-w-5xl mx-auto px-4 sm:px-6 text-left">
+  <div className="bg-white rounded-[36px] border border-orange-100 shadow-lg p-6 sm:p-10">
+    <div className="mb-4">
+  <Link
+    href="/trust"
+    className="inline-flex items-center rounded-full bg-orange-500 px-5 py-2 text-sm font-black text-white shadow-sm hover:bg-orange-600 transition"
+  >
+    Got a Question?
+  </Link>
+</div>
+
+    <h2 className="heading-font text-3xl sm:text-5xl font-black text-gray-900 tracking-tight mb-8">
       Food intelligence, explained clearly.
     </h2>
 
@@ -3091,7 +3098,7 @@ healthScore >= 80
       ].map((item) => (
         <details
           key={item.q}
-          className="group rounded-3xl border border-orange-100 bg-orange-50/50 p-5"
+          className="group rounded-[32px] border border-orange-100 bg-orange-50/50 p-5"
         >
           <summary className="cursor-pointer list-none flex items-center justify-between gap-4">
             <span className="text-lg font-black text-gray-900">
@@ -3112,13 +3119,13 @@ healthScore >= 80
   </div>
 </section>
 
-<section className="mt-16 max-w-7xl mx-auto px-4 sm:px-6">
-  <div className="rounded-[32px] border border-orange-100 bg-white shadow-xl p-6 sm:p-8">
+<section className="mt-20 max-w-7xl mx-auto px-4 sm:px-6">
+  <div className="rounded-[32px] border border-orange-100 bg-white shadow-lg p-6 sm:p-8">
     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
       <div>
         
 
-        <h2 className="text-2xl sm:text-3xl font-black text-gray-900">
+        <h2 className="heading-font text-3xl sm:text-5xl font-black text-gray-900 tracking-tight mb-5">
           Thanks to PAUSTICA 90% of all users say they are now eating "Healthier"
         </h2>
       </div>
@@ -3139,10 +3146,40 @@ healthScore >= 80
   </div>
 </section>
 
+<footer className="mt-20 border-t border-orange-100 bg-white">
+  <div className="max-w-7xl mx-auto px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-6">
+    <div className="text-center md:text-left">
+      <p className="text-lg font-black text-gray-900">
+        PAUSTICA
+      </p>
+      <p className="text-sm text-gray-500">
+        Food intelligence made simple.
+      </p>
+    </div>
+
+    <div className="flex flex-wrap justify-center gap-5 text-sm font-bold text-gray-500">
+      <Link href="/trust" className="hover:text-orange-500 transition">
+        Got a Question?
+      </Link>
+
+      <a href="mailto:paustica@gmail.com" className="hover:text-orange-500 transition">
+        Contact
+      </a>
+
+      <button
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        className="hover:text-orange-500 transition"
+      >
+        Back to Top
+      </button>
+    </div>
+  </div>
+</footer>
+
 {upgradeOpen && (
   <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-6">
     <div className="bg-white max-w-lg w-full rounded-[32px] p-8 shadow-2xl">
-      <h2 className="text-3xl font-black text-gray-900 mb-3">
+      <h2 className="heading-font text-xl font-black text-gray-900 mb-3">
         PAUSTICA Premium
       </h2>
 
@@ -3159,14 +3196,14 @@ healthScore >= 80
       </div>
 
       <button
-        className="w-full py-4 rounded-2xl bg-orange-500 text-white font-black mb-3"
+        className="w-full py-4 rounded-[20px] bg-orange-500 text-white font-black mb-3"
       >
         Coming Soon
       </button>
 
       <button
         onClick={() => setUpgradeOpen(false)}
-        className="w-full py-4 rounded-2xl bg-gray-100 text-gray-700 font-bold"
+        className="w-full py-4 rounded-[20px] bg-gray-100 text-gray-700 font-bold"
       >
         Close
       </button>
@@ -3179,7 +3216,7 @@ healthScore >= 80
     <div className="sticky top-0 bg-white z-20 flex justify-between items-start pb-4 border-b border-gray-100 mb-6">
   <div>
 
-    <h2 className="text-3xl font-black text-gray-900">
+    <h2 className="heading-font text-3xl sm:text-5xl font-black text-gray-900 tracking-tight mb-5">
       Health Profile
     </h2>
 
@@ -3197,7 +3234,7 @@ healthScore >= 80
         Personalize PAUSTICA recommendations based on your body and goal.
       </p>
 
-     <div className="mb-5 rounded-3xl border border-orange-100 bg-gradient-to-br from-orange-50 via-white to-white p-4">
+     <div className="mb-5 rounded-[32px] border border-orange-100 bg-gradient-to-br from-orange-50 via-white to-white p-4">
   <div className="flex items-center justify-between">
     <div>
 
@@ -3214,7 +3251,7 @@ healthScore >= 80
   </div>
 
   <div className="space-y-4">
-    <div className="rounded-3xl bg-gradient-to-br from-orange-50 to-white border border-orange-100 p-4">
+    <div className="rounded-[32px] bg-gradient-to-br from-orange-50 to-white border border-orange-100 p-4">
       <p className="text-xs font-bold text-gray-400 mb-2">
         BMI
       </p>
@@ -3228,7 +3265,7 @@ healthScore >= 80
       </p>
     </div>
 
-   <div className="bg-white rounded-3xl p-6 border border-gray-200">
+   <div className="bg-white rounded-[32px] p-6 border border-gray-200">
   <p className="text-sm font-bold text-gray-400 mb-2">
     Daily Calorie Target
   </p>
@@ -3260,12 +3297,12 @@ healthScore >= 80
   </div>
 
   <div className="grid grid-cols-3 gap-3 mt-5">
-    <div className="bg-white rounded-2xl p-3 border border-orange-100">
+    <div className="bg-white rounded-[20px] p-3 border border-orange-100">
       <p className="text-xs text-gray-400">Scans</p>
       <p className="font-black text-gray-900">{totalScans}</p>
     </div>
 
-    <div className="bg-white rounded-2xl p-3 border border-orange-100">
+    <div className="bg-white rounded-[20px] p-3 border border-orange-100">
       <p className="text-xs text-gray-400">Streak</p>
       <p className="font-black text-gray-900">{currentStreak}</p>
     </div>
@@ -3275,41 +3312,41 @@ healthScore >= 80
 
       <div className="space-y-4">
        
-       <div className="bg-gray-50 rounded-3xl p-5 border border-gray-200 mb-4">
+       <div className="bg-gray-50 rounded-[32px] p-5 border border-gray-200 mb-4">
 
   <label className="block text-sm font-bold text-gray-500 mb-3">
     Age
   </label>
-        <input value={userAge} onChange={(e) => setUserAge(e.target.value)} placeholder="Age" className="w-full px-5 py-4 rounded-2xl border border-orange-100 bg-orange-50 outline-none font-bold" />
+        <input value={userAge} onChange={(e) => setUserAge(e.target.value)} placeholder="Age" className="w-full px-5 py-4 rounded-[20px] border border-orange-100 bg-orange-50 outline-none font-bold" />
        </div>
 
-       <div className="bg-gray-50 rounded-3xl p-5 border border-gray-200 mb-4">
+       <div className="bg-gray-50 rounded-[32px] p-5 border border-gray-200 mb-4">
 
   <label className="block text-sm font-bold text-gray-500 mb-3">
     Weight
   </label>
 
-        <input value={userWeight} onChange={(e) => setUserWeight(e.target.value)} placeholder="Weight in kg" className="w-full px-5 py-4 rounded-2xl border border-orange-100 bg-orange-50 outline-none font-bold" />
+        <input value={userWeight} onChange={(e) => setUserWeight(e.target.value)} placeholder="Weight in kg" className="w-full px-5 py-4 rounded-[20px] border border-orange-100 bg-orange-50 outline-none font-bold" />
        </div>
        
-        <div className="bg-gray-50 rounded-3xl p-5 border border-gray-200 mb-4">
+        <div className="bg-gray-50 rounded-[32px] p-5 border border-gray-200 mb-4">
 
   <label className="block text-sm font-bold text-gray-500 mb-3">
     Height
   </label>
-        <input value={userHeight} onChange={(e) => setUserHeight(e.target.value)} placeholder="Height in cm" className="w-full px-5 py-4 rounded-2xl border border-orange-100 bg-orange-50 outline-none font-bold" />
+        <input value={userHeight} onChange={(e) => setUserHeight(e.target.value)} placeholder="Height in cm" className="w-full px-5 py-4 rounded-[20px] border border-orange-100 bg-orange-50 outline-none font-bold" />
             </div>
 
 
         {bmi > 0 && (
-          <div className="rounded-2xl bg-orange-50 border border-orange-100 p-5">
+          <div className="rounded-[20px] bg-orange-50 border border-orange-100 p-5">
             <p className="text-sm font-bold text-gray-500 mb-1">Estimated BMI</p>
             <p className="text-3xl font-black text-gray-900">{bmi.toFixed(1)}</p>
             <p className="text-sm font-bold text-orange-600 mt-1">{bmiCategory}</p>
           </div>
         )}
 
-       <details className="rounded-3xl bg-white border border-orange-100 p-5">
+       <details className="rounded-[32px] bg-white border border-orange-100 p-5">
   <summary className="cursor-pointer font-black text-gray-900">
     Achievements
   </summary>
@@ -3320,7 +3357,7 @@ healthScore >= 80
               const unlocked = achievement.current >= achievement.target;
 
               return (
-                <div key={achievement.title} className="rounded-2xl border border-orange-100 p-4">
+                <div key={achievement.title} className="rounded-[20px] border border-orange-100 p-4">
                   <div className="flex justify-between items-center mb-2">
                     <p className="font-bold text-gray-900">{achievement.title}</p>
                     <span className={`text-xs font-black px-3 py-1 rounded-full ${unlocked ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-600"}`}>
@@ -3356,14 +3393,14 @@ healthScore >= 80
 
           setProfileOpen(false);
         }}
-className="w-full mt-6 py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 text-white font-black shadow-lg" 
+className="w-full mt-6 py-4 rounded-[20px] bg-gradient-to-r from-orange-500 to-orange-600 text-white font-black shadow-lg" 
 >
         Save Profile
       </button>
 
       <button
         onClick={() => setProfileOpen(false)}
-        className="mt-3 w-full py-4 rounded-2xl bg-gray-100 text-gray-700 font-bold"
+        className="mt-3 w-full py-4 rounded-[20px] bg-gray-100 text-gray-700 font-bold"
       >
         Close
       </button>
