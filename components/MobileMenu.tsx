@@ -31,16 +31,29 @@ const [open, setOpen] = useState(false);
               Home Scanner
             </a>
 
-           <button
-  onClick={onOpenProfile}
-  className="w-full flex items-center justify-between px-4 py-4 rounded-2xl bg-gradient-to-r from-orange-50 to-white border border-orange-100 text-left"
->
-  <div>
-    <p className="font-black text-gray-900">Health Profile</p>
-  </div>
+       {loggedIn ? (
+  <button
+    onClick={() => {
+      setOpen(false);
+      onOpenProfile();
+    }}
+    className="w-full flex items-center justify-between px-4 py-4 rounded-2xl bg-gradient-to-r from-orange-50 to-white border border-orange-100 text-left"
+  >
+    <div>
+      <p className="font-black text-gray-900">Health Profile</p>
+      <p className="text-xs font-bold text-gray-400">Personalize your score</p>
+    </div>
 
-  <span className="text-orange-500 font-black">→</span>
-</button>
+    <span className="text-orange-500 font-black">→</span>
+  </button>
+) : (
+  <a
+    href="/auth"
+    className="block px-4 py-4 rounded-2xl font-black text-orange-600 bg-orange-50 border border-orange-100"
+  >
+    Login to create Health Profile
+  </a>
+)}
 
             <a className="block px-4 py-3 rounded-2xl font-bold text-gray-800 hover:bg-orange-50" href="/dashboard">
               Dashboard

@@ -7,6 +7,12 @@ export default function ProfilePage() {
   const [email, setEmail] = useState("");
   const [scanCount, setScanCount] = useState(0);
   const [favoriteCount, setFavoriteCount] = useState(0);
+  const [healthGoal, setHealthGoal] = useState("");
+const [dietType, setDietType] = useState("");
+const [age, setAge] = useState("");
+const [height, setHeight] = useState("");
+const [weight, setWeight] = useState("");
+const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -18,6 +24,20 @@ export default function ProfilePage() {
       }
 
       setEmail(data.user.email || "");
+
+      const { data: profile } = await supabase
+  .from("profiles")
+  .select("health_goal, diet_type, age, height, weight")
+  .eq("id", data.user.id)
+  .single();
+
+if (profile) {
+  setHealthGoal(profile.health_goal || "");
+  setDietType(profile.diet_type || "");
+  setAge(profile.age ? String(profile.age) : "");
+  setHeight(profile.height ? String(profile.height) : "");
+  setWeight(profile.weight ? String(profile.weight) : "");
+}
 
       const { count: scans } = await supabase
         .from("scan_history")
@@ -35,6 +55,65 @@ export default function ProfilePage() {
 
     loadProfile();
   }, []);
+
+  const saveProfile = async () => {
+  setSaving(true);
+
+  const { data } = await supabase.auth.getUser();
+
+  if (!data.user) {
+    window.location.href = "/auth";
+    return;
+  }
+
+  await supabase.from("profiles").upsert({
+    id: data.user.id,
+    health_goal: healthGoal,
+    diet_type: dietType,
+    age: age ? Number(age) : null,
+    height: height ? Number(height) : null,
+    weight: weight ? Number(weight) : null,
+    onboarded: true,
+  });
+
+  setSaving(false);
+};
+
+const deleteAccount = async () => {
+  const typed = window.prompt(
+    "This permanently deletes your account and all PAUSTICA data. Type DELETE to confirm."
+  );
+
+  if (typed !== "DELETE") {
+    alert("Account deletion cancelled.");
+    return;
+  }
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) {
+    window.location.href = "/auth";
+    return;
+  }
+
+  const res = await fetch("/api/account/delete", {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+    },
+  });
+
+  if (!res.ok) {
+    alert("Failed to delete account. Please try again.");
+    return;
+  }
+
+  await supabase.auth.signOut();
+  alert("Your account has been permanently deleted.");
+  window.location.href = "/";
+};
 
   const logout = async () => {
     await supabase.auth.signOut();
@@ -86,6 +165,60 @@ export default function ProfilePage() {
             </div>
           </div>
 
+          <div className="mt-8 bg-orange-50 border border-orange-100 rounded-3xl p-6">
+  <h3 className="text-2xl font-black text-gray-900 mb-5">
+    Health Preferences
+  </h3>
+
+  <div className="grid md:grid-cols-2 gap-4">
+    <input
+      value={dietType}
+      onChange={(e) => setDietType(e.target.value)}
+      placeholder="Diet type"
+      className="px-5 py-4 rounded-2xl border border-orange-100 outline-none"
+    />
+
+    <input
+      value={healthGoal}
+      onChange={(e) => setHealthGoal(e.target.value)}
+      placeholder="Health goal"
+      className="px-5 py-4 rounded-2xl border border-orange-100 outline-none"
+    />
+
+    <input
+      type="number"
+      value={age}
+      onChange={(e) => setAge(e.target.value)}
+      placeholder="Age"
+      className="px-5 py-4 rounded-2xl border border-orange-100 outline-none"
+    />
+
+    <input
+      type="number"
+      value={height}
+      onChange={(e) => setHeight(e.target.value)}
+      placeholder="Height in cm"
+      className="px-5 py-4 rounded-2xl border border-orange-100 outline-none"
+    />
+
+    <input
+      type="number"
+      value={weight}
+      onChange={(e) => setWeight(e.target.value)}
+      placeholder="Weight in kg"
+      className="px-5 py-4 rounded-2xl border border-orange-100 outline-none"
+    />
+  </div>
+
+  <button
+    onClick={saveProfile}
+    disabled={saving}
+    className="mt-5 w-full py-4 rounded-2xl bg-orange-500 text-white font-bold disabled:opacity-60"
+  >
+    {saving ? "Saving..." : "Save Health Preferences"}
+  </button>
+</div>
+
           <div className="mt-8 flex flex-col md:flex-row gap-4">
             <a
               href="/"
@@ -100,6 +233,13 @@ export default function ProfilePage() {
             >
               Logout
             </button>
+
+            <button
+  onClick={deleteAccount}
+  className="flex-1 py-4 rounded-2xl bg-red-600 text-white border border-red-600 font-bold"
+>
+  Delete Account
+</button>
           </div>
         </div>
       </div>

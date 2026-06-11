@@ -127,12 +127,24 @@ const streak = uniqueDays.length;
             <h1 className="text-3xl font-black text-gray-900">PAUSTICA</h1>
           </div>
 
-          <a
-            href="/"
-            className="px-5 py-3 rounded-2xl bg-orange-500 text-white font-bold"
-          >
-            Home
-          </a>
+         <div className="flex items-center gap-3">
+  <a
+    href="/"
+    className="px-5 py-3 rounded-2xl bg-orange-500 text-white font-bold"
+  >
+    Home
+  </a>
+
+  <button
+    onClick={async () => {
+      await supabase.auth.signOut();
+      window.location.href = "/auth";
+    }}
+    className="px-5 py-3 rounded-2xl bg-red-50 text-red-600 font-bold border border-red-100"
+  >
+    Logout
+  </button>
+</div>
         </nav>
 
         <section className="bg-white border border-orange-100 rounded-[36px] shadow-2xl p-8 mb-8">
@@ -177,7 +189,7 @@ const streak = uniqueDays.length;
   </p>
 
   <h3 className="text-5xl font-black text-green-600">
-    🔥 {streak}
+     {streak}
   </h3>
 </div>
         </section>

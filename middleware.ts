@@ -1,46 +1,46 @@
 import { NextRequest, NextResponse } from "next/server";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 
-const rateLimit = new Map<string, { count: number; resetTime: number }>();
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_REST_URL!,
+  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+});
 
-const LIMIT = 20; // max scans per hour
-const WINDOW = 60 * 60 * 1000; // 1 hour in milliseconds
+const ratelimit = new Ratelimit({
+  redis,
+  limiter: Ratelimit.slidingWindow(20, "1 h"),
+  analytics: true,
+});
 
-export function middleware(request: NextRequest) {
-  // Only rate limit the scan page
+export async function middleware(request: NextRequest) {
   if (!request.nextUrl.pathname.startsWith("/scan")) {
     return NextResponse.next();
   }
 
-  // Get IP address
-  const ip = request.headers.get("x-forwarded-for") ||
+  const ip =
+    request.headers.get("x-forwarded-for") ||
     request.headers.get("x-real-ip") ||
     "anonymous";
 
-  const now = Date.now();
-  const record = rateLimit.get(ip);
+  const { success, limit, remaining, reset } =
+    await ratelimit.limit(ip);
 
-  // Reset if window expired
-  if (!record || now > record.resetTime) {
-    rateLimit.set(ip, { count: 1, resetTime: now + WINDOW });
-    return NextResponse.next();
-  }
-
-  // Check limit
-  if (record.count >= LIMIT) {
-    return new NextResponse(
-      JSON.stringify({
-        error: "Too many requests. Please try again in an hour.",
-      }),
+  if (!success) {
+    return NextResponse.json(
+      {
+        error: "Too many requests. Please try again later.",
+      },
       {
         status: 429,
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "X-RateLimit-Limit": String(limit),
+          "X-RateLimit-Remaining": String(remaining),
+          "X-RateLimit-Reset": String(reset),
+        },
       }
     );
   }
-
-  // Increment count
-  record.count++;
-  rateLimit.set(ip, record);
 
   return NextResponse.next();
 }

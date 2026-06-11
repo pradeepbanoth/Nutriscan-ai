@@ -7,10 +7,17 @@ export default function UpdatePasswordPage() {
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const updatePassword = async () => {
     setLoading(true);
     setMessage("");
+
+    if (password.length < 8) {
+  setMessage("Password must be at least 8 characters.");
+  setLoading(false);
+  return;
+}
 
     const { error } = await supabase.auth.updateUser({
       password,
@@ -39,13 +46,23 @@ export default function UpdatePasswordPage() {
           Enter your new password below.
         </p>
 
-        <input
-          type="password"
-          placeholder="New password"
-          className="w-full px-5 py-4 rounded-2xl border border-orange-100 outline-none focus:border-orange-400"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+       <div className="relative">
+  <input
+    type={showPassword ? "text" : "password"}
+    placeholder="New password"
+    className="w-full px-5 py-4 pr-20 rounded-2xl border border-orange-100 outline-none focus:border-orange-400"
+    value={password}
+    onChange={(e) => setPassword(e.target.value)}
+  />
+
+  <button
+    type="button"
+    onClick={() => setShowPassword(!showPassword)}
+    className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-orange-600"
+  >
+    {showPassword ? "Hide" : "Show"}
+  </button>
+</div>
 
         <button
           onClick={updatePassword}

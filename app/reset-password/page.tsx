@@ -12,7 +12,13 @@ export default function ResetPasswordPage() {
     setLoading(true);
     setMessage("");
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    if (!email.trim()) {
+  setMessage("Please enter your email address.");
+  setLoading(false);
+  return;
+}
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo: `${window.location.origin}/update-password`,
     });
 

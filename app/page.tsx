@@ -32,6 +32,8 @@ import { parseFatSecretNutrition } from "../lib/parseFatSecretNutrition";
 import { getRealAlternatives } from "../lib/getRealAlternatives";
 import { createSlug } from "../lib/createSlug";
 import Link from "next/link";
+import { analyzeHealth } from "../lib/healthEngine";
+import { detectProductCategory } from "../lib/categoryEngine";
 
 
 type Product = {
@@ -49,6 +51,11 @@ type Product = {
   calories?: number;
 protein?: number;
 carbs?: number;
+fiber?: number;
+saturatedFat?: number;
+sodium?: number;
+  category?: string;
+
 };
 
 type ProductRow = {
@@ -93,6 +100,10 @@ export default function Home() {
   const [realAlternatives, setRealAlternatives] = useState<any[]>([]);
   const [showDemo, setShowDemo] = useState(false);
   const [showScoreFactors, setShowScoreFactors] = useState(false);
+  const [scanRemaining, setScanRemaining] = useState<number | null>(null);
+  const [currentPlan, setCurrentPlan] = useState("free");
+  const [fatSecretAlternatives, setFatSecretAlternatives] = useState<any[]>([]);
+  const [loadingAlternatives, setLoadingAlternatives] = useState(false);
 
   
   const [dailyScansUsed, setDailyScansUsed] = useState(() => {
@@ -476,34 +487,42 @@ const ingredientQuality =
     const comparisons = product?.name
   ? getProductComparisons(product.name)
   : [];
-  
-  const healthScore = product
-  ? calculateGoalScore(
-      selectedGoal,
-      product.sugar,
-      product.fat,
-      product.salt,
-      Number(product.nova),
-      detectedHarmful.length
-    )
-  : 0;
 
-const breakdown = product
-  ? getScoreBreakdown(
-      product.sugar,
-      product.fat,
-      product.salt,
-      Number(product.nova),
-      ingredientInsights.length
-    )
-  : {
-      sugarImpact: 0,
-      fatImpact: 0,
-      saltImpact: 0,
-      processingImpact: 0,
-      additiveImpact: 0,
-      totalImpact: 0,
-    };
+  const healthAnalysis = product
+  ? analyzeHealth({
+      sugar: product.sugar,
+      fat: product.fat,
+      salt: product.salt,
+      protein: product.protein,
+      carbs: product.carbs,
+      calories: product.calories,
+      nova: product.nova,
+      ingredients: product.ingredients,
+      healthGoal: selectedGoal,
+      fiber: product.fiber,
+      saturatedFat: product.saturatedFat,
+      sodium: product.sodium,
+      servingSize: 0,
+    })
+  : null;
+
+  const productCategory = product
+  ? detectProductCategory({
+      name: product.name,
+      category: product.category,
+      ingredients: product.ingredients,
+    })
+  : "Unknown";
+  
+  const healthScore = healthAnalysis?.score ?? 0;
+
+const breakdown = healthAnalysis?.breakdown ?? {
+  nutrition: 0,
+  ingredients: 0,
+  additives: 0,
+  processing: 0,
+  personalization: 0,
+};
   const confidence = product
   ? getConfidenceScore(product)
   : {
@@ -519,15 +538,7 @@ const breakdown = product
     };
 
   const scoreLabel =
-  healthScore >= 85
-    ? "Excellent Choice"
-    : healthScore >= 70
-    ? "Good Choice"
-    : healthScore >= 55
-    ? "Moderate Choice"
-    : healthScore >= 40
-    ? "Poor Choice"
-    : "Avoid Often";
+  healthAnalysis?.label ?? "Moderate Choice";
 
     const scoreRingColor =
   healthScore >= 80
@@ -602,16 +613,7 @@ const healthBadgeClass =
     ]
   : [];
 
-  const healthGrade =
-    healthScore >= 85
-      ? "A"
-      : healthScore >= 70
-      ? "B"
-      : healthScore >= 55
-      ? "C"
-      : healthScore >= 40
-      ? "D"
-      : "E";
+  const healthGrade = healthAnalysis?.grade ?? "C";
 
   const healthVerdict =
     healthScore >= 75
@@ -753,6 +755,9 @@ const fetchedProduct: Product = {
 calories: nutrition?.calories || 0,
 protein: nutrition?.protein || 0,
 carbs: nutrition?.carbs || 0,
+fiber: nutrition?.fiber || 0,
+saturatedFat: nutrition?.saturatedFat || 0,
+sodium: nutrition?.sodium || 0,
 
 fat: Number(
   (item as any).nutriments?.fat_100g ?? 0
@@ -769,13 +774,30 @@ salt: Number(
 });
 
   setProduct(fetchedProduct);
+  const analysis = analyzeHealth({
+  sugar: fetchedProduct.sugar,
+  fat: fetchedProduct.fat,
+  salt: fetchedProduct.salt,
+  protein: fetchedProduct.protein,
+  carbs: fetchedProduct.carbs,
+  calories: fetchedProduct.calories,
+  nova: fetchedProduct.nova,
+  ingredients: fetchedProduct.ingredients,
+  healthGoal: selectedGoal,
+});
+
+if (analysis.score < 60) {
+  fetchAlternatives(fetchedProduct.name);
+} else {
+  setFatSecretAlternatives([]);
+}
   const realItems = await getRealAlternatives(fetchedProduct.name);
   setRealAlternatives(realItems);
   posthog.capture("barcode_scan_success", {
   product_name: fetchedProduct.name,
   brand: fetchedProduct.brand,
 });
-  recordScanToday(); 
+  
   await updateScanStats();
   const getDailyScansUsed = () => {
   const today = new Date().toISOString().split("T")[0];
@@ -801,10 +823,12 @@ salt: Number(
   posthog.capture("product_search_started", {
   query: searchQuery,
 });
-  if (!canScanToday()) {
-    posthog.capture("premium_modal_opened");
-    setUpgradeOpen(true);
-    setLoading(false);
+ const permission = await checkScanPermission();
+
+if (!permission.allowed) {
+         posthog.capture("premium_modal_opened");
+  setUpgradeOpen(true);
+  setLoading(false);
   return;
 }
 
@@ -851,58 +875,61 @@ const results = data.products || [];
   setLoading(false);
 };
 
-   const canScanToday = () => {
-  const today = new Date().toISOString().split("T")[0];
-  const saved = localStorage.getItem("paustica_daily_scans");
+async function fetchAlternatives(productName: string) {
+  try {
+    setLoadingAlternatives(true);
 
-  if (!saved) {
-    return true;
-  }
-
-  const data = JSON.parse(saved);
-
-  if (data.date !== today) {
-    return true;
-  }
-
-  return data.count < FREE_DAILY_SCAN_LIMIT;
-};
-
-const recordScanToday = () => {
-  const today = new Date().toISOString().split("T")[0];
-  const saved = localStorage.getItem("paustica_daily_scans");
-
-  if (!saved) {
-    localStorage.setItem(
-      "paustica_daily_scans",
-      JSON.stringify({ date: today, count: 1 })
+    const res = await fetch(
+      `/api/fatsecret/alternatives?query=${encodeURIComponent(productName)}`
     );
 
-    setDailyScansUsed(1);
-    return;
+    const data = await res.json();
+
+    setFatSecretAlternatives(data.alternatives || []);
+  } catch (error) {
+    console.error(error);
+    setFatSecretAlternatives([]);
+  } finally {
+    setLoadingAlternatives(false);
+  }
+}
+
+ const checkScanPermission = async () => {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) {
+    setCurrentPlan("guest");
+    setScanRemaining(null);
+
+    return {
+      allowed: true,
+      remaining: null,
+      plan: "guest",
+    };
   }
 
-  const data = JSON.parse(saved);
+  const res = await fetch("/api/usage/scan", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+    },
+  });
 
-  if (data.date !== today) {
-    localStorage.setItem(
-      "paustica_daily_scans",
-      JSON.stringify({ date: today, count: 1 })
-    );
+  const data = await res.json();
 
-    setDailyScansUsed(1);
-    return;
+  if (typeof data.remaining !== "undefined") {
+    setScanRemaining(data.remaining);
   }
 
-  const newCount = data.count + 1;
+  if (data.plan) {
+    setCurrentPlan(data.plan);
+  }
 
-  localStorage.setItem(
-    "paustica_daily_scans",
-    JSON.stringify({ date: today, count: newCount })
-  );
-
-  setDailyScansUsed(newCount);
+  return data;
 };
+
 
 const updateScanStats = async () => {
   if (!userId) return;
@@ -962,13 +989,15 @@ const updateScanStats = async () => {
 
   if (!finalBarcode) return;
 
-    if (!canScanToday()) {
-     posthog.capture("premium_modal_opened");
-     setUpgradeOpen(true);
-      setLoading(false);
-    setScannerOpen(false);
-    return;
-    }
+   const permission = await checkScanPermission();
+
+if (!permission.allowed) {
+       posthog.capture("premium_modal_opened");
+  setUpgradeOpen(true);
+  setLoading(false);
+  setScannerOpen(false);
+  return;
+}
 
   const cached = localStorage.getItem(`product_${finalBarcode}`);
 
@@ -984,29 +1013,47 @@ const updateScanStats = async () => {
   setLoading(true);
 
   try {
-    const res = await fetch(
-      `https://world.openfoodfacts.org/api/v2/product/${finalBarcode}`
-    );
+  const res = await fetch(
+  `/api/product?barcode=${encodeURIComponent(finalBarcode)}`
+);
 
     const data = await res.json();
 
-    if (data.status === 1) {
+   if (data.success && data.product) {
      
-    
+   const fatsecretRes = await fetch(
+  `/api/fatsecret/search?query=${encodeURIComponent(
+    data.product.product_name || "Unknown Product"
+  )}`
+);
 
+const fatsecretData = await fatsecretRes.json();
+
+const firstFood = fatsecretData?.foods?.food?.[0];
+
+const nutrition = firstFood
+  ? parseFatSecretNutrition(firstFood.food_description)
+  : null;
+
+  
 const fetchedProduct: Product = {
-        id: Date.now(),
-        name: data.product.product_name || "Unknown Product",
-        brand: data.product.brands || "Unknown Brand",
-        image: data.product.image_front_url || "",
+        id: Number(finalBarcode),
+        name: data.product.name || "Unknown Product",
+        brand: data.product.brand || "Unknown Brand",
+        image: data.product.image || "",
         ingredients:
-          data.product.ingredients_text || "Ingredients unavailable",
-        nutriscore: data.product.nutriscore_grade || "unknown",
-        nova: data.product.nova_group || "N/A",
-        sugar: data.product.nutriments?.sugars_100g ?? 0,
-        fat: data.product.nutriments?.fat_100g ?? 0,
-        salt: data.product.nutriments?.salt_100g ?? 0,
+          data.product.ingredients || "Ingredients unavailable",
+        nutriscore: data.product.nutriscore || "unknown",
+        nova: data.product.nova || "N/A",
+        sugar: data.product.sugar ?? 0,
+        fat: data.product.fat ?? 0,
+        salt: data.product.salt ?? 0,
         
+        calories: nutrition?.calories || 0,
+        protein: nutrition?.protein || 0,
+        carbs: nutrition?.carbs || 0,
+        
+
       };
 
       localStorage.setItem(
@@ -1016,6 +1063,24 @@ const fetchedProduct: Product = {
 
       setScannerOpen(false);
       setProduct(fetchedProduct);
+
+      const analysis = analyzeHealth({
+  sugar: fetchedProduct.sugar,
+  fat: fetchedProduct.fat,
+  salt: fetchedProduct.salt,
+  protein: fetchedProduct.protein,
+  carbs: fetchedProduct.carbs,
+  calories: fetchedProduct.calories,
+  nova: fetchedProduct.nova,
+  ingredients: fetchedProduct.ingredients,
+  healthGoal: selectedGoal,
+});
+
+if (analysis.score < 60) {
+  fetchAlternatives(fetchedProduct.name);
+} else {
+  setFatSecretAlternatives([]);
+}
 
       const realItems = await getRealAlternatives(fetchedProduct.name);
 setRealAlternatives(realItems);
@@ -1031,6 +1096,39 @@ setRealAlternatives(realItems);
   }
 
   setLoading(false);
+};
+
+const logFood = async () => {
+  if (!product) return;
+
+  const { data } = await supabase.auth.getUser();
+
+  if (!data.user) {
+    window.location.href = "/auth";
+    return;
+  }
+
+  const { error } = await supabase.from("daily_food_logs").insert({
+    user_id: data.user.id,
+    product_name: product.name,
+    brand: product.brand,
+    calories: product.calories ?? 0,
+    protein: product.protein ?? 0,
+    carbs: product.carbs ?? 0,
+    fat: product.fat ?? 0,
+    sugar: product.sugar ?? 0,
+    salt: product.salt ?? 0,
+    fiber: 0,
+    paustica_score: healthAnalysis?.score ?? 0,
+    servings: 1,
+  });
+
+  if (error) {
+    alert("Could not log food. Please try again.");
+    return;
+  }
+
+  alert("Food logged for today.");
 };
 
   const clearHistory = async () => {
@@ -1267,8 +1365,12 @@ setRealAlternatives(realItems);
   </div>
 </div>
 
-  <p className="mt-4 text-sm text-gray-500 font-medium">
-  {dailyScansUsed} / {FREE_DAILY_SCAN_LIMIT} scans used today
+ <p className="mt-4 text-sm text-gray-500 font-medium">
+  {currentPlan === "guest"
+    ? "Guest scans available"
+    : scanRemaining === null
+    ? `${currentPlan.toUpperCase()} plan`
+    : `${scanRemaining} free scans remaining today`}
 </p>
 
         {scannerOpen && (
@@ -1359,6 +1461,10 @@ setRealAlternatives(realItems);
                         <p className="text-sm md:text-base text-gray-500 mb-4">
                            {product.brand}
                            </p>
+
+                           <span className="inline-flex mb-4 px-4 py-2 rounded-full bg-orange-50 border border-orange-100 text-orange-600 text-sm font-black">
+                             {productCategory}
+                             </span>
                       </div>
 
                       <button
@@ -1603,53 +1709,44 @@ healthScore >= 80
   )}
 </div>
 </details>
-                      <details className="mt-5 bg-white border border-orange-100 rounded-3xl p-5 shadow-lg">
+                   <details className="mt-5 bg-white border border-orange-100 rounded-3xl p-5 shadow-lg">
   <summary className="cursor-pointer text-lg font-black text-gray-900">
     Score Breakdown
   </summary>
 
-  <div className="space-y-3">
+  <div className="mt-4 space-y-3">
     <div className="flex justify-between">
-      <span>Sugar Impact</span>
-      <span className="font-bold text-red-500">
-        -{breakdown.sugarImpact}
+      <span>Nutrition Quality</span>
+      <span className="font-bold text-green-600">
+        {breakdown.nutrition}/40
       </span>
     </div>
 
     <div className="flex justify-between">
-      <span>Fat Impact</span>
-      <span className="font-bold text-red-500">
-        -{breakdown.fatImpact}
+      <span>Ingredient Quality</span>
+      <span className="font-bold text-green-600">
+        {breakdown.ingredients}/25
       </span>
     </div>
 
     <div className="flex justify-between">
-      <span>Salt Impact</span>
-      <span className="font-bold text-red-500">
-        -{breakdown.saltImpact}
+      <span>Additive Safety</span>
+      <span className="font-bold text-green-600">
+        {breakdown.additives}/15
       </span>
     </div>
 
     <div className="flex justify-between">
-      <span>Processing Impact</span>
-      <span className="font-bold text-red-500">
-        -{breakdown.processingImpact}
+      <span>Processing Level</span>
+      <span className="font-bold text-green-600">
+        {breakdown.processing}/10
       </span>
     </div>
 
     <div className="flex justify-between">
-      <span>Additives Impact</span>
-      <span className="font-bold text-red-500">
-        -{breakdown.additiveImpact}
-      </span>
-    </div>
-
-    <hr className="my-3" />
-
-    <div className="flex justify-between text-lg">
-      <span className="font-black">Total Impact</span>
-      <span className="font-black text-red-600">
-        -{breakdown.totalImpact}
+      <span>Personalization</span>
+      <span className="font-bold text-green-600">
+        {breakdown.personalization}/10
       </span>
     </div>
   </div>
@@ -1692,7 +1789,7 @@ healthScore >= 80
                     </div>
 
                       <p className="text-lg font-semibold text-gray-700 leading-relaxed mb-6">
-                      {healthVerdict}
+                      {healthAnalysis?.verdict || healthVerdict}
                     </p>
 
                     <div className="flex flex-wrap gap-2 mb-6">
@@ -1793,12 +1890,21 @@ healthScore >= 80
 )}
 
 <div className="mt-6">
+  <div className="mt-6 flex flex-col sm:flex-row gap-3">
+  <button
+    onClick={logFood}
+    className="inline-flex justify-center rounded-2xl bg-orange-500 px-6 py-4 text-white font-black"
+  >
+    Log Food
+  </button>
+
   <Link
     href={`/product/${createSlug(product.name)}`}
-    className="inline-flex rounded-2xl bg-gray-900 px-6 py-4 text-white font-black"
+    className="inline-flex justify-center rounded-2xl bg-gray-900 px-6 py-4 text-white font-black"
   >
     View Full Analysis
   </Link>
+</div>
 </div>
 
 
@@ -1869,25 +1975,114 @@ healthScore >= 80
   </div>
 </details>
 
-                    <details className="mt-5 bg-white rounded-2xl border border-orange-100 p-5">
- <summary className="cursor-pointer font-black text-gray-900">
-  Why this score?
-</summary>
+                   <details className="mt-5 bg-white rounded-2xl border border-orange-100 p-5">
+  <summary className="cursor-pointer font-black text-gray-900">
+    Why this score?
+  </summary>
 
-  <ul className="space-y-2 text-gray-700">
-    {product.sugar > 15 && <li>High sugar content reduces the score.</li>}
-    {product.salt > 1.5 && <li>High salt level may not be ideal for daily intake.</li>}
-    {product.fat > 20 && <li>High fat content increases calorie density.</li>}
-    {Number(product.nova) >= 4 && <li>Ultra-processed food lowers the health rating.</li>}
-    {ingredientInsights.length > 0 && <li>Detected additives or risky ingredients affect the score.</li>}
-    {product.sugar <= 15 &&
-      product.salt <= 1.5 &&
-      product.fat <= 20 &&
-      Number(product.nova) < 4 &&
-      ingredientInsights.length === 0 && (
-        <li>No major red flags detected from available data.</li>
-      )}
-  </ul>
+  {(healthAnalysis?.additiveInsights?.length ?? 0) > 0 && (
+  <details className="mt-5 bg-white rounded-2xl border border-orange-100 p-5">
+    <summary className="cursor-pointer font-black text-gray-900">
+      Additive Intelligence
+    </summary>
+
+    <div className="mt-4 space-y-4">
+      {(healthAnalysis?.additiveInsights || []).map((item) => (
+        <div
+          key={item.code}
+          className="rounded-2xl border border-orange-100 bg-orange-50 p-4"
+        >
+          <div className="flex items-center justify-between">
+            <h4 className="font-black text-gray-900">
+              {item.name} ({item.code})
+            </h4>
+
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-bold ${
+                item.risk === "high"
+                  ? "bg-red-100 text-red-700"
+                  : item.risk === "medium"
+                  ? "bg-yellow-100 text-yellow-700"
+                  : "bg-green-100 text-green-700"
+              }`}
+            >
+              {item.risk.toUpperCase()}
+            </span>
+          </div>
+
+          <p className="text-sm text-gray-700 mt-3">
+            <strong>Why?</strong> {item.reason}
+          </p>
+
+          <p className="text-sm text-gray-700 mt-2">
+            <strong>Scientific View:</strong> {item.scientificView}
+          </p>
+        </div>
+      ))}
+    </div>
+  </details>
+)}
+
+{loadingAlternatives && (
+  <div className="mt-5 rounded-2xl border border-orange-100 bg-white p-5">
+    Finding healthier alternatives...
+  </div>
+)}
+
+{alternatives.length > 0 && (
+  <div className="mt-5 rounded-2xl border border-green-100 bg-green-50 p-5">
+    <h3 className="text-lg font-black text-green-700 mb-4">
+      Healthier Alternatives
+    </h3>
+
+    <div className="space-y-3">
+     {alternatives.map((item, index) => (
+        <div
+          key={`${item.name}-${index}`}
+          className="bg-white rounded-xl border border-green-100 p-4"
+        >
+          <p className="font-bold text-gray-900">
+            {item.name}
+          </p>
+
+          <p className="text-sm text-gray-500 mt-1">
+            {item.reason}
+          </p>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+
+  <div className="mt-4 grid md:grid-cols-2 gap-4">
+    <div className="rounded-2xl bg-green-50 border border-green-100 p-5">
+      <h4 className="font-black text-green-700 mb-3">
+        Positives
+      </h4>
+
+      <ul className="space-y-2 text-sm text-green-800">
+        {(healthAnalysis?.positives || ["No strong positive signals found."]).map(
+          (item) => (
+            <li key={item}>{item}</li>
+          )
+        )}
+      </ul>
+    </div>
+
+    <div className="rounded-2xl bg-red-50 border border-red-100 p-5">
+      <h4 className="font-black text-red-700 mb-3">
+        Warnings
+      </h4>
+
+      <ul className="space-y-2 text-sm text-red-800">
+        {(healthAnalysis?.warnings || ["No major red flags detected."]).map(
+          (item) => (
+            <li key={item}>{item}</li>
+          )
+        )}
+      </ul>
+    </div>
+  </div>
 </details>
 
 

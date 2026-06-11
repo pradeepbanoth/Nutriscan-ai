@@ -1,30 +1,58 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { supabase } from "../../lib/supabase";
+
 export default function AuthCallbackPage() {
+  const [message, setMessage] = useState("Preparing your PAUSTICA account...");
+
+  useEffect(() => {
+    const handleCallback = async () => {
+      setMessage("Verifying your session...");
+
+      const { data, error } = await supabase.auth.getUser();
+
+      if (error || !data.user) {
+        setMessage("Session not found. Redirecting to login...");
+        window.location.href = "/auth";
+        return;
+      }
+
+      setMessage("Checking your profile...");
+
+     const { data: profile } = await supabase
+  .from("profiles")
+  .select("onboarded")
+  .eq("id", data.user.id)
+  .maybeSingle();
+
+if (!profile) {
+  window.location.href = "/onboarding";
+  return;
+}
+
+      setMessage("Redirecting...");
+
+window.location.href = profile.onboarded ? "/" : "/onboarding";
+    };
+
+    handleCallback();
+  }, []);
+
   return (
     <main className="min-h-screen bg-[#fff7ed] flex items-center justify-center px-6">
       <div className="w-full max-w-md bg-white border border-orange-100 rounded-[32px] shadow-2xl p-8 text-center">
+        <img
+          src="/logo.png"
+          alt="PAUSTICA"
+          className="w-20 h-20 object-contain mx-auto mb-5"
+        />
+
         <h1 className="text-4xl font-black text-gray-900 mb-4">
-          Email Verified
+          One moment
         </h1>
 
-        <p className="text-gray-500 mb-8">
-          Your email has been verified successfully. You can now login to PAUSTICA AI.
-        </p>
-
-        <a
-          href="/auth"
-          className="block w-full py-4 rounded-2xl text-white font-bold bg-orange-500"
-        >
-          Go to Login
-        </a>
-
-        <a
-          href="/"
-          className="block mt-6 text-sm font-bold text-orange-600"
-        >
-          Back to Home
-        </a>
+        <p className="text-gray-500">{message}</p>
       </div>
     </main>
   );

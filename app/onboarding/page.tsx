@@ -9,12 +9,12 @@ const steps = [
     subtitle: "We'll personalize your health scores based on your diet",
     field: "diet_type",
     options: [
-      { value: "regular", label: "Regular", emoji: "️", desc: "No specific diet" },
-      { value: "vegetarian", label: "Vegetarian", emoji: "", desc: "No meat or fish" },
-      { value: "vegan", label: "Vegan", emoji: "", desc: "No animal products" },
-      { value: "keto", label: "Keto", emoji: "", desc: "Low carb, high fat" },
-      { value: "diabetic", label: "Diabetic", emoji: "", desc: "Managing blood sugar" },
-      { value: "athlete", label: "Athlete", emoji: "", desc: "High performance" },
+      { value: "regular", label: "Regular",  desc: "No specific diet" },
+      { value: "vegetarian", label: "Vegetarian",  desc: "No meat or fish" },
+      { value: "vegan", label: "Vegan",  desc: "No animal products" },
+      { value: "keto", label: "Keto", desc: "Low carb, high fat" },
+      { value: "diabetic", label: "Diabetic",  desc: "Managing blood sugar" },
+      { value: "athlete", label: "Athlete", desc: "High performance" },
     ],
   },
   {
@@ -22,12 +22,12 @@ const steps = [
     subtitle: "This helps us give you more relevant recommendations",
     field: "health_goal",
     options: [
-      { value: "lose_weight", label: "Lose Weight", emoji: "️", desc: "Reduce body fat" },
-      { value: "build_muscle", label: "Build Muscle", emoji: "", desc: "Increase muscle mass" },
-      { value: "eat_healthier", label: "Eat Healthier", emoji: "", desc: "Improve overall diet" },
-      { value: "manage_condition", label: "Manage Condition", emoji: "", desc: "Diabetes, BP, etc." },
-      { value: "family_health", label: "Family Health", emoji: "‍‍", desc: "Keep family safe" },
-      { value: "just_curious", label: "Just Curious", emoji: "", desc: "Learn about food" },
+      { value: "lose_weight", label: "Lose Weight",  desc: "Reduce body fat" },
+      { value: "build_muscle", label: "Build Muscle",  desc: "Increase muscle mass" },
+      { value: "eat_healthier", label: "Eat Healthier",  desc: "Improve overall diet" },
+      { value: "manage_condition", label: "Manage Condition", desc: "Diabetes, BP, etc." },
+      { value: "family_health", label: "Family Health",  desc: "Keep family safe" },
+      { value: "just_curious", label: "Just Curious", desc: "Learn about food" },
     ],
   },
   {
@@ -50,12 +50,12 @@ const steps = [
     field: "allergies",
     multiple: true,
     options: [
-      { value: "gluten", label: "Gluten", emoji: "", desc: "Wheat, barley, rye" },
-      { value: "dairy", label: "Dairy", emoji: "", desc: "Milk products" },
-      { value: "nuts", label: "Nuts", emoji: "", desc: "All tree nuts" },
-      { value: "soy", label: "Soy", emoji: "", desc: "Soy products" },
-      { value: "eggs", label: "Eggs", emoji: "", desc: "Egg products" },
-      { value: "none", label: "None", emoji: "", desc: "No allergies" },
+      { value: "gluten", label: "Gluten", desc: "Wheat, barley, rye" },
+      { value: "dairy", label: "Dairy", desc: "Milk products" },
+      { value: "nuts", label: "Nuts",  desc: "All tree nuts" },
+      { value: "soy", label: "Soy",  desc: "Soy products" },
+      { value: "eggs", label: "Eggs",  desc: "Egg products" },
+      { value: "none", label: "None",  desc: "No allergies" },
     ],
   },
 ];
@@ -120,7 +120,7 @@ export default function OnboardingPage() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.user) {
-        window.location.href = "/login";
+        window.location.href = "/auth";
         return;
       }
 
@@ -207,7 +207,7 @@ export default function OnboardingPage() {
           boxShadow: isSelected(option.value) ? "0 0 0 2px #f97316" : "none",
         }}
       >
-        <span className="text-2xl">{option.emoji}</span>
+        
         <div>
           <div className="font-bold text-sm text-gray-900">{option.label}</div>
           <div className="text-xs text-gray-400">{option.desc}</div>
@@ -260,7 +260,7 @@ export default function OnboardingPage() {
 
           {/* Skip */}
           <button
-            onClick={() => window.location.href = "/scan"}
+            onClick={() => window.location.href = "/"}
             className="w-full text-center text-sm text-gray-400 hover:text-gray-600 mt-3 transition-colors"
           >
             Skip for now
