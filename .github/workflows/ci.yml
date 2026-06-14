@@ -37,8 +37,8 @@ jobs:
           FATSECRET_CLIENT_ID: ${{ secrets.FATSECRET_CLIENT_ID }}
           FATSECRET_CLIENT_SECRET: ${{ secrets.FATSECRET_CLIENT_SECRET }}
           INDEXNOW_KEY: ${{ secrets.INDEXNOW_KEY }}
-          ELASTICSEARCH_URL: ${{ secrets.ELASTICSEARCH_URL}}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY}}
-          NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL}}
-          UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN}}
+          ELASTICSEARCH_URL: ${{ secrets.ELASTICSEARCH_URL }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+          UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
         run: npm run build
