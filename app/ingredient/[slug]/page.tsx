@@ -28,7 +28,10 @@ function formatIngredientName(slug: string) {
 }
 
 async function getProductsWithIngredient(ingredientName: string) {
-  try {
+  if (!elastic) {
+  return [];
+}
+try {
     const result = await elastic.search<ProductSource>({
       index: PRODUCT_INDEX,
       size: 8,
@@ -68,12 +71,24 @@ export async function generateMetadata(
   const ingredientName = formatIngredientName(slug);
 
   return {
+  title: `${ingredientName}: Uses, Risk Level & Food Products | PAUSTICA`,
+  description: `Learn what ${ingredientName} is, why it is used in packaged foods, its risk level, common uses, and products that may contain it.`,
+  alternates: {
+    canonical: `/ingredient/${slug}`,
+  },
+  openGraph: {
     title: `${ingredientName} Ingredient Guide | PAUSTICA`,
-    description: `Learn what ${ingredientName} is, why it appears in food products, and how PAUSTICA explains ingredient risk.`,
-    alternates: {
-      canonical: `/ingredient/${slug}`,
-    },
-  };
+    description: `Uses, risk level, common food products, and PAUSTICA's view on ${ingredientName}.`,
+    type: "article",
+    images: ["/og-image.png"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${ingredientName} Ingredient Guide | PAUSTICA`,
+    description: `Understand ${ingredientName}, its food uses, and risk level.`,
+    images: ["/og-image.png"],
+  },
+};
 }
 
 export default async function IngredientPage({
@@ -84,6 +99,32 @@ export default async function IngredientPage({
   const ingredient = ingredientData[slug];
   const relatedProducts = await getProductsWithIngredient(ingredientName);
   const relatedIngredients = getRelatedIngredients(slug);
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  headline: `${ingredient?.name || ingredientName} Ingredient Guide`,
+  description: `Learn about ${ingredient?.name || ingredientName}, its food uses, risk level, and common products.`,
+  author: {
+    "@type": "Organization",
+    name: "PAUSTICA",
+  },
+  publisher: {
+    "@type": "Organization",
+    name: "PAUSTICA",
+  },
+  mainEntityOfPage: {
+    "@type": "WebPage",
+    "@id": `https://nutriscan-ai-orpin.vercel.app/ingredient/${slug}`,
+  },
+};
+
+<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{
+    __html: JSON.stringify(jsonLd),
+  }}
+/>
 
   return (
     <main className="min-h-screen bg-[#fff7ed] px-4 sm:px-6 py-10">
@@ -219,6 +260,23 @@ export default async function IngredientPage({
     </div>
   </section>
 )}
+
+<section className="mt-8 rounded-[32px] bg-white border border-orange-100 shadow-xl p-6 sm:p-8">
+  <p className="text-sm font-black text-orange-600 uppercase tracking-wide mb-3">
+    Important Note
+  </p>
+
+  <h2 className="text-2xl font-black text-gray-900 mb-4">
+    Ingredient information is educational.
+  </h2>
+
+  <p className="text-gray-600 leading-relaxed">
+    PAUSTICA ingredient guides are designed to help users understand packaged
+    food labels more clearly. They are not medical advice, and individual health
+    needs can vary. For medical or dietary concerns, speak with a qualified
+    healthcare professional.
+  </p>
+</section>
 
         <section className="mt-8 rounded-[32px] bg-gray-950 shadow-xl p-6 sm:p-8">
           <h2 className="text-2xl font-black text-white mb-4">

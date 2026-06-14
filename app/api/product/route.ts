@@ -2,8 +2,11 @@ import { NextResponse } from "next/server";
 import { barcodeRateLimit } from "@/lib/rateLimit";
 import {findFatSecretFoodIdByBarcode,getFatSecretFood,} from "@/lib/fatsecret";
 import { parseFatSecretNutrition } from "@/lib/parseFatSecretNutrition";
+import { cacheHeaders } from "@/lib/cacheHeaders";
+
 
 export async function GET(req: Request) {
+  const startedAt = Date.now();
   const ip =
   req.headers.get("x-forwarded-for") ||
   req.headers.get("x-real-ip") ||
@@ -37,14 +40,17 @@ if (!rate.success) {
       );
     }
 
-    const response = await fetch(
-      `https://world.openfoodfacts.org/api/v0/product/${barcode}.json`,
-      {
-        headers: {
-          "User-Agent": "PAUSTICA/1.0 contact: support@paustica.app",
-        },
-      }
-    );
+   const response = await fetch(
+  `https://world.openfoodfacts.org/api/v0/product/${barcode}.json`,
+  {
+    headers: {
+      "User-Agent": "PAUSTICA/1.0 contact: support@paustica.app",
+    },
+    next: {
+      revalidate: 60 * 60 * 24,
+    },
+  }
+);
 
     if (!response.ok) {
       return NextResponse.json(
@@ -59,30 +65,45 @@ if (!rate.success) {
   try {
     const foodId = await findFatSecretFoodIdByBarcode(barcode);
 
-    if (!foodId) {
-      return NextResponse.json({
-        success: false,
-        message: "Product not found",
-      });
+   if (!foodId) {
+  return NextResponse.json(
+    {
+      success: false,
+      message: "Product not found",
+    },
+    {
+     headers: cacheHeaders.nutrition,
     }
+  );
+}
 
     const fatSecretFood = await getFatSecretFood(foodId);
 
-    if (!fatSecretFood?.food) {
-      return NextResponse.json({
-        success: false,
-        message: "Product not found",
-      });
+  if (!fatSecretFood?.food) {
+  return NextResponse.json(
+    {
+      success: false,
+      message: "Product not found",
+    },
+    {
+      headers: cacheHeaders.nutrition,
     }
+  );
+}
 
    const food = fatSecretFood.food;
 const nutrition = parseFatSecretNutrition(food.food_description || "");
 
-return NextResponse.json({
-  success: true,
-  source: "fatsecret",
+if (process.env.NODE_ENV === "development") {
+  console.log("Product API completed in", Date.now() - startedAt, "ms");
+}
+console.log("Product API completed in", Date.now() - startedAt, "ms");
+return NextResponse.json(
+  {
+    success: true,
+    source: "fatsecret",
 
-  product: {
+    product: {
     name: food.food_name || "Unknown Product",
     brand: food.brand_name || "Unknown Brand",
 
@@ -105,18 +126,26 @@ return NextResponse.json({
     sugar: nutrition.sugar,
     fat: nutrition.fat,
     salt: nutrition.salt,
+    },
   },
-});
-  } catch (error) {
-    console.error("FatSecret fallback failed:", error);
+  {
+   headers: cacheHeaders.product,
+  }
+);
+  }catch (error) {
+  console.error("FatSecret fallback failed:", error);
 
-    return NextResponse.json({
+  return NextResponse.json(
+    {
       success: false,
       message: "Product not found",
-    });
-  }
+    },
+    {
+     headers: cacheHeaders.nutrition,
+    }
+  );
 }
-
+    }
    const product = data.product;
 
 const productName =
@@ -131,10 +160,15 @@ const brand =
   product.brands_tags?.[0] ||
   "Unknown Brand";
 
-return NextResponse.json({
-  success: true,
-  source: "openfoodfacts",
-  product: {
+  if (process.env.NODE_ENV === "development") {
+  console.log("Product API completed in", Date.now() - startedAt, "ms");
+}
+  console.log("Product API completed in", Date.now() - startedAt, "ms");
+return NextResponse.json(
+  {
+    success: true,
+    source: "openfoodfacts",
+    product: {
     name: productName,
     brand,
         image: product.image_url || "",
@@ -149,8 +183,12 @@ return NextResponse.json({
         protein: product.nutriments?.proteins_100g ?? 0,
         carbs: product.nutriments?.carbohydrates_100g ?? 0,
         fiber: product.nutriments?.fiber_100g ?? 0,
-      },
-    });
+         },
+  },
+  {
+    headers: cacheHeaders.product,
+  }
+);
   } catch (error) {
     console.error("Barcode API error:", error);
 

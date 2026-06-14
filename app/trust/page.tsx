@@ -1,13 +1,40 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function TrustPage() {
 
 const [activeSection, setActiveSection] = useState<"faq" | "privacy" | "terms" | null>(null);
 
+useEffect(() => {
+  const hash = window.location.hash.replace("#", "");
+
+  if (hash === "faq" || hash === "privacy" || hash === "terms") {
+    const timer = setTimeout(() => {
+      setActiveSection(hash);
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }
+}, []);
+
   return (
     <main className="min-h-screen" style={{ background: "#fff7ed" }}>
+      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+  <div
+    className="bubble-float absolute top-24 left-16 h-96 w-96 rounded-full bg-orange-300/10 blur-[120px]"
+  />
+
+  <div
+    className="bubble-float absolute top-[40%] right-0 h-[500px] w-[500px] rounded-full bg-orange-400/15 blur-[140px]"
+    style={{ animationDelay: "3s" }}
+  />
+
+  <div
+    className="bubble-float absolute bottom-0 left-1/3 h-[450px] w-[450px] rounded-full bg-yellow-300/15 blur-[140px]"
+    style={{ animationDelay: "6s" }}
+  />
+</div>
       <nav className="bg-white border-b sticky top-0 z-40" style={{ borderColor: "#fed7aa" }}>
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <a href="/" className="flex items-center gap-2">
@@ -75,17 +102,67 @@ const [activeSection, setActiveSection] = useState<"faq" | "privacy" | "terms" |
   ))}
 </div>
 </section>
+
+<section className="max-w-5xl mx-auto px-6 pb-10">
+  <div className="bg-white rounded-[36px] border border-orange-100 shadow-sm p-8">
+    <h2 className="text-3xl font-black text-gray-900 mb-6">
+      Our Scientific References
+    </h2>
+
+    <div className="grid md:grid-cols-2 gap-4">
+      <div className="rounded-2xl bg-orange-50 border border-orange-100 p-5">
+        <h3 className="font-black text-gray-900 mb-2">WHO</h3>
+        <p className="text-sm text-gray-600">
+          Public health guidance, sugar intake recommendations,
+          obesity prevention and nutrition education.
+        </p>
+      </div>
+
+      <div className="rounded-2xl bg-orange-50 border border-orange-100 p-5">
+        <h3 className="font-black text-gray-900 mb-2">FSSAI</h3>
+        <p className="text-sm text-gray-600">
+          Indian food labeling requirements and nutrition standards.
+        </p>
+      </div>
+
+      <div className="rounded-2xl bg-orange-50 border border-orange-100 p-5">
+        <h3 className="font-black text-gray-900 mb-2">FDA</h3>
+        <p className="text-sm text-gray-600">
+          Ingredient labeling guidance and food safety references.
+        </p>
+      </div>
+
+      <div className="rounded-2xl bg-orange-50 border border-orange-100 p-5">
+        <h3 className="font-black text-gray-900 mb-2">EFSA</h3>
+        <p className="text-sm text-gray-600">
+          European food safety opinions and additive assessments.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
             
         
       {activeSection === "faq" && (
 <section id="faq" className="max-w-5xl mx-auto px-6 pb-10">
-  <div className="bg-white rounded-[36px] border border-orange-100 shadow-sm p-6 sm:p-10">
+  <div className="relative bg-white rounded-[36px] border border-orange-100 shadow-sm p-6 sm:p-10">
     <p className="text-sm font-black text-orange-600 uppercase tracking-wide mb-3">
       FAQ
     </p>
 
+<div className="absolute top-6 right-6">
+  <button
+    onClick={() => setActiveSection(null)}
+    className="h-11 w-11 rounded-full bg-white border border-orange-100 shadow-sm hover:shadow-lg hover:scale-105 transition-all flex items-center justify-center"
+  >
+    <span className="text-lg font-black text-gray-500">
+      ✕
+    </span>
+  </button>
+</div>
+
     <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-8">
-      Food intelligence, explained clearly.
+       PAUSTICA explained clearly.
     </h2>
 
     <div className="space-y-4">
@@ -113,16 +190,28 @@ const [activeSection, setActiveSection] = useState<"faq" | "privacy" | "terms" |
       ].map((item) => (
         <details
           key={item.q}
-          className="group rounded-3xl border border-orange-100 bg-orange-50/50 p-5"
-        >
+className="group rounded-3xl bg-white p-5 shadow-sm"
+>
           <summary className="cursor-pointer list-none flex items-center justify-between gap-4">
             <span className="text-lg font-black text-gray-900">
               {item.q}
             </span>
 
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white border border-orange-100 text-orange-600 font-black group-open:rotate-45 transition">
-              +
-            </span>
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white border border-orange-100 text-orange-600 transition-transform duration-300 group-open:rotate-180">
+  <svg
+    className="w-4 h-4"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2.5}
+      d="M19 9l-7 7-7-7"
+    />
+  </svg>
+</span>
           </summary>
 
           <p className="mt-4 text-gray-600 leading-relaxed">
@@ -136,10 +225,21 @@ const [activeSection, setActiveSection] = useState<"faq" | "privacy" | "terms" |
     )}
 {activeSection === "privacy" && (
 <section id="privacy" className="max-w-5xl mx-auto px-6 pb-10">
-  <div className="bg-white rounded-[36px] border border-orange-100 shadow-sm p-6 sm:p-10">
+  <div className="relative bg-white rounded-[36px] border border-orange-100 shadow-sm p-6 sm:p-10">
     <p className="text-sm font-black text-orange-600 uppercase tracking-wide mb-3">
       Privacy
     </p>
+
+    <div className="absolute top-6 right-6">
+  <button
+    onClick={() => setActiveSection(null)}
+    className="h-11 w-11 rounded-full bg-white border border-orange-100 shadow-sm hover:shadow-lg hover:scale-105 transition-all flex items-center justify-center"
+  >
+    <span className="text-lg font-black text-gray-500">
+      ✕
+    </span>
+  </button>
+</div>
 
     <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-4">
       How we protect your data.
@@ -195,6 +295,23 @@ const [activeSection, setActiveSection] = useState<"faq" | "privacy" | "terms" |
             "You can request account deletion by contacting support.",
           ],
         },
+        {
+  title: "Account deletion",
+  items: [
+    "You can request account deletion at any time.",
+    "When your account is deleted, we will remove your account data and saved scan history where technically possible.",
+    "Some limited records may be retained if required for security, fraud prevention, or legal reasons.",
+  ],
+},
+{
+  title: "Data security",
+  items: [
+    "We use secure authentication and encrypted connections to protect your account.",
+    "Sensitive account information is not stored in plain text.",
+    "We regularly review our systems to improve security and reliability.",
+    "No security system is perfect, but we take reasonable measures to protect user data.",
+  ],
+},
       ].map((section) => (
         <div key={section.title}>
           <h3 className="text-base font-black text-gray-900 mb-3">
@@ -220,13 +337,25 @@ const [activeSection, setActiveSection] = useState<"faq" | "privacy" | "terms" |
     )}
 {activeSection === "terms" && (
 <section id="terms" className="max-w-5xl mx-auto px-6 pb-16">
-  <div className="bg-white rounded-[36px] border border-orange-100 shadow-sm p-6 sm:p-10">
+  <div className="relative bg-white rounded-[36px] border border-orange-100 shadow-sm p-6 sm:p-10">
     <p className="text-sm font-black text-orange-600 uppercase tracking-wide mb-3">
       Terms
     </p>
 
+
+    <div className="absolute top-6 right-6">
+  <button
+    onClick={() => setActiveSection(null)}
+    className="h-11 w-11 rounded-full bg-white border border-orange-100 shadow-sm hover:shadow-lg hover:scale-105 transition-all flex items-center justify-center"
+  >
+    <span className="text-lg font-black text-gray-500">
+      ✕
+    </span>
+  </button>
+</div>
+
     <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-4">
-      Simple terms for using PAUSTICA.
+      Terms for using PAUSTICA.
     </h2>
 
     <p className="text-gray-500 leading-relaxed mb-8">
@@ -306,6 +435,7 @@ const [activeSection, setActiveSection] = useState<"faq" | "privacy" | "terms" |
   </div>
 </section>
 )}
+
 <section className="max-w-5xl mx-auto px-6 pb-20">
   <div className="rounded-[36px] bg-gray-900 p-8 sm:p-10 text-white">
     <p className="text-sm font-black text-orange-400 uppercase tracking-wide mb-3">
@@ -329,6 +459,9 @@ const [activeSection, setActiveSection] = useState<"faq" | "privacy" | "terms" |
     </a>
   </div>
 </section>
+<p className="text-sm font-bold text-gray-400 mb-10">
+  Last updated: June 2026
+</p>
 
     </main>
   );

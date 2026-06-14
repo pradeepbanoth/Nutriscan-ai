@@ -8,7 +8,12 @@ export async function POST(request: Request) {
     if (secret !== process.env.SYNC_SECRET) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
+if (!elastic) {
+  return Response.json(
+    { error: "Elasticsearch client is not configured" },
+    { status: 500 }
+  );
+}
     console.log("Creating/checking index:", PRODUCT_INDEX);
 
     const exists = await elastic.indices.exists({

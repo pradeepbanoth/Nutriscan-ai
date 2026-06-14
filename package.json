@@ -21,7 +21,6 @@
     "lucide-react": "^1.16.0",
     "next": "15.4.10",
     "openai": "^6.42.0",
-    "posthog-js": "^1.379.1",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-qr-barcode-scanner": "^2.1.25",

@@ -2,7 +2,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect,  useRef, useState } from "react";
 import dynamic from "next/dynamic";
 
 const BarcodeScanner = dynamic(
@@ -24,8 +24,7 @@ import InstallButton from "../components/InstallButton";
 import { getScoreBreakdown } from "../lib/scoreBreakdown";
 import { getProductComparisons } from "../lib/productComparisons";
 import MobileMenu from "../components/MobileMenu";
-import { getConfidenceScore } from "../lib/getConfidenceScore";
-import posthog from "posthog-js";
+import { getConfidenceScore } from "../lib/getConfidenceScore"; 
 import { getPersonalizedWarning } from "../lib/getPersonalizedWarning";
 import Image from "next/image";
 import { parseFatSecretNutrition } from "../lib/parseFatSecretNutrition";
@@ -71,6 +70,184 @@ type ProductRow = {
   salt: number | null;
 };
 
+function ProductAnalysisSkeleton() {
+  return (
+    <div className="mt-10 w-full max-w-4xl mx-auto">
+      <div className="bg-white rounded-[32px] shadow-2xl border border-orange-100 overflow-hidden animate-pulse">
+        <div className="h-2 bg-orange-200" />
+
+        <div className="p-4 sm:p-6 md:p-8">
+          <div className="flex justify-end mb-6">
+            <div className="h-12 w-40 rounded-full bg-orange-100" />
+          </div>
+
+          <div className="flex flex-col md:flex-row gap-5">
+            <div className="mx-auto md:mx-0 w-32 h-32 md:w-40 md:h-40 rounded-[28px] bg-orange-100" />
+
+            <div className="flex-1">
+              <div className="h-8 w-3/4 rounded-full bg-orange-100 mb-4" />
+              <div className="h-5 w-1/3 rounded-full bg-orange-100 mb-6" />
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5">
+                {Array.from({ length: 8 }).map((_, index) => (
+                  <div
+                    key={index}
+                    className="rounded-2xl bg-orange-50 border border-orange-100 p-4"
+                  >
+                    <div className="h-3 w-16 rounded-full bg-orange-100 mb-3" />
+                    <div className="h-7 w-20 rounded-full bg-orange-200" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 rounded-3xl bg-orange-50 border border-orange-100 p-6">
+            <div className="flex flex-col md:flex-row gap-6">
+              <div className="w-40 h-40 rounded-full bg-orange-100 mx-auto md:mx-0" />
+
+              <div className="flex-1 space-y-4">
+                <div className="h-7 w-1/2 rounded-full bg-orange-100" />
+                <div className="h-4 w-full rounded-full bg-orange-100" />
+                <div className="h-4 w-5/6 rounded-full bg-orange-100" />
+                <div className="h-4 w-2/3 rounded-full bg-orange-100" />
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                  {Array.from({ length: 4 }).map((_, index) => (
+                    <div
+                      key={index}
+                      className="h-24 rounded-2xl bg-white border border-orange-100"
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <p className="mt-6 text-center text-sm font-bold text-orange-600">
+            Analyzing food intelligence...
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+
+
+  
+
+const CACHE_TTL = 24 * 60 * 60 * 1000;
+
+function setCache<T>(
+  key: string,
+  value: T,
+  ttl = DEFAULT_CACHE_TTL
+) {
+  if (typeof window === "undefined") return;
+
+  localStorage.setItem(
+    key,
+    JSON.stringify({
+      value,
+      expiry: Date.now() + ttl,
+    })
+  );
+}
+
+
+
+const DEFAULT_CACHE_TTL = 24 * 60 * 60 * 1000;
+
+function debounce<T extends (...args: any[]) => void>(
+  callback: T,
+  delay = 450
+) {
+  let timer: ReturnType<typeof setTimeout>;
+
+  return (...args: Parameters<T>) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => callback(...args), delay);
+  };
+}
+
+function throttle<T extends (...args: any[]) => void>(
+  callback: T,
+  delay = 1200
+) {
+  let lastRun = 0;
+
+  return (...args: Parameters<T>) => {
+    const now = Date.now();
+
+    if (now - lastRun < delay) return;
+
+    lastRun = now;
+    callback(...args);
+  };
+}
+
+const canRunAction = (
+  ref: React.MutableRefObject<number>,
+  delay = 1200
+) => {
+  const now = Date.now();
+
+  if (now - ref.current < delay) return false;
+
+  ref.current = now;
+  return true;
+};
+
+
+
+function getCache<T>(key: string): T | null {
+  if (typeof window === "undefined") return null;
+
+  const cached = localStorage.getItem(key);
+  if (!cached) return null;
+
+  try {
+    const parsed = JSON.parse(cached);
+
+    if (!parsed.expiry || Date.now() > parsed.expiry) {
+      localStorage.removeItem(key);
+      return null;
+    }
+
+    return parsed.value as T;
+  } catch {
+    localStorage.removeItem(key);
+    return null;
+  }
+}
+
+function removeCache(key: string) {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(key);
+}
+function createCacheKey(prefix: string, value: string | number) {
+  return `${prefix}_${String(value).trim().toLowerCase()}`;
+}
+async function dedupeRequest<T>(
+  key: string,
+  requestFn: () => Promise<T>,
+  activeRequests: React.MutableRefObject<Record<string, Promise<any> | undefined>>
+): Promise<T> {
+  if (activeRequests.current[key]) {
+    return activeRequests.current[key];
+  }
+
+  const request = requestFn().finally(() => {
+    delete activeRequests.current[key];
+  });
+
+  activeRequests.current[key] = request;
+  return request;
+}
+
+
 export default function Home() {
   const [barcode, setBarcode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -80,7 +257,6 @@ export default function Home() {
   const [userId, setUserId] = useState<string | null>(null);
   const [selectedGoal, setSelectedGoal] =
     useState<HealthGoal>("General Wellness");
-  const [isFetching, setIsFetching] = useState(false);
 
   const [scanHistory, setScanHistory] = useState<Product[]>([]);
   const [favorites, setFavorites] = useState<Product[]>([]);
@@ -104,8 +280,106 @@ export default function Home() {
   const [currentPlan, setCurrentPlan] = useState("free");
   const [fatSecretAlternatives, setFatSecretAlternatives] = useState<any[]>([]);
   const [loadingAlternatives, setLoadingAlternatives] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const suggestionAbortRef = useRef<AbortController | null>(null);
+  const searchAbortRef = useRef<AbortController | null>(null);
+  const productAbortRef = useRef<AbortController | null>(null);
+  const activeRequestsRef = useRef<Record<string, Promise<any> | undefined>>({});
+  const MIN_LOADING_TIME = 700;
 
-  
+
+const fetchAlternatives = async (productName: string) => {
+  const cleanName = productName.trim().toLowerCase();
+  const cacheKey = createCacheKey(
+  "fatsecret_alternatives",
+  cleanName
+);
+
+  try {
+    setLoadingAlternatives(true);
+
+    const cachedAlternatives = getCache<any[]>(cacheKey);
+
+    if (cachedAlternatives) {
+      setFatSecretAlternatives(cachedAlternatives);
+      return;
+    }
+
+   const fatsecretData = await dedupeRequest(
+  createCacheKey("api_fatsecret_alternatives", cleanName),
+  async () => {
+    const fatsecretRes = await fetch(
+      `/api/fatsecret/search?query=${encodeURIComponent(cleanName)}`
+    );
+
+    return fatsecretRes.json();
+  },
+  activeRequestsRef
+);
+
+    const foods = fatsecretData?.foods?.food || [];
+
+    const alternatives = Array.isArray(foods)
+      ? foods.slice(0, 5)
+      : foods
+      ? [foods]
+      : [];
+
+    setFatSecretAlternatives(alternatives);
+    setCache(cacheKey, alternatives, 24 * 60 * 60 * 1000);
+  } catch (error) {
+    console.error("Alternative fetch failed:", error);
+    setFatSecretAlternatives([]);
+  } finally {
+    setLoadingAlternatives(false);
+  }
+};
+  const carouselRef = useRef<HTMLDivElement | null>(null);
+const [activeSlide, setActiveSlide] = useState(0);
+const differenceSlides = [
+  {
+    title: "Beyond Nutrition Labels",
+    tag: "Clarity",
+    text: "PAUSTICA explains what sugar, salt, fat, additives, and processing levels actually mean before you decide what to eat.",
+  },
+  {
+    title: "Personalized Health Goals",
+    tag: "Personalized",
+    text: "Choose goals like diabetes friendly, heart health, weight loss, muscle gain, or kids nutrition for smarter food insights.",
+  },
+  {
+    title: "Ingredient Intelligence",
+    tag: "AI Analysis",
+    text: "Understand risky additives, ultra-processing signals, and ingredient quality in simple, friendly language.",
+  },
+  {
+    title: "Smarter Alternatives",
+    tag: "Better Choices",
+    text: "When a product is not ideal, PAUSTICA helps suggest better options instead of only showing warnings.",
+  },
+  {
+    title: "Food Confidence",
+    tag: "Trust",
+    text: "PAUSTICA turns complex nutrition data into clear scores, warnings, positives, and simple next steps.",
+  },
+];
+
+const scrollToSlide = (index: number) => {
+  const slider = carouselRef.current;
+  if (!slider) return;
+
+  const slide = slider.children[index] as HTMLElement;
+  if (!slide) return;
+
+  slide.scrollIntoView({
+    behavior: "smooth",
+    inline: "center",
+    block: "nearest",
+  });
+
+  setActiveSlide(index);
+};
+
   const [dailyScansUsed, setDailyScansUsed] = useState(() => {
   if (typeof window === "undefined") return 0;
 
@@ -135,46 +409,74 @@ export default function Home() {
   return data.count || 0;
 };
 
-  const fetchSuggestions = async (query: string) => {
-  if (query.length < 2) {
+const fetchSuggestions = useCallback(async (query: string) => {
+    const cleanQuery = query.trim().toLowerCase();
+
+  if (cleanQuery.length < 2) {
+    suggestionAbortRef.current?.abort();
     setSuggestions([]);
     return;
   }
 
+  const cacheKey = createCacheKey(
+  "suggestions",
+  cleanQuery
+);
+  const cachedSuggestions = getCache<any[]>(cacheKey);
+
+  if (cachedSuggestions) {
+    setSuggestions(cachedSuggestions);
+    return;
+  }
+
+  suggestionAbortRef.current?.abort();
+
+  const controller = new AbortController();
+  suggestionAbortRef.current = controller;
+
   try {
-   const res = await fetch(
-  `/api/search?q=${encodeURIComponent(query)}`
+    const data = await dedupeRequest(
+  createCacheKey("api_search_suggestions", cleanQuery),
+  async () => {
+    const res = await fetch(
+      `/api/search?q=${encodeURIComponent(cleanQuery)}`,
+      { signal: controller.signal }
+    );
+
+    return res.json();
+  },
+  activeRequestsRef
 );
 
-const data = await res.json();
+    const mappedSuggestions = (data.products || []).map((p: any) => ({
+      product_name: p.name,
+      brands: p.brand,
+      image_front_url: p.image,
+      ingredients_text: p.ingredients,
+      nutriscore_grade: p.nutriscore,
+      nova_group: p.nova,
+      nutriments: {
+        sugars_100g: p.sugar,
+        fat_100g: p.fat,
+        salt_100g: p.salt,
+      },
+    }));
 
-setSuggestions(
-  (data.products || []).map((p: any) => ({
-    product_name: p.name,
-    brands: p.brand,
-    image_front_url: p.image,
-    ingredients_text: p.ingredients,
-    nutriscore_grade: p.nutriscore,
-    nova_group: p.nova,
-    nutriments: {
-      sugars_100g: p.sugar,
-      fat_100g: p.fat,
-      salt_100g: p.salt,
-    },
-  }))
-);
-  } catch {
+    setSuggestions(mappedSuggestions);
+    setCache(cacheKey, mappedSuggestions, 6 * 60 * 60 * 1000);
+  } catch (error: any) {
+    if (error.name === "AbortError") return;
     setSuggestions([]);
   }
-};
+}, []);
 
-  useEffect(() => {
+useEffect(() => {
   const timer = setTimeout(() => {
     fetchSuggestions(searchQuery);
-  }, 400);
+  }, 450);
 
   return () => clearTimeout(timer);
-}, [searchQuery]);
+}, [searchQuery, fetchSuggestions]);
 
   const harmfulIngredients = [
     "palm oil",
@@ -276,6 +578,18 @@ setSuggestions(
   }
 }, []);
 
+useEffect(() => {
+  if (product && !loading) {
+    document.body.style.overflow = "hidden";
+  } else {
+    document.body.style.overflow = "";
+  }
+
+  return () => {
+    document.body.style.overflow = "";
+  };
+}, [product, loading]);
+
 
   useEffect(() => {
     requestAnimationFrame(() => {
@@ -292,10 +606,27 @@ setSuggestions(
     });
   }, []);
 
-  useEffect(() => {
-  posthog.capture("homepage_loaded");
+ useEffect(() => {
+  const timer = setTimeout(() => {
+    const saved = localStorage.getItem("paustica_recent_searches");
+
+    if (saved) {
+      setRecentSearches(JSON.parse(saved));
+    }
+  }, 0);
+
+  return () => clearTimeout(timer);
 }, []);
 
+useEffect(() => {
+  return () => {
+    suggestionAbortRef.current?.abort();
+    searchAbortRef.current?.abort();
+    productAbortRef.current?.abort();
+  };
+}, []);
+
+  
   useEffect(() => {
     const getUser = async () => {
       const { data } = await supabase.auth.getUser();
@@ -725,13 +1056,26 @@ const dailyCalorieTarget =
   
 setSuggestions([]);
 
-const fatsecretRes = await fetch(
-  `/api/fatsecret/search?query=${encodeURIComponent(
-    String(item.product_name ?? "")
-  )}`
+const productName = String(item.product_name ?? "");
+const fatsecretCacheKey = `fatsecret_search_${productName.toLowerCase()}`;
+
+let fatsecretData = getCache<any>(fatsecretCacheKey);
+
+if (!fatsecretData) {
+  fatsecretData = await dedupeRequest(
+  createCacheKey("api_fatsecret", productName),
+  async () => {
+    const fatsecretRes = await fetch(
+      `/api/fatsecret/search?query=${encodeURIComponent(productName)}`
+    );
+
+    return fatsecretRes.json();
+  },
+  activeRequestsRef
 );
 
-const fatsecretData = await fatsecretRes.json();
+  setCache(fatsecretCacheKey, fatsecretData);
+}
 
 const firstFood = fatsecretData?.foods?.food?.[0];
 
@@ -742,7 +1086,7 @@ const nutrition = firstFood
 const fetchedProduct: Product = {
 
     id: 0,
-    name: String(item.product_name ?? "Unknown Product"),
+    name: productName || "Unknown Product",
     brand: String(item.brands ?? "Unknown Brand"),
     image: String(item.image_front_url ?? ""),
     ingredients: String(item.ingredients_text ?? "Ingredients unavailable"),
@@ -768,10 +1112,7 @@ salt: Number(
 ),
   };
 
-  posthog.capture("search_result_opened", {
-  product_name: String(item.product_name ?? "Unknown Product"),
-  brand: String(item.brands ?? "Unknown Brand"),
-});
+  
 
   setProduct(fetchedProduct);
   const analysis = analyzeHealth({
@@ -791,12 +1132,26 @@ if (analysis.score < 60) {
 } else {
   setFatSecretAlternatives([]);
 }
-  const realItems = await getRealAlternatives(fetchedProduct.name);
+const realAlternativesCacheKey =
+  createCacheKey(
+    "real_alternatives",
+    fetchedProduct.name
+  );
+
+const cachedRealAlternatives = getCache<any[]>(realAlternativesCacheKey);
+
+if (cachedRealAlternatives) {
+  setRealAlternatives(cachedRealAlternatives);
+} else {
+const realItems = await dedupeRequest(
+  createCacheKey("api_real_alternatives", fetchedProduct.name),
+  async () => getRealAlternatives(fetchedProduct.name),
+  activeRequestsRef
+);
   setRealAlternatives(realItems);
-  posthog.capture("barcode_scan_success", {
-  product_name: fetchedProduct.name,
-  brand: fetchedProduct.brand,
-});
+  setCache(realAlternativesCacheKey, realItems, 24 * 60 * 60 * 1000);
+}
+  
   
   await updateScanStats();
   const getDailyScansUsed = () => {
@@ -818,39 +1173,91 @@ if (analysis.score < 60) {
   setLoading(false);
 };
 
-    const searchProduct = async () => {
-  if (!searchQuery.trim()) return;
-  posthog.capture("product_search_started", {
-  query: searchQuery,
-});
- const permission = await checkScanPermission();
+const saveRecentSearch = (query: string) => {
+  const cleanQuery = query.trim();
 
-if (!permission.allowed) {
-         posthog.capture("premium_modal_opened");
+  if (!cleanQuery) return;
+
+  const updated = [
+    cleanQuery,
+    ...recentSearches.filter(
+      (item) => item.toLowerCase() !== cleanQuery.toLowerCase()
+    ),
+  ].slice(0, 5);
+
+  setRecentSearches(updated);
+  localStorage.setItem("paustica_recent_searches", JSON.stringify(updated));
+};
+
+
+  const searchProduct = async () => {
+  
+    
+
+   
+  if (!searchQuery.trim()) return;
+
+  saveRecentSearch(searchQuery);
+  const cleanQuery = searchQuery.trim().toLowerCase();
+const searchCacheKey = createCacheKey(
+  "search_result",
+  cleanQuery
+);
+const cachedSearch = getCache<any>(searchCacheKey);
+
+if (cachedSearch) {
+  setSearchResults(cachedSearch);
+  setSuggestions([]);
+  setScannerOpen(false);
+  setProduct(null);
+  return;
+}
+
+  const permission = await checkScanPermission();
+
+ if (!permission.allowed) {
+  
   setUpgradeOpen(true);
   setLoading(false);
   return;
 }
 
+setLoading(true);
+
+ // eslint-disable-next-line react-hooks/purity
+const loadingStartedAt = Date.now();
+
+searchAbortRef.current?.abort();
+
+const controller = new AbortController();
+searchAbortRef.current = controller;
+
   setLoading(true);
 
   try {
-   const res = await fetch(
-  `/api/search?q=${encodeURIComponent(searchQuery)}`
+  const data = await dedupeRequest(
+  createCacheKey("api_search", cleanQuery),
+  async () => {
+    const res = await fetch(
+      `/api/search?q=${encodeURIComponent(cleanQuery)}`,
+      { signal: controller.signal }
+    );
+
+    return res.json();
+  },
+  activeRequestsRef
 );
 
-const data = await res.json();
-
-const results = data.products || [];
-
-    if (results.length === 0) {
+    if (!data.success || !data.product) {
       alert("No product found. Try a more specific name.");
       setSearchResults([]);
       return;
     }
 
-    setSearchResults(
-  results.map((p: any) => ({
+    const p = data.product;
+
+ const mappedSearchResult = [
+  {
     product_name: p.name,
     brands: p.brand,
     image_front_url: p.image,
@@ -862,37 +1269,29 @@ const results = data.products || [];
       fat_100g: p.fat,
       salt_100g: p.salt,
     },
-  }))
-);
+  },
+];
+
+setSearchResults(mappedSearchResult);
+setCache(searchCacheKey, mappedSearchResult, 12 * 60 * 60 * 1000);
+
     setSuggestions([]);
     setScannerOpen(false);
     setProduct(null);
-  } catch (error) {
+} catch (error: any) {
+  if (error.name !== "AbortError") {
     console.log(error);
     alert("Search failed. Please try again.");
   }
+} finally {
+  const elapsed = Date.now() - loadingStartedAt;
+  const remainingTime = Math.max(0, MIN_LOADING_TIME - elapsed);
 
-  setLoading(false);
-};
-
-async function fetchAlternatives(productName: string) {
-  try {
-    setLoadingAlternatives(true);
-
-    const res = await fetch(
-      `/api/fatsecret/alternatives?query=${encodeURIComponent(productName)}`
-    );
-
-    const data = await res.json();
-
-    setFatSecretAlternatives(data.alternatives || []);
-  } catch (error) {
-    console.error(error);
-    setFatSecretAlternatives([]);
-  } finally {
-    setLoadingAlternatives(false);
-  }
+  setTimeout(() => {
+    setLoading(false);
+  }, remainingTime);
 }
+};
 
  const checkScanPermission = async () => {
   const {
@@ -988,46 +1387,76 @@ const updateScanStats = async () => {
   const finalBarcode = code || barcode;
 
   if (!finalBarcode) return;
+  
+
+ 
+
 
    const permission = await checkScanPermission();
 
-if (!permission.allowed) {
-       posthog.capture("premium_modal_opened");
-  setUpgradeOpen(true);
-  setLoading(false);
+    // eslint-disable-next-line react-hooks/purity
+const loadingStartedAt = Date.now();
+
+    productAbortRef.current?.abort();
+
+const controller = new AbortController();
+productAbortRef.current = controller;
+
+ const productCacheKey = createCacheKey(
+  "product",
+  finalBarcode
+);
+const cachedProduct = getCache<Product>(productCacheKey);
+
+if (cachedProduct) {
+  setProduct(cachedProduct);
   setScannerOpen(false);
+  setLoading(false);
   return;
 }
-
-  const cached = localStorage.getItem(`product_${finalBarcode}`);
-
-  if (cached) {
-    const cachedProduct = JSON.parse(cached);
-
-    setProduct(cachedProduct);
-    setScannerOpen(false);
-    setLoading(false);
-    return;
-  }
 
   setLoading(true);
 
   try {
-  const res = await fetch(
-  `/api/product?barcode=${encodeURIComponent(finalBarcode)}`
-);
+ const data = await dedupeRequest(
+  createCacheKey("api_product", finalBarcode),
+  async () => {
+    const res = await fetch(
+      `/api/product?barcode=${encodeURIComponent(finalBarcode)}`,
+      { signal: controller.signal }
+    );
 
-    const data = await res.json();
+    return res.json();
+  },
+  activeRequestsRef
+);
 
    if (data.success && data.product) {
      
-   const fatsecretRes = await fetch(
-  `/api/fatsecret/search?query=${encodeURIComponent(
-    data.product.product_name || "Unknown Product"
-  )}`
+  const productNameForNutrition =
+  data.product.name ||
+  data.product.product_name ||
+  "Unknown Product";
+
+const fatsecretCacheKey = `fatsecret_search_${productNameForNutrition.toLowerCase()}`;
+
+let fatsecretData = getCache<any>(fatsecretCacheKey);
+
+if (!fatsecretData) {
+fatsecretData = await dedupeRequest(
+  createCacheKey("api_fatsecret", productNameForNutrition),
+  async () => {
+    const fatsecretRes = await fetch(
+      `/api/fatsecret/search?query=${encodeURIComponent(productNameForNutrition)}`
+    );
+
+    return fatsecretRes.json();
+  },
+  activeRequestsRef
 );
 
-const fatsecretData = await fatsecretRes.json();
+  setCache(fatsecretCacheKey, fatsecretData);
+}
 
 const firstFood = fatsecretData?.foods?.food?.[0];
 
@@ -1056,10 +1485,7 @@ const fetchedProduct: Product = {
 
       };
 
-      localStorage.setItem(
-        `product_${finalBarcode}`,
-        JSON.stringify(fetchedProduct)
-      );
+     setCache(productCacheKey, fetchedProduct, 7 * 24 * 60 * 60 * 1000);
 
       setScannerOpen(false);
       setProduct(fetchedProduct);
@@ -1082,21 +1508,47 @@ if (analysis.score < 60) {
   setFatSecretAlternatives([]);
 }
 
-      const realItems = await getRealAlternatives(fetchedProduct.name);
-setRealAlternatives(realItems);
+  const realAlternativesCacheKey = `real_alternatives_${fetchedProduct.name
+  .trim()
+  .toLowerCase()}`;
+
+const cachedRealAlternatives = getCache<any[]>(realAlternativesCacheKey);
+
+if (cachedRealAlternatives) {
+  setRealAlternatives(cachedRealAlternatives);
+} else {
+const realItems = await dedupeRequest(
+  createCacheKey("api_real_alternatives", fetchedProduct.name),
+  async () => getRealAlternatives(fetchedProduct.name),
+  activeRequestsRef
+);
+  setRealAlternatives(realItems);
+  setCache(realAlternativesCacheKey, realItems, 24 * 60 * 60 * 1000);
+}
 
       await saveHistory(fetchedProduct);
     } else {
   setProduct(null);
   alert("Product not found in database. Try another barcode or enter product details manually.");
 }
-  } catch (error) {
+} catch (error: any) {
+  if (error.name !== "AbortError") {
     console.log(error);
     alert("Something went wrong");
   }
+} finally {
+  const elapsed = Date.now() - loadingStartedAt;
+  const remainingTime = Math.max(0, MIN_LOADING_TIME - elapsed);
 
-  setLoading(false);
+  setTimeout(() => {
+    setLoading(false);
+  }, remainingTime);
+}
 };
+const lastSearchClickRef = useRef(0);
+const lastBarcodeClickRef = useRef(0);
+const lastScannerScanRef = useRef(0);
+
 
 const logFood = async () => {
   if (!product) return;
@@ -1145,6 +1597,22 @@ const logFood = async () => {
       className="min-h-screen overflow-x-hidden"
       style={{ background: "#fff7ed" }}
     >
+
+      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+  <div
+    className="bubble-float absolute top-24 left-16 h-96 w-96 rounded-full bg-orange-300/10 blur-[120px]"
+  />
+
+  <div
+    className="bubble-float absolute top-[40%] right-0 h-[500px] w-[500px] rounded-full bg-orange-400/15 blur-[140px]"
+    style={{ animationDelay: "3s" }}
+  />
+
+  <div
+    className="bubble-float absolute bottom-0 left-1/3 h-[450px] w-[450px] rounded-full bg-yellow-300/15 blur-[140px]"
+    style={{ animationDelay: "6s" }}
+  />
+</div>
 <nav className="sticky top-0 z-50 border-b border-orange-100 bg-white/70 backdrop-blur-xl">
   <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
     <div className="flex items-center gap-3">
@@ -1261,38 +1729,30 @@ const logFood = async () => {
 
         <div className="flex flex-col md:flex-row gap-3 justify-center mb-8">
           <button
-            onClick={() => {
-             posthog.capture("scanner_opened");
-             setScannerOpen(true);
-            }}
+            
             className="px-8 py-5 rounded-[20px] text-white font-bold text-lg shadow-xl"
             style={{
               background: "linear-gradient(135deg, #f97316, #ea580c)",
             }}
           >
-            Open Camera Scanner
+          SCAN FOOD
           </button>
 
-          <button
-  onClick={() => {
-    posthog.capture("scanner_opened");
-    setScannerOpen(true);
-  }}
-  className="px-8 py-5 rounded-20px bg-white border border-orange-100 text-gray-900 font-bold text-lg shadow-sm hover:bg-orange-50 transition"
->
-  Scan Product
-</button>
+         
           <input
   value={barcode}
   onChange={(e) => setBarcode(e.target.value)}
   placeholder="Enter barcode manually"
-  className="px-6 py-5 rounded-[20px] bg-white border border-orange-100 text-gray-900 font-bold outline-none"
+className="px-6 py-5 rounded-2xl bg-white text-gray-900 font-bold outline-none shadow-sm"
 />
 
        <button
         disabled={loading}
-        onClick={() => fetchProduct()}
-        className="px-8 py-5 rounded-[20px] bg-gray-900 text-white font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+        onClick={() => {
+  if (!canRunAction(lastBarcodeClickRef, 1500)) return;
+  fetchProduct();
+}}
+className="px-7 py-5 rounded-2xl bg-gray-900 text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
         >
         {loading ? "Analyzing..." : "Analyze Barcode"}
            </button>
@@ -1307,10 +1767,11 @@ const logFood = async () => {
           setSearchQuery(e.target.value);
         }}
         onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            setSuggestions([]);
-            searchProduct();
-          }
+         if (e.key === "Enter") {
+  setSuggestions([]);
+  if (!canRunAction(lastSearchClickRef, 1500)) return;
+searchProduct();
+}
         }}
         placeholder="Search product name..."
         className="flex-1 px-6 py-4 rounded-[20px] border border-orange-100 bg-white outline-none font-semibold shadow-sm"
@@ -1318,7 +1779,10 @@ const logFood = async () => {
 
       <button
         disabled={loading}
-        onClick={searchProduct}
+       onClick={() => {
+  if (!canRunAction(lastSearchClickRef, 1500)) return;
+  searchProduct();
+}}
         className="px-6 py-4 rounded-[20px] bg-orange-500 text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading ? "Searching..." : "Search"}
@@ -1365,6 +1829,44 @@ const logFood = async () => {
   </div>
 </div>
 
+{recentSearches.length > 0 && searchQuery.length === 0 && (
+  <div className="mt-4 flex flex-wrap justify-center gap-2">
+    {recentSearches.map((item) => (
+      <button
+        key={item}
+        onClick={() => {
+  setSearchQuery(item);
+setSuggestions([]);
+saveRecentSearch(item);
+
+setTimeout(() => {
+  searchProduct();
+}, 0);
+}}
+        className="rounded-full border border-orange-100 bg-white px-4 py-2 text-sm font-bold text-gray-600 hover:bg-orange-50"
+      >
+        {item}
+      </button>
+    ))}
+  </div>
+)}
+{recentSearches.length === 0 && searchQuery.length === 0 && (
+  <div className="mt-4 flex flex-wrap justify-center gap-2">
+    {["Diet Coke", "Maggi", "Nutella", "Red Bull", "Lay's"].map((item) => (
+      <button
+        key={item}
+        onClick={() => {
+          setSearchQuery(item);
+          setSuggestions([]);
+        }}
+        className="rounded-full border border-orange-100 bg-orange-50 px-4 py-2 text-sm font-bold text-orange-600 hover:bg-white"
+      >
+        {item}
+      </button>
+    ))}
+  </div>
+)}
+
  <p className="mt-4 text-sm text-gray-500 font-medium">
   {currentPlan === "guest"
     ? "Guest scans available"
@@ -1374,14 +1876,20 @@ const logFood = async () => {
 </p>
 
         {scannerOpen && (
-          <div className="max-w-2xl mx-auto bg-white p-6 rounded-[32px] border border-orange-100 mb-10">
-           <BarcodeScanner
-              onScan={(code) => {
-              setBarcode(code);
-              setScannerOpen(false);
-              setLoading(true);
-              fetchProduct(code);
-              }}
+  <div className="max-w-2xl mx-auto bg-white p-6 rounded-[32px] shadow-xl mb-10">
+              <BarcodeScanner
+             onScan={(code) => {
+  if (!canRunAction(lastScannerScanRef, 2000)) return;
+
+
+
+
+  setBarcode(code);
+  setScannerOpen(false);
+  setLoading(true);
+  fetchProduct(code);
+}}
+              
               />
             <p className="text-sm text-gray-400 mt-4">
                 Align barcode inside frame
@@ -1389,19 +1897,11 @@ const logFood = async () => {
           </div>
         )}
 
-        {loading && (
-          <div className="mt-10">
-            <div className="w-16 h-16 border-4 border-orange-200 border-t-orange-500 rounded-full animate-spin mx-auto"></div>
-
-            <p className="mt-4 text-gray-500 font-medium">
-              AI analyzing product...
-            </p>
-          </div>
-        )}
+        {loading && <ProductAnalysisSkeleton />}
          
          {!product && !loading && !scannerOpen && (
-  <div className="mt-10 max-w-2xl mx-auto bg-white rounded-[32px] border border-orange-100 shadow-xl p-8">
-    <h3 className="heading-font text-xl font-black text-gray-900 mb-3">
+<div className="mt-10 max-w-2xl mx-auto bg-white rounded-[32px] shadow-sm p-8">
+<h3 className="heading-font text-xl font-black text-gray-900 mb-3">
       Ready to analyze your food
     </h3>
 
@@ -1421,10 +1921,39 @@ const logFood = async () => {
   </div>
 )}
 
-        {product && !loading && (
-          <div className="mt-10 w-full max-w-4xl mx-auto">
-            <div className="bg-white rounded-[32px] shadow-2xl border border-orange-100 overflow-hidden">
-              <div className="h-2 bg-gradient-to-r from-orange-500 to-orange-600" />
+      {product && !loading && (
+  <>
+    <div
+      onClick={() => {
+        setProduct(null);
+        setBarcode("");
+        setSearchResults([]);
+      }}
+      className="fixed inset-0 z-30 bg-black/30 backdrop-blur-sm"
+    />
+          <div className="fixed inset-x-0 bottom-0 z-40 mx-auto w-full max-w-4xl rounded-t-[36px] border border-orange-100 bg-white shadow-2xl max-h-[88vh] overflow-y-auto pb-6 sm:bottom-6 sm:rounded-[36px]">
+            <div className="overflow-hidden">
+           <div className="sticky top-0 z-20 bg-white pt-3 pb-3 border-b border-orange-100">
+  <div className="mx-auto h-1.5 w-16 rounded-full bg-gray-300 mb-3" />
+
+  <div className="flex items-center justify-between px-5">
+    <p className="text-sm font-black text-gray-500 uppercase tracking-wide">
+      Product Analysis
+    </p>
+
+    <button
+      onClick={() => {
+        setProduct(null);
+        setBarcode("");
+        setSearchResults([]);
+      }}
+      className="h-9 w-9 rounded-full bg-orange-50 border border-orange-100 text-orange-600 font-black"
+    >
+      ×
+    </button>
+  </div>
+</div>
+                  <div className="h-2 bg-gradient-to-r from-orange-500 to-orange-600" />
 
                 <div className="p-4 sm:p-6 md:p-8">
                 <div className="flex justify-end mb-6">
@@ -1439,99 +1968,45 @@ const logFood = async () => {
     Scan Another Product
   </button>
 </div>
-                <div className="flex flex-col md:flex-row gap-5 md:items-start">
-                  {product.image && (
-                   <Image
-    src={product.image}
-    alt={product.name}
-  width={120}
-  height={120}
-  className="mx-auto md:mx-0 w-32 h-32 md:w-40 md:h-40 object-cover rounded-[28px] border border-orange-100 shadow-md"
-  unoptimized
-/>
-                  )}
+                <div className="text-center">
+  {product.image && (
+    <Image
+      src={product.image}
+      alt={product.name}
+      width={160}
+      height={160}
+      className="mx-auto w-36 h-36 sm:w-44 sm:h-44 object-cover rounded-[32px] border border-orange-100 shadow-md"
+      unoptimized
+    />
+  )}
 
-                  <div className="flex-1 text-left">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                          <h2 className="heading-font text-xl md:text-3xl font-black text-gray-900 mb-2 leading-tight">
-                          {product.name}
-                        </h2>
+  <div className="mt-6">
+                   <h2 className="text-2xl sm:text-4xl font-black text-gray-900 mt-4 mb-2 leading-tight">
+  {product.name}
+</h2>
 
-                        <p className="text-sm md:text-base text-gray-500 mb-4">
-                           {product.brand}
-                           </p>
+<p className="text-sm sm:text-base text-gray-500 mb-4">
+  {product.brand}
+</p>
 
-                           <span className="inline-flex mb-4 px-4 py-2 rounded-full bg-orange-50 border border-orange-100 text-orange-600 text-sm font-black">
-                             {productCategory}
-                             </span>
-                      </div>
+<div className="flex justify-center gap-3 mb-6">
+  <span className="inline-flex px-4 py-2 rounded-full bg-orange-50 border border-orange-100 text-orange-600 text-sm font-black">
+    {productCategory}
+  </span>
 
-                      <button
-                        onClick={toggleFavorite}
-                        className={`px-4 py-3 rounded-[20px] font-bold border transition-all ${
-                          isFavorite
-                            ? "bg-orange-500 text-white border-orange-500"
-                            : "bg-orange-50 text-orange-600 border-orange-100"
-                        }`}
-                      >
-                        {isFavorite ? "Saved" : "Save"}
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5">
-                      <div className="bg-orange-50 rounded-[24px] p-3 md:p-4 border border-orange-100">
-                        <p className="text-xs text-gray-400 mb-1">Sugar</p>
-                        <p className="text-xl md:text-2xl font-black text-orange-600">
-                          {product.sugar}g
-                        </p>
-                      </div>
-
-                     <div className="bg-orange-50 rounded-[24px] p-3 md:p-4 border border-orange-100">
-  <p className="text-xs text-gray-400 mb-1">Calories</p>
-  <p className="text-xl md:text-2xl font-black text-orange-600">
-    {product.calories || 0}
-  </p>
+  <button
+    onClick={toggleFavorite}
+    className={`px-4 py-2 rounded-full font-bold border transition-all ${
+      isFavorite
+        ? "bg-orange-500 text-white border-orange-500"
+        : "bg-white text-orange-600 border-orange-100"
+    }`}
+  >
+    {isFavorite ? "Saved" : "Save"}
+  </button>
 </div>
 
-<div className="bg-orange-50 rounded-[24px] p-3 md:p-4 border border-orange-100">
-  <p className="text-xs text-gray-400 mb-1">Protein</p>
-  <p className="text-xl md:text-2xl font-black text-orange-600">
-    {product.protein || 0}g
-  </p>
-</div>
-
-<div className="bg-orange-50 rounded-[24px] p-3 md:p-4 border border-orange-100">
-  <p className="text-xs text-gray-400 mb-1">Carbs</p>
-  <p className="text-xl md:text-2xl font-black text-orange-600">
-    {product.carbs || 0}g
-  </p>
-</div>
-
-                      <div className="bg-orange-50 rounded-[24px] p-3 md:p-4 border border-orange-100">
-                        <p className="text-xs text-gray-400 mb-1">Fat</p>
-                        <p className="text-xl md:text-2xl font-black text-orange-600">
-                          {product.fat}g
-                        </p>
-                      </div>
-
-                      <div className="bg-orange-50 rounded-[24px] p-3 md:p-4 border border-orange-100">
-                        <p className="text-xs text-gray-400 mb-1">Salt</p>
-                        <p className="text-xl md:text-2xl font-black text-orange-600">
-                          {product.salt}g
-                        </p>
-                      </div>
-
-                     
-                      <div className="bg-orange-50 rounded-[24px] p-3 md:p-4 border border-orange-100">
-  <p className="text-xs text-gray-400 mb-1">NOVA</p>
-  <p className="text-xl md:text-2xl font-black text-orange-600">
-    {product.nova}
-  </p>
-</div>
-
-
-                    </div>
+                 
                   </div>
                 </div>
 
@@ -1540,42 +2015,60 @@ const logFood = async () => {
                     Personal Health Goal
                   </label>
 
-                 <select
-  value={selectedGoal}
-  onChange={async (e) => {
-    const goal = e.target.value as HealthGoal;
-    setSelectedGoal(goal);
+               <div className="relative">
+  <select
+    value={selectedGoal}
+    onChange={async (e) => {
+      const goal = e.target.value as HealthGoal;
+      setSelectedGoal(goal);
 
-    if (userId) {
-      await supabase
-        .from("profiles")
-        .upsert({
-          id: userId,
-          health_goal: goal,
-        });
-    }
-  }}
-                    className="w-full rounded-[20px] border border-orange-100 bg-orange-50 px-5 py-4 font-bold text-gray-800 outline-none"
-                  >
-                    <option>General Wellness</option>
-                    <option>Weight Loss</option>
-                    <option>Diabetes Friendly</option>
-                    <option>Muscle Gain</option>
-                    <option>Heart Health</option>
-                    <option>Kids Nutrition</option>
-                  </select>
+      if (userId) {
+        await supabase
+          .from("profiles")
+          .upsert({
+            id: userId,
+            health_goal: goal,
+          });
+      }
+    }}
+    className="w-full appearance-none rounded-[20px] border border-orange-100 bg-orange-50 px-5 py-4 pr-12 font-bold text-gray-800 outline-none shadow-sm"
+  >
+    <option>General Wellness</option>
+    <option>Weight Loss</option>
+    <option>Diabetes Friendly</option>
+    <option>Muscle Gain</option>
+    <option>Heart Health</option>
+    <option>Kids Nutrition</option>
+  </select>
+
+  <div className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-orange-500">
+    <svg
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2.5}
+        d="M19 9l-7 7-7-7"
+      />
+    </svg>
+  </div>
+</div>
                 </div>
 
                 <div className="mt-8 text-left">
                   <div
-className={`rounded-[32px] p-4 sm:p-6 border ${
+className={`rounded-[32px] p-4 sm:p-6 shadow-sm ${
 healthScore >= 80
-    ? "bg-green-50 border-green-200"
+    ? "bg-green-50"
     : healthScore >= 60
-    ? "bg-yellow-50 border-yellow-200"
+    ? "bg-yellow-50"
     : healthScore >= 40
-    ? "bg-orange-50 border-orange-200"
-    : "bg-red-50 border-red-200"
+    ? "bg-orange-50"
+    : "bg-red-50"
 }`}
                   >
                     <div className="flex flex-col md:flex-row gap-6 mb-4">
@@ -1623,18 +2116,45 @@ healthScore >= 80
       {healthScore}
     </p>
 
-    <p className="text-xs font-bold text-gray-400">/100</p>
+    <p className="text-xs font-semibold text-gray-400 tracking-wide">
+  out of 100
+</p>
   </div>
 </div>
 
 <div className="mt-4 flex justify-center md:justify-start">
-  <span className={`inline-flex items-center px-5 py-2 rounded-full border text-lg font-black shadow-sm ${healthBadgeClass}`}>
+  <span className={`inline-flex items-center px-6 py-3 rounded-full border text-xl font-black shadow-sm ${healthBadgeClass}`}>
     {scoreLabel}
   </span>
 </div>
-<p className="mt-3 max-w-sm text-sm text-gray-600 font-medium leading-relaxed text-center md:text-left">
-  Based on sugar, salt, fat, processing level, calories, protein, and ingredient risk.
-</p>
+<div className="mt-4 max-w-sm rounded-[24px] border border-orange-100 bg-white p-4 shadow-sm text-center md:text-left">
+  <p className="text-sm font-black text-gray-900 mb-2">
+    Why this score?
+  </p>
+
+  <div className="space-y-2">
+    {topReasons.slice(0, 3).map((reason) => (
+      <div
+        key={reason.label}
+        className="flex items-center justify-between gap-3 text-sm"
+      >
+        <span className="font-semibold text-gray-600">
+          {reason.label}
+        </span>
+
+        <span
+          className={`rounded-full px-3 py-1 text-xs font-black ${
+            reason.type === "bad"
+              ? "bg-red-50 text-red-600"
+              : "bg-green-50 text-green-600"
+          }`}
+        >
+          {reason.type === "bad" ? "Needs attention" : "Good"}
+        </span>
+      </div>
+    ))}
+  </div>
+</div>
 
 
 <div className="mt-4">
@@ -1645,7 +2165,7 @@ healthScore >= 80
 
   <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
     <div
-      className="h-full bg-blue-500 rounded-full"
+      className="h-full bg-green-500 rounded-full"
       style={{ width: `${confidenceScore}%` }}
     />
   </div>
@@ -1654,61 +2174,19 @@ healthScore >= 80
   {topReasons.map((reason) => (
     <span
       key={reason.label}
-      className={`px-3 py-2 rounded-full border text-sm font-bold ${
+      className={`px-3 py-2 rounded-full text-sm font-bold ${
         reason.type === "bad"
-          ? "bg-red-50 border-red-100 text-red-700"
-          : "bg-green-50 border-green-100 text-green-700"
+          ? "bg-red-50 text-red-700"
+          : "bg-green-50 text-green-700"
       }`}
     >
       {reason.type === "bad" ? "!" : "✓"} {reason.label}
     </span>
   ))}
 </div>
-<div className="mt-4 flex flex-wrap gap-2">
-  {topReasons.map((reason) => (
-    <span
-      key={reason.label}
-      className={`px-3 py-2 rounded-full border text-sm font-bold ${
-        reason.type === "bad"
-          ? "bg-red-50 border-red-100 text-red-700"
-          : "bg-green-50 border-green-100 text-green-700"
-      }`}
-    >
-      {reason.type === "bad" ? "!" : "✓"} {reason.label}
-    </span>
-  ))}
-</div>
+
                       </div>
-                      <details className="mt-5 rounded-[32px] border border-orange-200 bg-gradient-to-br from-orange-50 to-white p-5">
-  <summary className="cursor-pointer text-lg font-black text-orange-600">
-  Premium Insights
-</summary>
-
-<div className="mt-4">
-
-  {isPremium ? (
-    <div className="space-y-2 text-sm text-gray-700">
-      <p>✓ Personalized nutrition analysis</p>
-      <p>✓ Ingredient risk breakdown</p>
-      <p>✓ Better product alternatives</p>
-      <p>✓ Weekly health reports</p>
-    </div>
-  ) : (
-    <>
-      <p className="text-gray-500 mb-4">
-        Unlock advanced nutrition intelligence and personalized recommendations.
-      </p>
-
-      <button
-  onClick={() => setUpgradeOpen(true)}
-  className="px-5 py-3 rounded-[20px] bg-orange-500 text-white font-bold"
->
-  Upgrade to Premium
-</button>
-    </>
-  )}
-</div>
-</details>
+                     
                    <details className="mt-5 bg-white border border-orange-100 rounded-[32px] p-5 shadow-lg">
   <summary className="cursor-pointer text-lg font-black text-gray-900">
     Score Breakdown
@@ -1752,142 +2230,72 @@ healthScore >= 80
   </div>
 </details>
 
-                      <div className="text-right">
-                        <p className="text-sm text-gray-500 font-semibold">
-                          Grade
-                        </p>
-
-                       <div
-  className={`text-6xl font-black ${
-    healthScore >= 80
-      ? "text-green-600"
-      : healthScore >= 60
-      ? "text-yellow-600"
-      : healthScore >= 40
-      ? "text-yellow-600"
-      : "text-red-600"
-  }`}
->
-  {healthGrade}
-</div>
                       </div>
-                    </div>
 
-                    <div className="w-full h-4 bg-white rounded-full overflow-hidden mb-6">
-                      <div
-                        className={`h-full rounded-full ${
-                         healthScore >= 80
-  ? "bg-green-500"
-  : healthScore >= 60
-  ? "bg-yellow-500"
-  : healthScore >= 40
-  ? "bg-orange-500"
-  : "bg-red-500"
-                        }`}
-                        style={{ width: `${healthScore}%` }}
-                      />
-                    </div>
-
-                      <p className="text-lg font-semibold text-gray-700 leading-relaxed mb-6">
-                      {healthAnalysis?.verdict || healthVerdict}
-                    </p>
-
-                    <div className="flex flex-wrap gap-2 mb-6">
-  {nutritionSummary.map((item, index) => (
-    <span
-      key={index}
-      className="px-3 py-2 rounded-full bg-white border border-orange-100 text-sm font-bold text-gray-700"
-    >
-      {item}
-    </span>
-  ))}
-</div>
-
-                    {alternatives.length > 0 && (
-  <details className="mt-4 bg-green-50 rounded-[20px] border border-green-200 p-4 text-left">
-    <summary className="cursor-pointer text-lg font-black text-green-700">
-      Better Alternatives
-    </summary>
-
-    <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-      {alternatives.map((alternative, index) => (
-       <div
-  key={index}
-  onClick={() =>
-    posthog.capture("alternative_clicked", {
-      product_name: product?.name,
-      alternative_name: alternative.name,
-      alternative_score: alternative.score,
-    })
-  }
-  className="bg-white border border-green-200 rounded-[20px] p-5 cursor-pointer hover:shadow-md transition"
->
-          <div className="flex items-center justify-between gap-3 mb-3">
-            <p className="font-black text-green-700">
-              {alternative.name}
-            </p>
-
-            <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-black">
-              {alternative.score}/100
-            </span>
-          </div>
-
-          <p className="text-sm text-gray-600 leading-relaxed">
-            {alternative.reason}
-          </p>
-        </div>
-      ))}
-    </div>
-  </details>
-)}
-
+                 
 {realAlternatives.length > 0 && (
-  <div className="mt-6">
-    <h4 className="font-black text-green-700 mb-4">
-      Real Product Alternatives
-    </h4>
+  <section className="mt-6 rounded-[32px] border border-green-100 bg-white p-5 shadow-sm">
+    <div className="mb-5">
+      <p className="text-xs font-black uppercase tracking-wide text-green-600">
+        Better Alternatives
+      </p>
+
+      <h3 className="heading-font text-2xl font-black text-gray-900 mt-1">
+        Cleaner choices to try
+      </h3>
+
+      <p className="mt-2 text-sm text-gray-500 leading-relaxed">
+        A few product options that may be better choices based on available nutrition data.
+      </p>
+    </div>
 
     <div className="space-y-3">
-      {realAlternatives.map((item, index) => (
+      {realAlternatives.slice(0, 3).map((item, index) => (
         <div
-          key={index}
-          className="flex items-center gap-4 bg-white border border-green-200 rounded-[20px] p-4"
+          key={`${item.name}-${index}`}
+          className="rounded-[24px] border border-orange-100 bg-orange-50/40 p-4"
         >
-          {item.image && (
-            <Image
-              src={item.image}
-              alt={item.name}
-              width={64}
-              height={64}
-              className="rounded-xl object-cover"
-              unoptimized
-            />
-          )}
+          <div className="flex items-center gap-4">
+            {item.image ? (
+              <Image
+                src={item.image}
+                alt={item.name}
+                width={72}
+                height={72}
+                className="h-[72px] w-[72px] rounded-[20px] border border-orange-100 bg-white object-cover"
+                unoptimized
+              />
+            ) : (
+              <div className="h-[72px] w-[72px] rounded-[20px] border border-orange-100 bg-white" />
+            )}
 
-          <div className="flex-1">
-            <p className="font-black text-gray-900">
-              {item.name}
-            </p>
+            <div className="min-w-0 flex-1">
+              <p className="line-clamp-2 text-base font-black text-gray-900 leading-snug">
+                {item.name}
+              </p>
 
-            <p className="text-sm text-gray-500">
-              {item.brand}
-            </p>
+              <p className="mt-1 truncate text-sm font-semibold text-gray-500">
+                {item.brand || "Brand unavailable"}
+              </p>
+            </div>
           </div>
 
-          <div className="text-right">
-            <p className="font-black text-green-600">
-              {item.nutriscore?.toUpperCase()}
+          <div className="mt-4 rounded-[20px] bg-white border border-orange-100 p-4">
+            <p className="text-sm font-bold text-gray-700">
+              Why it may be better
             </p>
 
-            <p className="text-xs text-gray-400">
-              NOVA {item.nova}
+            <p className="mt-1 text-sm text-gray-500 leading-relaxed">
+              Usually a cleaner option means lower processing, better ingredient quality,
+              or a stronger nutrition profile compared with the scanned product.
             </p>
           </div>
         </div>
       ))}
     </div>
-  </div>
+  </section>
 )}
+  
 
 <div className="mt-6">
   <div className="mt-6 flex flex-col sm:flex-row gap-3">
@@ -1933,35 +2341,35 @@ healthScore >= 80
 
 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
 
-  <div className="bg-orange-50 rounded-[20px] p-4 border border-orange-100">
+  <div className="bg-orange-50 rounded-2xl p-3 md:p-4">
     <p className="text-xs text-gray-400">Calories</p>
     <p className="font-black text-orange-600">
       {product.calories || 0}
     </p>
   </div>
 
-  <div className="bg-orange-50 rounded-[20px] p-4 border border-orange-100">
+  <div className="bg-orange-50 rounded-2xl p-3 md:p-4">
     <p className="text-xs text-gray-400">Protein</p>
     <p className="font-black text-orange-600">
       {product.protein || 0}g
     </p>
   </div>
 
-  <div className="bg-orange-50 rounded-[20px] p-4 border border-orange-100">
+  <div className="bg-orange-50 rounded-2xl p-3 md:p-4">
     <p className="text-xs text-gray-400">Carbs</p>
     <p className="font-black text-orange-600">
       {product.carbs || 0}g
     </p>
   </div>
 
-  <div className="bg-orange-50 rounded-[20px] p-4 border border-orange-100">
+  <div className="bg-orange-50 rounded-2xl p-3 md:p-4">
     <p className="text-xs text-gray-400">Sugar</p>
     <p className="font-black text-orange-600">
       {product.sugar}g
     </p>
   </div>
 
-  <div className="bg-orange-50 rounded-[20px] p-4 border border-orange-100">
+  <div className="bg-orange-50 rounded-2xl p-3 md:p-4">
     <p className="text-xs text-gray-400">Fat</p>
     <p className="font-black text-orange-600">
       {product.fat}g
@@ -2146,18 +2554,144 @@ healthScore >= 80
 
                 
 
-<details
-  className="mt-4 text-left bg-white rounded-[32px] border border-orange-100 p-4"
->
-  <summary className="cursor-pointer text-lg font-black text-gray-900">
-    Ingredients
+<details className="mt-4 text-left bg-white rounded-[32px] border border-orange-100 p-5 shadow-sm">
+  <summary className="cursor-pointer list-none flex items-center justify-between gap-4">
+    <span className="text-lg font-black text-gray-900">
+      Ingredients
+    </span>
+
+    <svg
+      className="w-4 h-4 text-orange-500 transition-transform duration-300 group-open:rotate-180"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+    </svg>
   </summary>
 
-  <div className="mt-4 bg-orange-50 rounded-[32px] border border-orange-100 p-5">
+  <div className="mt-4 bg-orange-50 rounded-[28px] border border-orange-100 p-5">
     <p className="text-gray-700 leading-relaxed">
       {product.ingredients}
     </p>
   </div>
+
+  {ingredientInsights.length > 0 && (
+    <details className="group mt-4 rounded-[28px] border border-orange-100 bg-white p-5">
+      <summary className="cursor-pointer list-none flex items-center justify-between gap-4">
+        <div>
+          <p className="text-sm font-black text-orange-600 uppercase tracking-wide">
+            Ingredient Analysis
+          </p>
+          <p className="text-lg font-black text-gray-900">
+            AI Ingredient Intelligence
+          </p>
+        </div>
+
+        <svg
+          className="w-4 h-4 text-orange-500 transition-transform duration-300 group-open:rotate-180"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+        </svg>
+      </summary>
+
+      <div className="mt-5 rounded-[24px] bg-orange-50/70 border border-orange-100 p-5">
+        <div className="mb-5 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-sm font-bold text-gray-500">Ingredient Quality</p>
+            <h4 className="text-2xl font-black text-gray-900">
+              {ingredientQuality}
+            </h4>
+          </div>
+
+          <span className="rounded-full bg-white border border-orange-100 px-4 py-2 text-sm font-black text-orange-600">
+            {ingredientInsights.length} detected
+          </span>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3 mb-6">
+          <div className="rounded-[20px] bg-white border border-red-100 p-4">
+            <p className="text-xs text-red-500 font-bold">High</p>
+            <p className="text-2xl font-black text-red-600">{highRiskIngredients}</p>
+          </div>
+
+          <div className="rounded-[20px] bg-white border border-yellow-100 p-4">
+            <p className="text-xs text-yellow-600 font-bold">Medium</p>
+            <p className="text-2xl font-black text-yellow-600">{mediumRiskIngredients}</p>
+          </div>
+
+          <div className="rounded-[20px] bg-white border border-green-100 p-4">
+            <p className="text-xs text-green-600 font-bold">Low</p>
+            <p className="text-2xl font-black text-green-600">{lowRiskIngredients}</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          {ingredientInsights.map((item, index) => (
+            <details
+              key={index}
+              className="group rounded-[24px] border border-orange-100 bg-white p-5"
+            >
+              <summary className="cursor-pointer list-none flex items-center justify-between gap-4">
+                <div>
+                  <h4 className="text-lg font-black text-gray-900">
+                    {item.ingredient}
+                  </h4>
+
+                  <p className="text-sm text-gray-500">
+                    Tap to view explanation
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-black ${
+                      item.info?.risk === "High"
+                        ? "bg-red-50 text-red-600"
+                        : item.info?.risk === "Medium"
+                        ? "bg-yellow-50 text-yellow-600"
+                        : "bg-green-50 text-green-600"
+                    }`}
+                  >
+                    {item.info?.risk}
+                  </span>
+
+                  <svg
+                    className="w-4 h-4 text-orange-500 transition-transform duration-300 group-open:rotate-180"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </summary>
+
+              <div className="mt-5 space-y-4 text-sm leading-relaxed text-gray-700">
+                <div>
+                  <p className="font-black text-gray-900 mb-1">Why it matters</p>
+                  <p>{item.info?.why}</p>
+                </div>
+
+                <div>
+                  <p className="font-black text-gray-900 mb-1">Scientific view</p>
+                  <p>{item.info?.scientificView}</p>
+                </div>
+
+                <div>
+                  <p className="font-black text-gray-900 mb-1">Recommendation</p>
+                  <p>{item.info?.recommendation}</p>
+                </div>
+              </div>
+            </details>
+          ))}
+        </div>
+      </div>
+    </details>
+  )}
 </details>
                 
 
@@ -2182,108 +2716,7 @@ healthScore >= 80
 
 
 
-                {ingredientInsights.length > 0 && (
-                  <details className="mt-6 text-left bg-white rounded-[32px] border border-orange-100 p-5">
-                    <div className="bg-blue-50 border border-blue-200 rounded-[32px] p-5">
-                      <summary className="cursor-pointer text-xl font-black text-gray-900">
-                       AI Ingredient Intelligence
-                         </summary>
-
-                      <div className="mb-6 bg-white border border-blue-100 rounded-[32px] p-6">
-  <p className="text-sm font-bold text-gray-500 mb-2">
-    Ingredient Quality
-  </p>
-
-  <h4 className="text-3xl font-black text-gray-900 mb-4">
-    {ingredientQuality}
-  </h4>
-
-  <div className="grid grid-cols-3 gap-3">
-    <div className="rounded-[20px] bg-red-50 border border-red-100 p-4">
-      <p className="text-xs text-red-400 font-bold">High Risk</p>
-      <p className="text-2xl font-black text-red-600">
-        {highRiskIngredients}
-      </p>
-    </div>
-
-    <div className="rounded-[20px] bg-yellow-50 border border-yellow-100 p-4">
-      <p className="text-xs text-yellow-500 font-bold">Medium Risk</p>
-      <p className="text-2xl font-black text-yellow-600">
-        {mediumRiskIngredients}
-      </p>
-    </div>
-
-    <div className="rounded-[20px] bg-green-50 border border-green-100 p-4">
-      <p className="text-xs text-green-500 font-bold">Low Risk</p>
-      <p className="text-2xl font-black text-green-600">
-        {lowRiskIngredients}
-      </p>
-    </div>
-  </div>
-</div>
-
-                      <div className="space-y-6">
-                        {ingredientInsights.map((item, index) => (
-                          <div
-                            key={index}
-                            className="bg-white border border-blue-100 rounded-[32px] p-6"
-                          >
-                            <div className="flex items-center justify-between mb-4">
-                              <h4 className="text-xl font-black text-gray-900">
-                                {item.ingredient}
-                              </h4>
-
-                              <span
-                                className={`px-4 py-2 rounded-full text-sm font-bold ${
-                                  item.info?.risk === "High"
-                                    ? "bg-red-100 text-red-700"
-                                    : item.info?.risk === "Medium"
-                                    ? "bg-yellow-100 text-yellow-700"
-                                    : "bg-green-100 text-green-700"
-                                }`}
-                              >
-                                {item.info?.risk} Risk
-                              </span>
-                            </div>
-
-                            <div className="space-y-4">
-                              <div>
-                                <p className="font-bold text-gray-900 mb-1">
-                                  Why it matters
-                                </p>
-
-                                <p className="text-gray-700">
-                                  {item.info?.why}
-                                </p>
-                              </div>
-
-                              <div>
-                                <p className="font-bold text-gray-900 mb-1">
-                                  Scientific View
-                                </p>
-
-                                <p className="text-gray-700">
-                                  {item.info?.scientificView}
-                                </p>
-                              </div>
-
-                              <div>
-                                <p className="font-bold text-gray-900 mb-1">
-                                  Recommendation
-                                </p>
-
-                                <p className="text-gray-700">
-                                  {item.info?.recommendation}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </details>
-                )}
-
+              
                 {alternatives.length > 0 && (
                   <div className="mt-10 text-left">
                     <div className="bg-green-50 border border-green-200 rounded-[32px] p-4">
@@ -2309,16 +2742,10 @@ healthScore >= 80
     </p>
   </div>
 
-  <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
-    <span className="font-black text-green-700">
-      {alternative.score}
-    </span>
-  </div>
+  
 </div>
 
-      <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-black">
-        {alternative.score}/100
-      </span>
+    
     </div>
 
   <p className="text-sm text-gray-600 leading-relaxed mb-3">
@@ -2392,8 +2819,10 @@ healthScore >= 80
                 )}
               </div>
             </div>
-          </div>
-        )}
+            </div>
+  </>
+)}
+      
 
         {comparisons.length > 0 && (
   <div className="hidden md:block mt-10 text-left">
@@ -2506,8 +2935,8 @@ healthScore >= 80
                 </div>
               ))}
             </div>
-          </div>
-        )}
+            </div>
+)}
 
         {scanHistory.length > 0 && (
          <details className="max-w-6xl mx-auto mt-8 bg-white rounded-[32px] border border-orange-100 shadow-xl p-6">
@@ -2563,9 +2992,10 @@ healthScore >= 80
          </details>
         )}
       </section>
+      
 
-      <section className="mt-16 max-w-7xl mx-auto px-4 sm:px-6 text-left">
-  <div className="bg-white rounded-[36px] border border-orange-100 shadow-xl p-6 sm:p-10">
+      <section className="mt-24 max-w-5xl mx-auto px-4 sm:px-6 text-left">
+  <div className="p-0">
     <p className="text-sm font-black text-orange-600 uppercase tracking-wide mb-3">
       Scientific Methodology
     </p>
@@ -2613,93 +3043,96 @@ healthScore >= 80
         </p>
       </div>
     </div>
-
-    <div className="mt-10 rounded-[32px] border border-orange-100 bg-orange-50 p-6">
-      <h3 className="text-xl font-black text-gray-900 mb-4">
-        Trusted References
-      </h3>
-
-      <div className="flex flex-wrap gap-3">
-        {["WHO", "FDA", "EFSA", "IARC", "NOVA"].map(
-          (source) => (
-            <span
-              key={source}
-              className="px-4 py-2 rounded-full bg-white border border-orange-100 text-gray-700 font-bold"
-            >
-              {source}
-            </span>
-          )
-        )}
-      </div>
-
-      <p className="mt-5 text-sm text-gray-500 leading-relaxed">
-        PAUSTICA is for educational food transparency. It does not replace
-        medical advice, diagnosis, or treatment.
-      </p>
-    </div>
   </div>
 </section>
 
-<section className="mt-16 max-w-7xl mx-auto px-4 sm:px-6 text-left">
-  <div className="rounded-[36px] bg-gray-950 p-6 sm:p-10 ">
+<section className="mt-24 max-w-6xl mx-auto px-4 sm:px-6 text-left">
+  <div className="p-0">
     <div className="max-w-3xl">
       <p className="text-sm font-black text-orange-400 uppercase tracking-wide mb-3">
         Why PAUSTICA is Different
       </p>
 
-      <h2 className="heading-font text-3xl sm:text-5xl font-black text-white tracking-tight mb-5">
+      <h2 className="heading-font text-3xl sm:text-5xl font-black text-gray tracking-tight mb-5">
         Food labels show data. PAUSTICA explains what it means.
       </h2>
 
-      <p className="text-lg text-gray-300 leading-relaxed">
+      <p className="text-lg text-gray-500 leading-relaxed">
         Most people see calories, sugar, salt, additives, and ingredients — but
         still do not know whether a product is actually good for them.
         PAUSTICA turns confusing food labels into simple, personalized health
         intelligence.
       </p>
     </div>
+    
 
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-10">
-      {[
-        {
-          title: "Ingredient Intelligence",
-          text: "Explains additives, preservatives, sweeteners, colors, and risky ingredients in simple language.",
-        },
-        {
-          title: "Personalized Scoring",
-          text: "Adjusts analysis for goals like weight loss, diabetes-friendly eating, heart health, muscle gain, and kids nutrition.",
-        },
-        {
-          title: "Processing Detection",
-          text: "Uses NOVA-style processing signals to identify ultra-processed foods more clearly.",
-        },
-        {
-          title: "Transparent Reasons",
-          text: "Every score is supported by visible reasons like sugar, salt, fat, processing level, and ingredient risk.",
-        },
-        {
-          title: "Better Alternatives",
-          text: "Does not only warn users — it helps them discover cleaner and healthier product choices.",
-        },
-        {
-          title: "Built for Daily Decisions",
-          text: "Designed for quick supermarket, hostel, home, and daily snack decisions — not complicated nutrition lectures.",
-        },
-      ].map((item) => (
+   <div className="mt-10 relative">
+  <div
+    ref={carouselRef}
+    onScroll={() => {
+      const slider = carouselRef.current;
+      if (!slider) return;
+
+      const slideWidth = slider.scrollWidth / differenceSlides.length;
+      const index = Math.round(slider.scrollLeft / slideWidth);
+      setActiveSlide(Math.min(index, differenceSlides.length - 1));
+    }}
+    className="overflow-x-auto scroll-smooth snap-x snap-mandatory pb-6 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+  >
+    <div className="flex gap-6">
+      {differenceSlides.map((item, index) => (
         <div
           key={item.title}
-          className="rounded-[32px] border border-white/10 bg-white/5 p-6"
+          className="relative min-w-[86%] sm:min-w-[460px] snap-center overflow-hidden rounded-[36px] border border-orange-100 bg-white p-7 sm:p-9 shadow-2xl"
         >
-          <h3 className="text-xl font-black text-white mb-3">
-            {item.title}
-          </h3>
+          <div className="absolute -right-12 -top-12 h-32 w-32 rounded-full bg-orange-100 blur-2xl" />
 
-          <p className="text-gray-300 leading-relaxed">
-            {item.text}
-          </p>
+          <div className="relative z-10">
+            <div className="mb-8 flex items-center justify-between">
+              <span className="rounded-full bg-orange-50 px-4 py-2 text-xs font-black uppercase tracking-wide text-orange-600 border border-orange-100">
+                {item.tag}
+              </span>
+
+              <span className="text-5xl font-black text-orange-100">
+                0{index + 1}
+              </span>
+            </div>
+
+            <h3 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight mb-4">
+              {item.title}
+            </h3>
+
+            <p className="text-gray-600 leading-relaxed text-base sm:text-lg">
+              {item.text}
+            </p>
+          </div>
         </div>
       ))}
     </div>
+  </div>
+
+  <div className="mt-4 flex items-center justify-center gap-4">
+   
+
+    <div className="flex gap-2">
+      {differenceSlides.map((_, index) => (
+        <button
+          key={index}
+          onClick={() => scrollToSlide(index)}
+          className={`h-2.5 rounded-full transition-all ${
+            activeSlide === index
+              ? "w-8 bg-orange-500"
+              : "w-2.5 bg-orange-200"
+          }`}
+          aria-label={`Go to slide ${index + 1}`}
+        />
+      ))}
+    </div>
+
+   
+  </div>
+
+</div>
   </div>
 </section>
 
@@ -2722,9 +3155,21 @@ healthScore >= 80
         </p>
       </div>
 
-      <div className="w-12 h-12 rounded-full bg-orange-50 border border-orange-100 flex items-center justify-center text-orange-600 font-black text-2xl group-open:rotate-45 transition">
-        +
-      </div>
+      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white border border-orange-100 text-orange-600 transition-transform duration-300 group-open:rotate-180">
+  <svg
+    className="w-4 h-4"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2.5}
+      d="M19 9l-7 7-7-7"
+    />
+  </svg>
+</span>
 
     </summary>
 
@@ -2855,8 +3300,8 @@ healthScore >= 80
   </details>
 </section>  
 
-<section className="mt-16 max-w-7xl mx-auto px-4 sm:px-6 text-left">
-  <div className="rounded-[36px] bg-white border border-orange-100 shadow-xl p-6 sm:p-10">
+<section className="mt-24 max-w-6xl mx-auto px-4 sm:px-6 text-left">
+  <div className="p-0">
     <p className="text-sm font-black text-orange-600 uppercase tracking-wide mb-3">
       User Outcomes
     </p>
@@ -2887,9 +3332,10 @@ healthScore >= 80
       ].map((item) => (
         <div
           key={item.title}
-          className="rounded-[32px] bg-orange-50 border border-orange-100 p-6"
+          className="py-4"
         >
-          <h3 className="text-xl font-black text-gray-900 mb-3">
+          <h3 className="text-xl font-black text-gray-900 mb-2">
+            <div className="w-12 h-1 rounded-full bg-orange-500 mb-4" />
             {item.title}
           </h3>
 
@@ -2913,7 +3359,7 @@ healthScore >= 80
 {showScoreFactors && (
   <div className="mt-8 grid md:grid-cols-5 gap-4">
 
-    <div className="rounded-[32px] bg-orange-50 border border-orange-100 p-5">
+    <div className="rounded-[28px] bg-white p-5 shadow-sm">
       <h3 className="font-black text-gray-900 mb-2">
         Sugar
       </h3>
@@ -2923,7 +3369,7 @@ healthScore >= 80
       </p>
     </div>
 
-    <div className="rounded-[32px] bg-orange-50 border border-orange-100 p-5">
+    <div className="rounded-[28px] bg-white p-5 shadow-sm">
       <h3 className="font-black text-gray-900 mb-2">
         Salt
       </h3>
@@ -2933,7 +3379,7 @@ healthScore >= 80
       </p>
     </div>
 
-    <div className="rounded-[32px] bg-orange-50 border border-orange-100 p-5">
+    <div className="rounded-[28px] bg-white p-5 shadow-sm">
       <h3 className="font-black text-gray-900 mb-2">
         Fat
       </h3>
@@ -2943,7 +3389,7 @@ healthScore >= 80
       </p>
     </div>
 
-    <div className="rounded-[32px] bg-orange-50 border border-orange-100 p-5">
+    <div className="rounded-[28px] bg-white p-5 shadow-sm">
       <h3 className="font-black text-gray-900 mb-2">
         Processing
       </h3>
@@ -2953,7 +3399,7 @@ healthScore >= 80
       </p>
     </div>
 
-    <div className="rounded-[32px] bg-orange-50 border border-orange-100 p-5">
+    <div className="rounded-[28px] bg-white p-5 shadow-sm">
       <h3 className="font-black text-gray-900 mb-2">
         Ingredients
       </h3>
@@ -2969,8 +3415,8 @@ healthScore >= 80
   </div>
 </section>
 
-<section className="mt-16 max-w-7xl mx-auto px-4 sm:px-6 text-left">
-  <div className="rounded-[36px] bg-gray-950 p-6 sm:p-10 shadow-2xl">
+<section className="mt-24 max-w-6xl mx-auto px-4 sm:px-6 text-left">
+  <div className="rounded-[36px] bg-gray-950 p-6 sm:p-10 shadow-xl">
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
       <div>
         <p className="text-sm font-black text-orange-400 uppercase tracking-wide mb-3">
@@ -3017,8 +3463,9 @@ healthScore >= 80
   </div>
 </section>
 
-<section className="mt-20 max-w-6xl mx-auto px-4 sm:px-6 text-center">
-  <div className="rounded-[36px] border border-orange-100 bg-white shadow-lg p-8 sm:p-12">
+
+<section className="mt-24 max-w-5xl mx-auto px-4 sm:px-6 text-center">
+  <div className="p-0">
     <h2 className="heading-font text-3xl sm:text-5xl font-black text-gray-900 tracking-tight mb-5">
       Ready to know what you’re eating?
     </h2>
@@ -3053,125 +3500,79 @@ healthScore >= 80
 </section>
 
 
+<section className="mt-24 max-w-5xl mx-auto px-4 sm:px-6 text-center">
+  <p className="text-sm font-black text-orange-600 uppercase tracking-wide mb-3">
+    Built on trusted references
+  </p>
 
-<section className="mt-20 max-w-5xl mx-auto px-4 sm:px-6 text-left">
-  <div className="bg-white rounded-[36px] border border-orange-100 shadow-lg p-6 sm:p-10">
-    <div className="mb-4">
-  <Link
-    href="/trust"
-    className="inline-flex items-center rounded-full bg-orange-500 px-5 py-2 text-sm font-black text-white shadow-sm hover:bg-orange-600 transition"
-  >
-    Got a Question?
-  </Link>
-</div>
+  <h2 className="text-2xl sm:text-4xl font-black text-gray-900 tracking-tight">
+    PAUSTICA explains food using nutrition data, ingredient signals, and health-focused references.
+  </h2>
 
-    <h2 className="heading-font text-3xl sm:text-5xl font-black text-gray-900 tracking-tight mb-8">
-      Food intelligence, explained clearly.
-    </h2>
-
-    <div className="space-y-4">
-      {[
-        {
-          q: "How is PAUSTICA different from a normal nutrition label?",
-          a: "A nutrition label only shows numbers. PAUSTICA explains what those numbers mean using sugar, salt, fat, processing level, ingredients, additives, and your personal health goal.",
-        },
-        {
-          q: "How is the health score calculated?",
-          a: "The score is based on nutrition quality, ingredient risk, processing level, and goal-based personalization. Higher sugar, salt, fat, ultra-processing, or risky additives can reduce the score.",
-        },
-        {
-          q: "Does PAUSTICA use AI?",
-          a: "Yes. PAUSTICA uses AI-style food intelligence to simplify ingredients, detect risky signals, explain concerns, and suggest better alternatives in a way users can understand quickly.",
-        },
-        {
-          q: "Can people with diabetes use PAUSTICA?",
-          a: "PAUSTICA includes a diabetes-friendly goal that pays closer attention to sugar, carbohydrates, processing level, and ingredients. It is educational and should not replace medical advice.",
-        },
-        {
-          q: "What data powers PAUSTICA?",
-          a: "PAUSTICA can use product data from sources like OpenFoodFacts, nutrition APIs, ingredient intelligence, NOVA-style processing signals, Nutri-Score-style grading, and scientific references.",
-        },
-        {
-          q: "Is PAUSTICA free?",
-          a: "PAUSTICA can be used for basic scans and food analysis. Premium features may include advanced reports, unlimited scans, deeper personalization, family profiles, and smarter alternatives.",
-        },
-      ].map((item) => (
-        <details
-          key={item.q}
-          className="group rounded-[32px] border border-orange-100 bg-orange-50/50 p-5"
-        >
-          <summary className="cursor-pointer list-none flex items-center justify-between gap-4">
-            <span className="text-lg font-black text-gray-900">
-              {item.q}
-            </span>
-
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white border border-orange-100 text-orange-600 font-black group-open:rotate-45 transition">
-              +
-            </span>
-          </summary>
-
-          <p className="mt-4 text-gray-600 leading-relaxed">
-            {item.a}
-          </p>
-        </details>
-      ))}
-    </div>
-  </div>
-</section>
-
-<section className="mt-20 max-w-7xl mx-auto px-4 sm:px-6">
-  <div className="rounded-[32px] border border-orange-100 bg-white shadow-lg p-6 sm:p-8">
-    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-      <div>
-        
-
-        <h2 className="heading-font text-3xl sm:text-5xl font-black text-gray-900 tracking-tight mb-5">
-          Thanks to PAUSTICA 90% of all users say they are now eating "Healthier"
-        </h2>
-      </div>
-
-      <div className="flex flex-wrap gap-3">
-        {["WHO", "FDA", "EFSA", "IARC", ].map(
-          (source) => (
-            <span
-              key={source}
-              className="rounded-full border border-orange-100 bg-orange-50 px-4 py-2 text-sm font-black text-gray-700"
-            >
-              {source}
-            </span>
-          )
-        )}
-      </div>
-    </div>
-  </div>
+  <p className="mt-5 text-gray-500 leading-relaxed">
+    Inspired by public nutrition guidance and references from sources like WHO, FDA, EFSA, and IARC.
+  </p>
 </section>
 
 <footer className="mt-20 border-t border-orange-100 bg-white">
-  <div className="max-w-7xl mx-auto px-6 py-10 flex flex-col md:flex-row items-center justify-between gap-6">
-    <div className="text-center md:text-left">
-      <p className="text-lg font-black text-gray-900">
-        PAUSTICA
-      </p>
-      <p className="text-sm text-gray-500">
-        Food intelligence made simple.
-      </p>
+  <div className="max-w-7xl mx-auto px-6 py-12">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+      <div>
+        <p className="text-xl font-black text-gray-900">
+          PAUSTICA
+        </p>
+        <p className="mt-3 max-w-sm text-sm text-gray-500 leading-relaxed">
+          Food intelligence made simple for everyday choices.
+        </p>
+      </div>
+
+      <div>
+        <p className="text-sm font-black text-gray-900 mb-4">
+          Product
+        </p>
+        <div className="space-y-3 text-sm font-bold text-gray-500">
+          <button
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+            className="block hover:text-orange-500 transition"
+          >
+            Scanner
+          </button>
+          <Link href="/dashboard" className="block hover:text-orange-500 transition">
+            Dashboard
+          </Link>
+          <button
+            onClick={() => setUpgradeOpen(true)}
+            className="block hover:text-orange-500 transition"
+          >
+            Premium
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <p className="text-sm font-black text-gray-900 mb-4">
+          Support
+        </p>
+        <div className="space-y-3 text-sm font-bold text-gray-500">
+          <Link href="/trust" className="block hover:text-orange-500 transition">
+            Got a Question?
+          </Link>
+          <a
+            href="mailto:banothpradeep0203@gmail.com"
+            className="block hover:text-orange-500 transition"
+          >
+            Contact
+          </a>
+          <Link href="/trust#privacy" className="block hover:text-orange-500 transition">
+            Privacy & Terms
+          </Link>
+        </div>
+      </div>
     </div>
 
-    <div className="flex flex-wrap justify-center gap-5 text-sm font-bold text-gray-500">
-      <Link href="/trust" className="hover:text-orange-500 transition">
-        Got a Question?
-      </Link>
-
-      <a href="mailto:paustica@gmail.com" className="hover:text-orange-500 transition">
-        Contact
-      </a>
-
-      <button
-        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-        className="hover:text-orange-500 transition"
-      >
-        Back to Top
-      </button>
+    <div className="mt-10 border-t border-orange-100 pt-6 flex flex-col md:flex-row justify-between gap-4 text-sm text-gray-400">
+      <p>© 2026 PAUSTICA. All rights reserved.</p>
+      <p>Made for smarter food decisions.</p>
     </div>
   </div>
 </footer>
@@ -3212,7 +3613,7 @@ healthScore >= 80
 )}
 {profileOpen && (
   <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-6">
-<div className="bg-white max-w-lg w-full max-h-[85vh] overflow-y-auto rounded-[36px] p-6 sm:p-8 shadow-2xl border border-orange-100">
+<div className="bg-white max-w-lg w-full max-h-[85vh] overflow-y-auto rounded-[36px] p-6 sm:p-8 shadow-xl">
     <div className="sticky top-0 bg-white z-20 flex justify-between items-start pb-4 border-b border-gray-100 mb-6">
   <div>
 
@@ -3234,11 +3635,11 @@ healthScore >= 80
         Personalize PAUSTICA recommendations based on your body and goal.
       </p>
 
-     <div className="mb-5 rounded-[32px] border border-orange-100 bg-gradient-to-br from-orange-50 via-white to-white p-4">
+     <div className="mb-5">
   <div className="flex items-center justify-between">
     <div>
 
-<div className="mb-6 rounded-[28px] border border-orange-100 bg-white p-4 shadow-sm">
+<div className="mb-6 bg-white p-0">
   <div className="flex items-center justify-between mb-4">
     <div>
       <p className="text-xs font-black uppercase tracking-[0.18em] text-orange-500">
@@ -3251,7 +3652,7 @@ healthScore >= 80
   </div>
 
   <div className="space-y-4">
-    <div className="rounded-[32px] bg-gradient-to-br from-orange-50 to-white border border-orange-100 p-4">
+   <div className="rounded-3xl bg-orange-50 p-4">
       <p className="text-xs font-bold text-gray-400 mb-2">
         BMI
       </p>
@@ -3265,7 +3666,7 @@ healthScore >= 80
       </p>
     </div>
 
-   <div className="bg-white rounded-[32px] p-6 border border-gray-200">
+   <div className="bg-gray-50 rounded-3xl p-6">
   <p className="text-sm font-bold text-gray-400 mb-2">
     Daily Calorie Target
   </p>
@@ -3297,12 +3698,12 @@ healthScore >= 80
   </div>
 
   <div className="grid grid-cols-3 gap-3 mt-5">
-    <div className="bg-white rounded-[20px] p-3 border border-orange-100">
+    <div className="bg-orange-50 rounded-2xl p-3">
       <p className="text-xs text-gray-400">Scans</p>
       <p className="font-black text-gray-900">{totalScans}</p>
     </div>
 
-    <div className="bg-white rounded-[20px] p-3 border border-orange-100">
+    <div className="bg-orange-50 rounded-2xl p-3">
       <p className="text-xs text-gray-400">Streak</p>
       <p className="font-black text-gray-900">{currentStreak}</p>
     </div>
@@ -3312,7 +3713,7 @@ healthScore >= 80
 
       <div className="space-y-4">
        
-       <div className="bg-gray-50 rounded-[32px] p-5 border border-gray-200 mb-4">
+       <div className="bg-gray-50 rounded-[32px] p-5 mb-4">
 
   <label className="block text-sm font-bold text-gray-500 mb-3">
     Age
@@ -3320,7 +3721,7 @@ healthScore >= 80
         <input value={userAge} onChange={(e) => setUserAge(e.target.value)} placeholder="Age" className="w-full px-5 py-4 rounded-[20px] border border-orange-100 bg-orange-50 outline-none font-bold" />
        </div>
 
-       <div className="bg-gray-50 rounded-[32px] p-5 border border-gray-200 mb-4">
+       <div className="bg-gray-50 rounded-[32px] p-5  mb-4">
 
   <label className="block text-sm font-bold text-gray-500 mb-3">
     Weight
@@ -3329,7 +3730,7 @@ healthScore >= 80
         <input value={userWeight} onChange={(e) => setUserWeight(e.target.value)} placeholder="Weight in kg" className="w-full px-5 py-4 rounded-[20px] border border-orange-100 bg-orange-50 outline-none font-bold" />
        </div>
        
-        <div className="bg-gray-50 rounded-[32px] p-5 border border-gray-200 mb-4">
+        <div className="bg-gray-50 rounded-[32px] p-5  mb-4">
 
   <label className="block text-sm font-bold text-gray-500 mb-3">
     Height
@@ -3346,7 +3747,7 @@ healthScore >= 80
           </div>
         )}
 
-       <details className="rounded-[32px] bg-white border border-orange-100 p-5">
+       <details className="rounded-[32px] bg-gray p-5">
   <summary className="cursor-pointer font-black text-gray-900">
     Achievements
   </summary>
@@ -3357,7 +3758,7 @@ healthScore >= 80
               const unlocked = achievement.current >= achievement.target;
 
               return (
-                <div key={achievement.title} className="rounded-[20px] border border-orange-100 p-4">
+                <div key={achievement.title} className="rounded-[20px] p-4 shadow-sm">
                   <div className="flex justify-between items-center mb-2">
                     <p className="font-bold text-gray-900">{achievement.title}</p>
                     <span className={`text-xs font-black px-3 py-1 rounded-full ${unlocked ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-600"}`}>

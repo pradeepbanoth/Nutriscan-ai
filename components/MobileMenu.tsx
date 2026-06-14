@@ -41,7 +41,7 @@ const [open, setOpen] = useState(false);
   >
     <div>
       <p className="font-black text-gray-900">Health Profile</p>
-      <p className="text-xs font-bold text-gray-400">Personalize your score</p>
+      
     </div>
 
     <span className="text-orange-500 font-black">→</span>

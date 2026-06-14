@@ -63,3 +63,30 @@ h2 {
 .animate-scan {
   animation: scan 2s linear infinite;
 }
+
+@keyframes floatBubble {
+  0% {
+    transform: translateY(0px) translateX(0px);
+  }
+
+  25% {
+    transform: translateY(-20px) translateX(10px);
+  }
+
+  50% {
+    transform: translateY(-40px) translateX(-10px);
+  }
+
+  75% {
+    transform: translateY(-20px) translateX(15px);
+  }
+
+  100% {
+    transform: translateY(0px) translateX(0px);
+  }
+}
+
+.bubble-float {
+  animation: floatBubble 18s ease-in-out infinite;
+}
+

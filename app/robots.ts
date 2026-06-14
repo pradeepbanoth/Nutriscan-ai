@@ -6,9 +6,15 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/api/", "/history", "/login"],
+        disallow: [
+          "/api/",
+          "/history",
+          "/login",
+          "/dashboard",
+          "/auth",
+        ],
       },
     ],
-    sitemap: "https://PAUSTICA-ai-orpin.vercel.app/sitemap.xml",
+    sitemap: "https://nutriscan-ai-orpin.vercel.app/sitemap.xml",
   };
 }

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { PostHogProvider } from "./providers";
 import { Chelsea_Market, Livvic } from "next/font/google";
 
 const chelsea = Chelsea_Market({
@@ -39,17 +38,26 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_IN",
     url: "https://nutriscan-ai-orpin.vercel.app",
-    title: "PAUSTICA — Know What You're Eating",
+    title: "PAUSTICA — Scan food Smarter",
     description:
       "Scan any packaged food and get instant AI health analysis — ingredients, additives, nutrition score, and personalized recommendations in seconds.",
     siteName: "PAUSTICA",
+    images: [
+  {
+    url: "/og-image.png",
+    width: 1200,
+    height: 630,
+    alt: "PAUSTICA food scanner app",
+  },
+],
   },
   twitter: {
     card: "summary_large_image",
-    title: "PAUSTICA — Know What You're Eating",
+    title: "PAUSTICA — Scan food Smarter",
     description:
       "Scan any packaged food and get instant AI health analysis in seconds.",
-    creator: "@PAUSTICAai",
+    creator: "@PAUSTICA",
+     images: ["/og-image.png"],
   },
   robots: {
     index: true,
@@ -74,14 +82,14 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <html
-      lang="en"
-      className={`${chelsea.variable} ${livvic.variable} h-full antialiased`}
-    >
-      <body>
-        <PostHogProvider>{children}</PostHogProvider>
-      </body>
-    </html>
-  );
+ return (
+  <html
+    lang="en"
+    className={`${chelsea.variable} ${livvic.variable} h-full antialiased`}
+  >
+    <body className="min-h-screen font-body">
+      {children}
+    </body>
+  </html>
+);
 }

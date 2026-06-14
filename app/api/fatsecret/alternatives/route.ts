@@ -1,3 +1,44 @@
+
+let cachedToken: string | null = null;
+let cachedTokenExpiry = 0;
+
+async function getFatSecretToken() {
+  const now = Date.now();
+
+  if (cachedToken && now < cachedTokenExpiry) {
+    return cachedToken;
+  }
+
+  const credentials = Buffer.from(
+    `${process.env.FATSECRET_CLIENT_ID}:${process.env.FATSECRET_CLIENT_SECRET}`
+  ).toString("base64");
+
+  const tokenRes = await fetch("https://oauth.fatsecret.com/connect/token", {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${credentials}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: "grant_type=client_credentials&scope=basic",
+  });
+
+  if (!tokenRes.ok) {
+    return null;
+  }
+
+  const tokenData = await tokenRes.json();
+
+  if (!tokenData.access_token) {
+    return null;
+  }
+
+  cachedToken = tokenData.access_token;
+  cachedTokenExpiry = now + 50 * 60 * 1000;
+
+  return cachedToken;
+}
+
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const query = searchParams.get("query")?.trim();
@@ -21,24 +62,11 @@ type FatSecretFood = {
   }
 
   try {
-    const credentials = Buffer.from(
-      `${process.env.FATSECRET_CLIENT_ID}:${process.env.FATSECRET_CLIENT_SECRET}`
-    ).toString("base64");
+    const accessToken = await getFatSecretToken();
 
-    const tokenRes = await fetch("https://oauth.fatsecret.com/connect/token", {
-      method: "POST",
-      headers: {
-        Authorization: `Basic ${credentials}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: "grant_type=client_credentials&scope=basic",
-    });
-
-    if (!tokenRes.ok) {
-      return Response.json({ alternatives: [] }, { status: 502 });
-    }
-
-    const tokenData = await tokenRes.json();
+if (!accessToken) {
+  return Response.json({ alternatives: [] }, { status: 502 });
+}
 
    const searchTerms = [
   `low sugar ${query}`,
@@ -49,31 +77,34 @@ type FatSecretFood = {
   `unsweetened ${query}`,
 ];
 
-    const results: FatSecretFood[] = [];
-
-    for (const term of searchTerms) {
-      const foodRes = await fetch(
-        `https://platform.fatsecret.com/rest/server.api?method=foods.search&search_expression=${encodeURIComponent(
-          term
-        )}&format=json&max_results=5`,
-        {
-          headers: {
-            Authorization: `Bearer ${tokenData.access_token}`,
-          },
-        }
-      );
-
-      if (!foodRes.ok) continue;
-
-      const data = await foodRes.json();
-      const foods = data?.foods?.food;
-
-      if (Array.isArray(foods)) {
-        results.push(...foods);
-      } else if (foods) {
-        results.push(foods);
+   const responses = await Promise.allSettled(
+  searchTerms.map(async (term) => {
+    const foodRes = await fetch(
+      `https://platform.fatsecret.com/rest/server.api?method=foods.search&search_expression=${encodeURIComponent(
+        term
+      )}&format=json&max_results=5`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
       }
-    }
+    );
+
+    if (!foodRes.ok) return [];
+
+    const data = await foodRes.json();
+    const foods = data?.foods?.food;
+
+    if (Array.isArray(foods)) return foods;
+    if (foods) return [foods];
+
+    return [];
+  })
+);
+
+const results: FatSecretFood[] = responses
+  .filter((result) => result.status === "fulfilled")
+  .flatMap((result) => result.value);
 
    const bannedWords = [
   "fried",
@@ -98,14 +129,21 @@ const unique = Array.from(
   })
   .slice(0, 6);
 
-    return Response.json({
-      alternatives: unique.map((item: FatSecretFood) => ({
-        id: item.food_id,
-        name: item.food_name,
-        description: item.food_description,
-        url: item.food_url,
-      })),
-    });
+  return Response.json(
+  {
+    alternatives: unique.map((item: FatSecretFood) => ({
+      id: item.food_id,
+      name: item.food_name,
+      description: item.food_description,
+      url: item.food_url,
+    })),
+  },
+  {
+    headers: {
+      "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
+    },
+  }
+);
   } catch (error) {
     console.error("FatSecret alternatives error:", error);
     return Response.json({ alternatives: [] }, { status: 500 });

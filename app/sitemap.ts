@@ -39,20 +39,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly",
       priority: 0.8,
     },
+   {
+  url: `${baseUrl}/trust`,
+  lastModified: new Date(),
+  changeFrequency: "monthly",
+  priority: 0.8,
+},
+  ];
+if (!elastic) {
+  return [
     {
-      url: `${baseUrl}/privacy`,
+      url: "SITE_URL",
       lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.5,
-    },
-    {
-      url: `${baseUrl}/terms`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.5,
+      changeFrequency: "daily",
+      priority: 1,
     },
   ];
-
+}
+  
   try {
     const result = await elastic.search<ProductSource>({
       index: PRODUCT_INDEX,

@@ -32,6 +32,9 @@ function formatProductName(slug: string) {
 
 async function getProductFromSearch(slug: string): Promise<ProductData | null> {
   const query = formatProductName(slug);
+  if (!elastic) {
+  return null;
+}
 
   try {
     const result = await elastic.search<ProductData>({
@@ -57,7 +60,10 @@ async function getProductFromSearch(slug: string): Promise<ProductData | null> {
 }
 
 export async function generateStaticParams() {
-  try {
+ if (!elastic) {
+  return [];
+}
+ try {
     const result = await elastic.search<ProductData>({
       index: PRODUCT_INDEX,
       size: 50,
@@ -91,21 +97,24 @@ export async function generateMetadata(
   const productName = formatProductName(slug);
 
   return {
-    title: `${productName} Health Score & Analysis | PAUSTICA`,
-    description: `Analyze ${productName} ingredients, additives, nutrition facts, processing level and healthier alternatives with PAUSTICA.`,
+    title: `${productName} Review, Ingredients, Nutrition & Health Score | PAUSTICA`,
+    description:`${productName} ingredient analysis, nutrition facts, NOVA processing level, additives, health score and healthier alternatives. See if ${productName} is a healthy choice with PAUSTICA.`,
   alternates: {
   canonical: `/product/${slug}`,
 },
-    openGraph: {
-      title: `${productName} Health Score & Analysis`,
-      description: `Ingredient intelligence and food analysis for ${productName}.`,
-      type: "website",
-    },
+   openGraph: {
+  title: `${productName} Review & Health Score`,
+  description: `Ingredients, nutrition facts, additives, NOVA processing level and healthier alternatives for ${productName}.`,
+  type: "website",
+  images: ["/og-image.png"],
+},
   };
 }
 
 async function getRelatedProducts(product: ProductData | null) {
-  if (!product) return [];
+  if (!product || !elastic) {
+    return [];
+  }
 
   try {
     const result = await elastic.search<ProductData>({
@@ -168,6 +177,20 @@ export default async function ProductPage({ params }: ProductPageProps) {
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "Product",
+  aggregateRating: {
+  "@type": "AggregateRating",
+  ratingValue:
+    product?.nutriscore?.toUpperCase() === "A"
+      ? 5
+      : product?.nutriscore?.toUpperCase() === "B"
+      ? 4
+      : product?.nutriscore?.toUpperCase() === "C"
+      ? 3
+      : product?.nutriscore?.toUpperCase() === "D"
+      ? 2
+      : 1,
+  reviewCount: 1,
+},
   name: productName,
   brand: {
     "@type": "Brand",
@@ -358,6 +381,7 @@ const jsonLd = {
   {ingredient.trim()}
 </Link>
         ))}
+
     </div>
 
     <p className="mt-5 text-gray-500">

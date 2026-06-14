@@ -111,6 +111,13 @@ export async function POST(request: Request) {
       const data = await response.json();
       const products: OFFProduct[] = data.products || [];
 
+if (!elastic) {
+  return NextResponse.json(
+    { error: "Elasticsearch client is not configured" },
+    { status: 500 }
+  );
+}
+
       for (const product of products) {
         const name = product.product_name || product.product_name_en;
 
@@ -140,8 +147,12 @@ export async function POST(request: Request) {
       }
     }
 
-    await elastic.indices.refresh({ index: PRODUCT_INDEX });
-
+if (!elastic) {
+  return NextResponse.json(
+    { ok: false, error: "Elasticsearch client is not configured" },
+    { status: 500 }
+  );
+}
     return NextResponse.json({
       ok: true,
       indexed,

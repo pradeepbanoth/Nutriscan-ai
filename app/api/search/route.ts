@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { SearchHit } from "@elastic/elasticsearch/lib/api/types";
 import { elastic, PRODUCT_INDEX } from "@/lib/elasticsearch";
 import { searchRateLimit } from "@/lib/rateLimit";
+import { cacheHeaders } from "@/lib/cacheHeaders";
 
 
 type ProductSource = {
@@ -21,6 +22,7 @@ type ProductSource = {
 };
 
 export async function GET(request: Request) {
+  const startedAt = Date.now();
   const ip =
   request.headers.get("x-forwarded-for") ||
   request.headers.get("x-real-ip") ||
@@ -31,6 +33,11 @@ const rate = searchRateLimit
   : { success: true };
 
 if (!rate.success) {
+
+  if (process.env.NODE_ENV === "development") {
+  console.log("Search API completed in", Date.now() - startedAt, "ms");
+}
+  console.log("Search API completed in", Date.now() - startedAt, "ms");
   return NextResponse.json(
     { error: "Too many searches. Please try again shortly." },
     { status: 429 }
@@ -40,7 +47,12 @@ if (!rate.success) {
   const q = searchParams.get("q")?.trim();
 
 if (!q) {
-  return NextResponse.json({ products: [] });
+  return NextResponse.json(
+    { products: [] },
+    {
+     headers: cacheHeaders.search,
+    }
+  );
 }
 
 if (q.length > 80) {
@@ -51,13 +63,25 @@ if (q.length > 80) {
 }
 
 if (q.length < 2) {
-  return NextResponse.json({ products: [] });
+  return NextResponse.json(
+    { products: [] },
+    {
+     headers: cacheHeaders.search,
+    }
+  );
 }
 
 if (!/^[a-zA-Z0-9\s\-&.,()]+$/.test(q)) {
   return NextResponse.json(
     { error: "Search contains unsupported characters." },
     { status: 400 }
+  );
+}
+
+if (!elastic) {
+  return NextResponse.json(
+    { products: [], error: "Elasticsearch is not configured." },
+    { status: 200 }
   );
 }
 
@@ -111,18 +135,32 @@ if (!/^[a-zA-Z0-9\s\-&.,()]+$/.test(q)) {
   }
 );
 
-  const products = result.hits.hits.map((hit: SearchHit<ProductSource>) => ({
+ const products = result.hits.hits.map((hit: SearchHit<ProductSource>) => {
+  const p = hit._source || {};
+
+  return {
     id: hit._id,
     score: hit._score,
-    ...hit._source,
-  }));
+    barcode: p.barcode || "",
+    name: p.name || "",
+    brand: p.brand || "",
+    category: p.category || "",
+    ingredients: p.ingredients || "",
+    nutriscore: p.nutriscore || "unknown",
+    nova: p.nova ?? "N/A",
+    image: p.image || "",
+    sugar: Number(p.sugar ?? 0),
+    fat: Number(p.fat ?? 0),
+    salt: Number(p.salt ?? 0),
+    source: p.source || "elasticsearch",
+    updatedAt: p.updatedAt || "",
+  };
+});
 
   return NextResponse.json(
   { products },
   {
-    headers: {
-      "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
-    },
+   headers: cacheHeaders.search,
   }
 );
 } catch (error) {
