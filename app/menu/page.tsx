@@ -70,9 +70,7 @@ export default function MenuPage() {
         </nav>
 
         <section className="text-center mb-14">
-          <p className="text-orange-600 font-bold mb-3">
-            App Menu
-          </p>
+         
 
           <h2 className="heading-font text-5xl font-black text-gray-900 mb-5">
             Explore PAUSTICA

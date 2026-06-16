@@ -182,28 +182,28 @@ const streak = uniqueDays.length;
     Home
   </a>
 
-  <button
-    onClick={async () => {
-      await supabase.auth.signOut();
-      window.location.href = "/auth";
-    }}
-    className="px-5 py-3 rounded-2xl bg-red-50 text-red-600 font-bold border border-red-100"
-  >
-    Logout
-  </button>
+ 
 </div>
         </nav>
 
-        <section className="bg-white border border-orange-100 rounded-[36px] shadow-2xl p-8 mb-8">
-          <p className="text-orange-600 font-bold mb-2">Dashboard</p>
-          <h2 className="heading-font text-4xl font-black text-gray-900 mb-2">
-            Your Nutrition Overview
-          </h2>
-          <p className="text-gray-500">{email}</p>
-        </section>
+        <section className="relative overflow-hidden bg-gray-900 rounded-[40px] shadow-2xl p-8 md:p-12 mb-8 text-white">
+  <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-orange-500/20 blur-3xl" />
 
-             <section className="grid md:grid-cols-5 gap-6 mb-8">
-              <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-lg">
+  <div className="relative">
+    <p className="text-orange-300 font-black uppercase tracking-[0.2em] mb-3">
+      Dashboard
+    </p>
+
+    <h2 className="heading-font text-4xl md:text-6xl font-black mb-4">
+      Your nutrition overview
+    </h2>
+
+    <p className="text-white/60 font-semibold">{email}</p>
+  </div>
+</section>
+
+            <section className="grid sm:grid-cols-2 lg:grid-cols-5 gap-5 mb-8">
+              <div className="bg-white border border-orange-100 rounded-[32px] p-6 shadow-sm hover:shadow-xl transition-all">
             <p className="text-gray-500 font-semibold mb-2">Total Scans</p>
             <h3 className="text-5xl font-black text-orange-600">
               {scans.length}
@@ -246,7 +246,7 @@ const streak = uniqueDays.length;
         </section>
 
         <section className="grid md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-green-50 border border-green-200 rounded-3xl p-6">
+          <div className="bg-green-50 border border-green-200 rounded-[36px] p-8 shadow-sm">
             <h3 className="heading-font text-2xl font-black text-green-700 mb-4">
               Best Product
             </h3>
@@ -264,7 +264,7 @@ const streak = uniqueDays.length;
             )}
           </div>
 
-          <div className="bg-red-50 border border-red-200 rounded-3xl p-6">
+          <div className="bg-red-50 border border-red-200 rounded-[36px] p-8 shadow-sm">
             <h3 className="heading-font text-2xl font-black text-red-700 mb-4">
               Worst Product
             </h3>
@@ -283,14 +283,14 @@ const streak = uniqueDays.length;
           </div>
         </section>
 
-        <section className="bg-white border border-orange-100 rounded-[36px] shadow-xl p-8 mb-8">
+        <section className="bg-white border border-orange-100 rounded-[40px] shadow-sm p-8 md:p-10 mb-8">
           <h3 className="heading-font text-3xl font-black text-gray-900 mb-4">
             AI Insight
           </h3>
           <p className="text-gray-700 text-lg leading-relaxed">{insight}</p>
         </section>
 
-        <section className="bg-white border border-orange-100 rounded-[36px] shadow-xl p-8">
+        <section className="bg-white border border-orange-100 rounded-[40px] shadow-sm p-8 md:p-10">
           <h3 className="heading-font text-3xl font-black text-gray-900 mb-6">
             Recent Activity
           </h3>
@@ -300,7 +300,7 @@ const streak = uniqueDays.length;
               {scans.slice(0, 6).map((scan) => (
                 <div
                   key={scan.id}
-                  className="border border-orange-100 rounded-3xl p-5"
+                  className="rounded-[28px] border border-orange-100 bg-orange-50/40 p-5 hover:bg-white hover:shadow-lg transition-all"
                 >
                   <p className="font-black text-gray-900 line-clamp-2">
                     {scan.product_name}
@@ -310,7 +310,22 @@ const streak = uniqueDays.length;
               ))}
             </div>
           ) : (
-            <p className="text-gray-500">No scan activity yet.</p>
+            <div className="rounded-[32px] border border-orange-100 bg-orange-50/60 p-8 text-center">
+  <h4 className="text-2xl font-black text-gray-900">
+    No scans yet
+  </h4>
+
+  <p className="mt-3 text-gray-500">
+    Scan your first product to unlock your nutrition overview.
+  </p>
+
+  <a
+    href="/"
+    className="mt-6 inline-flex rounded-[20px] bg-orange-500 px-6 py-4 text-white font-black"
+  >
+    Start Scanning
+  </a>
+</div>
           )}
         </section>
       </div>
