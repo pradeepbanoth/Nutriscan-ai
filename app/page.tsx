@@ -20,10 +20,8 @@ import { getAlternatives } from "../lib/getAlternatives";
 import { HealthGoal } from "../lib/goalScoring";
 import { supabase } from "./lib/supabase";
 import { getProductComparisons } from "../lib/productComparisons";
-import MobileMenu from "../components/MobileMenu";
 import Image from "next/image";
 import Link from "next/link";
-import { analyzeHealth } from "../lib/healthEngine";
 import Hero from "@/components/home/Hero";
 import TrustStats from "@/components/home/TrustStats";
 import PrimaryActions from "@/components/home/PrimaryActions";
@@ -38,9 +36,7 @@ import QuickSearches from "@/components/scan/QuickSearches";
 import ReadyToAnalyze from "@/components/scan/ReadyToAnalyze";
 import { useCache } from "@/hooks/useCache";
 import { useDedupeRequest } from "@/hooks/useDedupeRequest";
-import { fetchProductByBarcode,   fetchFatSecretNutrition,  } from "@/services/productService";
 import { searchProductByName } from "@/services/searchService";
-import { fetchRealAlternatives } from "@/services/alternativeService";
 import { useScanPermission } from "@/hooks/useScanPermission";
 import { useRecentSearches } from "@/hooks/useRecentSearches";
 import { useScrollLock } from "@/hooks/useScrollLock";
@@ -62,6 +58,16 @@ import { useIngredientInsights } from "@/hooks/useIngredientInsights";
 import { useScanStats } from "@/hooks/useScanStats";
 import { useDailyScans } from "@/hooks/useDailyScans";
 import ProductAnalysisContent from "@/components/product/ProductAnalysisContent";
+import Footer from "@/components/layout/Footer";
+import Navbar from "@/components/layout/Navbar";
+import ScannerPanel from "@/components/scan/ScannerPanel";
+import BackgroundEffects from "@/components/layout/BackgroundEffects";
+import { useFoodAlternatives } from "@/hooks/useFoodAlternatives";
+import { useAnalyzeProduct } from "@/hooks/useAnalyzeProduct";
+import { useBarcodeProduct } from "@/hooks/useBarcodeProduct";
+import Testimonials from "@/components/home/Testimonials";
+import FoodCategories from "@/components/home/FoodCategories";
+import BeforeAfter from "@/components/home/BeforeAfter";
 
 export default function Home() {
   const [barcode, setBarcode] = useState("");
@@ -75,7 +81,6 @@ export default function Home() {
   const [realAlternatives, setRealAlternatives] = useState<any[]>([]);
   
   const [fatSecretAlternatives, setFatSecretAlternatives] = useState<any[]>([]);
-  const [loadingAlternatives, setLoadingAlternatives] = useState(false);
   const suggestionAbortRef = useRef<AbortController | null>(null);
   const searchAbortRef = useRef<AbortController | null>(null);
   const productAbortRef = useRef<AbortController | null>(null);
@@ -90,6 +95,16 @@ const {
   getCache,
   createCacheKey,
 } = useCache();
+
+const {
+  loadingAlternatives,
+  fetchAlternatives,
+} = useFoodAlternatives({
+  getCache,
+  setCache,
+  createCacheKey,
+  dedupeRequest,
+});
 
 useScrollLock(!!product && !loading);
 
@@ -166,51 +181,7 @@ const toggleFavorite = async () => {
   saveFavorites(updatedFavorites);
 };
 
-const fetchAlternatives = async (productName: string) => {
-  const cleanName = productName.trim().toLowerCase();
-  const cacheKey = createCacheKey(
-  "fatsecret_alternatives",
-  cleanName
-);
 
-  try {
-    setLoadingAlternatives(true);
-
-    const cachedAlternatives = getCache<any[]>(cacheKey);
-
-    if (cachedAlternatives) {
-      setFatSecretAlternatives(cachedAlternatives);
-      return;
-    }
-
-   const fatsecretData = await dedupeRequest(
-  createCacheKey("api_fatsecret_alternatives", cleanName),
-  async () => {
-    const fatsecretRes = await fetch(
-      `/api/fatsecret/search?query=${encodeURIComponent(cleanName)}`
-    );
-
-    return fatsecretRes.json();
-  }
-);
-
-    const foods = fatsecretData?.foods?.food || [];
-
-    const alternatives = Array.isArray(foods)
-      ? foods.slice(0, 5)
-      : foods
-      ? [foods]
-      : [];
-
-    setFatSecretAlternatives(alternatives);
-    setCache(cacheKey, alternatives, 24 * 60 * 60 * 1000);
-  } catch (error) {
-    console.error("Alternative fetch failed:", error);
-    setFatSecretAlternatives([]);
-  } finally {
-    setLoadingAlternatives(false);
-  }
-};
  
 const fetchSuggestions = useCallback(async (query: string) => {
     const cleanQuery = query.trim().toLowerCase();
@@ -390,108 +361,39 @@ const {
     target: 7,
   },
 ];
- 
-     const analyzeSelectedProduct = async (item: Record<string, unknown>) => {
-      if (!item) return;
 
-  setLoading(true);
-  
-setSuggestions([]);
-
-const productName = String(item.product_name ?? "");
-const nutritionCacheKey = createCacheKey("nutrition", productName);
-
-let nutrition = getCache<Awaited<ReturnType<typeof fetchFatSecretNutrition>>>(
-  nutritionCacheKey
-);
-
-if (!nutrition) {
-  nutrition = await dedupeRequest(
-    createCacheKey("api_nutrition", productName),
-    async () => fetchFatSecretNutrition(productName)
-  );
-
-  setCache(nutritionCacheKey, nutrition, 24 * 60 * 60 * 1000);
-}
-
-const fetchedProduct: Product = {
-
-    id: 0,
-    name: productName || "Unknown Product",
-    brand: String(item.brands ?? "Unknown Brand"),
-    image: String(item.image_front_url ?? ""),
-    ingredients: String(item.ingredients_text ?? "Ingredients unavailable"),
-    nutriscore: String(item.nutriscore_grade ?? "unknown"),
-    nova: String(item.nova_group ?? "N/A"),
-    sugar: Number(
-  (item as any).nutriments?.sugars_100g ?? 0
-),
-
-calories: nutrition?.calories || 0,
-protein: nutrition?.protein || 0,
-carbs: nutrition?.carbs || 0,
-fiber: nutrition?.fiber || 0,
-saturatedFat: nutrition?.saturatedFat || 0,
-sodium: nutrition?.sodium || 0,
-
-fat: Number(
-  (item as any).nutriments?.fat_100g ?? 0
-),
-
-salt: Number(
-  (item as any).nutriments?.salt_100g ?? 0
-),
-  };
-
-  
-
-  setProduct(fetchedProduct);
-  const analysis = analyzeHealth({
-  sugar: fetchedProduct.sugar,
-  fat: fetchedProduct.fat,
-  salt: fetchedProduct.salt,
-  protein: fetchedProduct.protein,
-  carbs: fetchedProduct.carbs,
-  calories: fetchedProduct.calories,
-  nova: fetchedProduct.nova,
-  ingredients: fetchedProduct.ingredients,
-  healthGoal: selectedGoal,
+const { updateScanStats } = useScanStats({
+  userId,
+  setTotalScans,
+  setCurrentStreak,
+  setBestStreak,
 });
-
-if (analysis.score < 60) {
-  fetchAlternatives(fetchedProduct.name);
-} else {
-  setFatSecretAlternatives([]);
-}
-const realAlternativesCacheKey =
-  createCacheKey(
-    "real_alternatives",
-    fetchedProduct.name
-  );
-
-const cachedRealAlternatives = getCache<any[]>(realAlternativesCacheKey);
-
-if (cachedRealAlternatives) {
-  setRealAlternatives(cachedRealAlternatives);
-} else {
-const realItems = await dedupeRequest(
-  createCacheKey("api_real_alternatives", fetchedProduct.name),
-  async () => fetchRealAlternatives(fetchedProduct.name),
-  
-);
-  setRealAlternatives(realItems);
-  setCache(realAlternativesCacheKey, realItems, 24 * 60 * 60 * 1000);
-}
-  
-  
-  await updateScanStats();
  
-  setScannerOpen(false);
+  const { analyzeSelectedProduct } =
+  useAnalyzeProduct({
+    createCacheKey,
+    getCache,
+    setCache,
+    dedupeRequest,
 
-  await saveHistory(fetchedProduct);
+    selectedGoal,
 
-  setLoading(false);
-};
+    fetchAlternatives,
+
+    setProduct,
+
+    setRealAlternatives,
+
+    setSuggestions,
+
+    setScannerOpen,
+
+    setLoading,
+
+    saveHistory,
+
+    updateScanStats,
+  });
 
   const searchProduct = async () => {
    
@@ -575,118 +477,26 @@ setCache(searchCacheKey, mappedSearchResult, 12 * 60 * 60 * 1000);
   checkScanPermission,
 } = useScanPermission();
 
-const { updateScanStats } = useScanStats({
-  userId,
-  setTotalScans,
-  setCurrentStreak,
-  setBestStreak,
+const { fetchProduct } = useBarcodeProduct({
+  barcode,
+  selectedGoal,
+  productAbortRef,
+  checkScanPermission,
+  setUpgradeOpen,
+  createCacheKey,
+  getCache,
+  setCache,
+  dedupeRequest,
+  fetchAlternatives,
+  setRealAlternatives,
+  setProduct,
+  setScannerOpen,
+  setLoading,
+  saveHistory,
+  minLoadingTime: MIN_LOADING_TIME,
 });
 
-const fetchProduct = async (code?: string) => {
-  const finalBarcode = code || barcode;
 
-  if (!finalBarcode) return;
-  
-   const permission = await checkScanPermission();
-
-if (!permission.allowed) {
-  setUpgradeOpen(true);
-  return;
-}
-    
-const loadingStartedAt = Date.now();
-
-    productAbortRef.current?.abort();
-
-const controller = new AbortController();
-productAbortRef.current = controller;
-
- const productCacheKey = createCacheKey(
-  "product",
-  finalBarcode
-);
-const cachedProduct = getCache<Product>(productCacheKey);
-
-if (cachedProduct) {
-  setProduct(cachedProduct);
-  setScannerOpen(false);
-  setLoading(false);
-  return;
-}
-
-  setLoading(true);
-
-  try {
- const fetchedBaseProduct = await fetchProductByBarcode({
-  barcode: finalBarcode,
-  signal: controller.signal,
-});
-
-if (fetchedBaseProduct) {     
-  const fetchedProduct: Product = {
-  ...fetchedBaseProduct,
-};
-
-     setCache(productCacheKey, fetchedProduct, 7 * 24 * 60 * 60 * 1000);
-
-      setScannerOpen(false);
-      setProduct(fetchedProduct);
-
-      const analysis = analyzeHealth({
-  sugar: fetchedProduct.sugar,
-  fat: fetchedProduct.fat,
-  salt: fetchedProduct.salt,
-  protein: fetchedProduct.protein,
-  carbs: fetchedProduct.carbs,
-  calories: fetchedProduct.calories,
-  nova: fetchedProduct.nova,
-  ingredients: fetchedProduct.ingredients,
-  healthGoal: selectedGoal,
-});
-
-if (analysis.score < 60) {
-  fetchAlternatives(fetchedProduct.name);
-} else {
-  setFatSecretAlternatives([]);
-}
-
-  const realAlternativesCacheKey = `real_alternatives_${fetchedProduct.name
-  .trim()
-  .toLowerCase()}`;
-
-const cachedRealAlternatives = getCache<any[]>(realAlternativesCacheKey);
-
-if (cachedRealAlternatives) {
-  setRealAlternatives(cachedRealAlternatives);
-} else {
-const realItems = await dedupeRequest(
-  createCacheKey("api_real_alternatives", fetchedProduct.name),
-  async () => fetchRealAlternatives(fetchedProduct.name)
-
-);
-  setRealAlternatives(realItems);
-  setCache(realAlternativesCacheKey, realItems, 24 * 60 * 60 * 1000);
-}
-
-      await saveHistory(fetchedProduct);
-    } else {
-  setProduct(null);
-  alert("Product not found in database. Try another barcode or enter product details manually.");
-}
-} catch (error: any) {
-  if (error.name !== "AbortError") {
-    console.log(error);
-    alert("Something went wrong");
-  }
-} finally {
-  const elapsed = Date.now() - loadingStartedAt;
-  const remainingTime = Math.max(0, MIN_LOADING_TIME - elapsed);
-
-  setTimeout(() => {
-    setLoading(false);
-  }, remainingTime);
-}
-};
 const lastSearchClickRef = useRef(0);
 const lastBarcodeClickRef = useRef(0);
 const lastScannerScanRef = useRef(0);
@@ -733,107 +543,14 @@ const logFood = async () => {
       style={{ background: "#fff7ed" }}
     >
 
-      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-  <div
-    className="bubble-float absolute top-24 left-16 h-96 w-96 rounded-full bg-orange-300/10 blur-[120px]"
-  />
+    <BackgroundEffects />
 
-  <div
-    className="bubble-float absolute top-[40%] right-0 h-[500px] w-[500px] rounded-full bg-orange-400/15 blur-[140px]"
-    style={{ animationDelay: "3s" }}
-  />
-
-  <div
-    className="bubble-float absolute bottom-0 left-1/3 h-[450px] w-[450px] rounded-full bg-yellow-300/15 blur-[140px]"
-    style={{ animationDelay: "6s" }}
-  />
-</div>
-<nav className="sticky top-0 z-50 border-b border-orange-100 bg-white/70 backdrop-blur-xl">
-  <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-    <div className="flex items-center gap-3">
-      <Image
-  src="/logo.png"
-  alt="PAUSTICA"
-  width={48}
-  height={48}
-  className="object-contain"
-/>
-
-      <span className="text-xl font-black tracking-tight text-[#0f172a]">
-        PAUSTICA
-      </span>
-    </div>
-
-    <MobileMenu
-  loggedIn={!!userEmail}
-  onLogout={logout}
+<Navbar
+  userEmail={userEmail}
+  logout={logout}
   onOpenProfile={() => setProfileOpen(true)}
+  onUpgrade={() => setUpgradeOpen(true)}
 />
-
-    <div className="hidden md:flex items-center gap-3">
-      {userEmail ? (
-        <>
-          <a
-            href="/dashboard"
-            className="rounded-full px-5 py-3 text-sm font-bold text-orange-600 bg-orange-50 border border-orange-100"
-          >
-            Dashboard
-          </a>
-          <button
-  onClick={() => setUpgradeOpen(true)}
-  className="rounded-full px-5 py-3 text-sm font-bold text-white bg-gray-900"
->
-  Upgrade
-</button>
-
-          <a
-            href="/menu"
-            className="rounded-full px-5 py-3 text-sm font-bold text-orange-600 bg-orange-50 border border-orange-100"
-          >
-            Menu
-          </a>
-
-          <button
-            onClick={logout}
-            className="rounded-full px-6 py-3 text-sm font-bold text-white shadow-lg"
-            style={{
-              background: "linear-gradient(135deg, #f97316, #ea580c)",
-            }}
-          >
-            Logout
-          </button>
-
-         
-        </>
-      ) : (
-        <>
-          <a
-            href="/menu"
-            className="rounded-full px-5 py-3 text-sm font-bold text-orange-600 bg-orange-50 border border-orange-100"
-          >
-            Menu
-          </a>
-          <button
-  onClick={() => setUpgradeOpen(true)}
-  className="rounded-full px-5 py-3 text-sm font-bold text-white bg-gray-900"
->
-  Upgrade
-</button>
-
-          <a
-            href="/auth"
-            className="rounded-full px-6 py-3 text-sm font-bold text-white shadow-lg"
-            style={{
-              background: "linear-gradient(135deg, #f97316, #ea580c)",
-            }}
-          >
-            Login
-          </a>
-        </>
-      )}
-    </div>
-  </div>
-</nav>
 <Hero
   onScan={() => setScannerOpen(true)}
   onSearchFocus={() => {
@@ -854,24 +571,8 @@ const logFood = async () => {
     });
   }}
 />
-<section className="max-w-5xl mx-auto px-6 py-20" id="scanner-area">      
-       
-<div className="rounded-[44px] border border-orange-100 bg-white p-6 sm:p-8 md:p-12 shadow-2xl">
-      <div className="text-center mb-8">
 
-  <p className="text-sm font-black uppercase tracking-[0.2em] text-orange-500">
-    Analyze now
-  </p>
-
-  <h2 className="mt-3 text-3xl md:text-5xl font-black text-gray-900">
-    Scan or search your food
-  </h2>
-
-  <p className="mt-4 text-gray-500">
-    Use barcode, product name, or ingredient label to get instant food intelligence.
-  </p>
-
-</div>
+<ScannerPanel>
 
        <ScannerSection
   barcode={barcode}
@@ -906,9 +607,6 @@ const logFood = async () => {
   saveRecentSearch={saveRecentSearch}
   searchProduct={searchProduct}
 />
-
-
-
 
 {!product && !loading && !scannerOpen && (
   <ReadyToAnalyze onScan={() => setScannerOpen(true)} />
@@ -979,37 +677,33 @@ const logFood = async () => {
   </ProductAnalysisModal>
 )}
       
-          {/*
-  {favorites.length > 0 && (
-    ...
-  )}
-*/}
+
       <ProductComparison comparisons={comparisons} />
-         {/*
-  {favorites.length > 0 && (
-    ...
-  )}
-*/}
+      
        <FavoritesSection
   favorites={favorites}
   onSelect={setProduct}
   onRemove={removeFavorite}
 />
-{/*
-  {favorites.length > 0 && (
-    ...
-  )}
-*/}
+
       <ScanHistory
   scanHistory={scanHistory}
   onSelect={(item) => setProduct(item)}
   onClear={clearHistory}
 />
-        </div>
-      </section>
+    </ScannerPanel>
+
       <LiveProductPreview />
 
 <FeatureCards />
+
+
+
+<BeforeAfter />
+
+<FoodCategories />
+
+<Testimonials />
 
 <HowItWorks />
 
@@ -1033,68 +727,7 @@ const logFood = async () => {
 
 </section>
 
-<footer className="mt-20 border-t border-orange-100 bg-white">
-  <div className="max-w-7xl mx-auto px-6 py-12">
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-      <div>
-        <p className="text-xl font-black text-gray-900">
-          PAUSTICA
-        </p>
-        <p className="mt-3 max-w-sm text-sm text-gray-500 leading-relaxed">
-          Food intelligence made simple for everyday choices.
-        </p>
-      </div>
-
-      <div>
-        <p className="text-sm font-black text-gray-900 mb-4">
-          Product
-        </p>
-        <div className="space-y-3 text-sm font-bold text-gray-500">
-          <button
-            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            className="block hover:text-orange-500 transition"
-          >
-            Scanner
-          </button>
-          <Link href="/dashboard" className="block hover:text-orange-500 transition">
-            Dashboard
-          </Link>
-          <button
-            onClick={() => setUpgradeOpen(true)}
-            className="block hover:text-orange-500 transition"
-          >
-            Premium
-          </button>
-        </div>
-      </div>
-
-      <div>
-        <p className="text-sm font-black text-gray-900 mb-4">
-          Support
-        </p>
-        <div className="space-y-3 text-sm font-bold text-gray-500">
-          <Link href="/trust" className="block hover:text-orange-500 transition">
-            Got a Question?
-          </Link>
-          <a
-            href="mailto:banothpradeep0203@gmail.com"
-            className="block hover:text-orange-500 transition"
-          >
-            Contact
-          </a>
-          <Link href="/trust#privacy" className="block hover:text-orange-500 transition">
-            Privacy & Terms
-          </Link>
-        </div>
-      </div>
-    </div>
-
-    <div className="mt-10 border-t border-orange-100 pt-6 flex flex-col md:flex-row justify-between gap-4 text-sm text-gray-400">
-      <p>© 2026 PAUSTICA. All rights reserved.</p>
-      <p>Made for smarter food decisions.</p>
-    </div>
-  </div>
-</footer>
+<Footer onUpgrade={() => setUpgradeOpen(true)} />
 
 <UpgradeModal
   open={upgradeOpen}
