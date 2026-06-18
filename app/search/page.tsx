@@ -2,7 +2,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 
 import SearchSection from "@/components/scan/SearchSection";
 import QuickSearches from "@/components/scan/QuickSearches";
@@ -34,8 +34,8 @@ import { useDailyScans } from "@/hooks/useDailyScans";
 import { useScrollLock } from "@/hooks/useScrollLock";
 import { useSearchParams } from "next/navigation";
 
-export default function SearchPage() {
-  const [loading, setLoading] = useState(false);
+function SearchPageContent() {
+    const [loading, setLoading] = useState(false);
   const [product, setProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState<any[]>([]);
@@ -183,73 +183,83 @@ export default function SearchPage() {
     [createCacheKey, dedupeRequest, getCache, setCache]
   );
 
-   const searchProduct = async () => {
-    if (!searchQuery.trim()) return;
+   const searchProduct = useCallback(async () => {
+  if (!searchQuery.trim()) return;
 
-    saveRecentSearch(searchQuery);
+  saveRecentSearch(searchQuery);
 
-    const cleanQuery = searchQuery.trim().toLowerCase();
-    const searchCacheKey = createCacheKey("search_result", cleanQuery);
-    const cachedSearch = getCache<any>(searchCacheKey);
+  const cleanQuery = searchQuery.trim().toLowerCase();
+  const searchCacheKey = createCacheKey("search_result", cleanQuery);
+  const cachedSearch = getCache<any>(searchCacheKey);
 
-    if (cachedSearch?.[0]) {
-      setProduct(cachedSearch[0] as unknown as Product);
-      setSuggestions([]);
+  if (cachedSearch?.[0]) {
+    setProduct(cachedSearch[0] as unknown as Product);
+    setSuggestions([]);
+    return;
+  }
+
+  const permission = await checkScanPermission();
+
+  if (!permission.allowed) {
+    setUpgradeOpen(true);
+    setLoading(false);
+    return;
+  }
+
+  setLoading(true);
+
+  const loadingStartedAt = Date.now();
+
+  searchAbortRef.current?.abort();
+
+  const controller = new AbortController();
+  searchAbortRef.current = controller;
+
+  try {
+    const foundProduct = await dedupeRequest(
+      createCacheKey("api_search", cleanQuery),
+      async () =>
+        searchProductByName({
+          query: cleanQuery,
+          signal: controller.signal,
+        })
+    );
+
+    if (!foundProduct) {
+      alert("No product found. Try a more specific name.");
       return;
     }
 
-    const permission = await checkScanPermission();
+    setCache(searchCacheKey, [foundProduct], 12 * 60 * 60 * 1000);
 
-    if (!permission.allowed) {
-      setUpgradeOpen(true);
+    setSuggestions([]);
+    setProduct(foundProduct as unknown as Product);
+    await saveHistory(foundProduct as unknown as Product);
+    await updateScanStats();
+  } catch (error: any) {
+    if (error.name !== "AbortError") {
+      console.log(error);
+      alert("Search failed. Please try again.");
+    }
+  } finally {
+    const elapsed = Date.now() - loadingStartedAt;
+    const remainingTime = Math.max(0, MIN_LOADING_TIME - elapsed);
+
+    setTimeout(() => {
       setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-
-    const loadingStartedAt = Date.now();
-
-    searchAbortRef.current?.abort();
-
-    const controller = new AbortController();
-    searchAbortRef.current = controller;
-
-    try {
-      const foundProduct = await dedupeRequest(
-        createCacheKey("api_search", cleanQuery),
-        async () =>
-          searchProductByName({
-            query: cleanQuery,
-            signal: controller.signal,
-          })
-      );
-
-      if (!foundProduct) {
-        alert("No product found. Try a more specific name.");
-        return;
-      }
-
-      setCache(searchCacheKey, [foundProduct], 12 * 60 * 60 * 1000);
-
-      setSuggestions([]);
-      setProduct(foundProduct as unknown as Product);
-      await saveHistory(foundProduct as unknown as Product);
-      await updateScanStats();
-    } catch (error: any) {
-      if (error.name !== "AbortError") {
-        console.log(error);
-        alert("Search failed. Please try again.");
-      }
-    } finally {
-      const elapsed = Date.now() - loadingStartedAt;
-      const remainingTime = Math.max(0, MIN_LOADING_TIME - elapsed);
-
-      setTimeout(() => {
-        setLoading(false);
-      }, remainingTime);
-    }
-  };
+    }, remainingTime);
+  }
+}, [
+  searchQuery,
+  saveRecentSearch,
+  createCacheKey,
+  getCache,
+  checkScanPermission,
+  dedupeRequest,
+  setCache,
+  saveHistory,
+  updateScanStats,
+]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -264,10 +274,14 @@ export default function SearchPage() {
 
   if (!q) return;
 
-  setSearchQuery((prev) => {
-    if (prev === q) return prev;
-    return q;
-  });
+  const timer = setTimeout(() => {
+    setSearchQuery((prev) => {
+      if (prev === q) return prev;
+      return q;
+    });
+  }, 0);
+
+  return () => clearTimeout(timer);
 }, [searchParams]);
 
 useEffect(() => {
@@ -278,7 +292,7 @@ useEffect(() => {
   }, 300);
 
   return () => clearTimeout(timer);
-}, [searchQuery]);
+}, [searchQuery, searchProduct]);
 
   const {
     detectedHarmful,
@@ -533,5 +547,18 @@ className="rounded-full border border-orange-100 bg-white px-5 py-3 text-sm font
         freeDailyScanLimit={FREE_DAILY_SCAN_LIMIT}
       />
     </main>
+  );
+}
+export default function SearchPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-[#fff7ed] flex items-center justify-center">
+          <p className="font-bold text-gray-500">Loading search...</p>
+        </main>
+      }
+    >
+      <SearchPageContent />
+    </Suspense>
   );
 }

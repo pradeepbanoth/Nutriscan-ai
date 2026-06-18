@@ -3,24 +3,40 @@
 import { useEffect } from "react";
 import posthog from "posthog-js";
 
+let posthogInitialized = false;
+
 export default function PostHogProvider({
   children,
 }: {
   children: React.ReactNode;
 }) {
   useEffect(() => {
-    if (!process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN) return;
+    const token = process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN;
+    const host =
+      process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com";
 
-    if ((posthog as typeof posthog & { __loaded?: boolean }).__loaded) return;
+    if (!token || posthogInitialized) return;
 
-    posthog.init(process.env.NEXT_PUBLIC_POSTHOG_PROJECT_TOKEN, {
-      api_host:
-        process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com",
-      defaults: "2026-01-30",
+    posthogInitialized = true;
+
+    posthog.init(token, {
+      api_host: host,
+
       capture_pageview: true,
-      capture_pageleave: true,
-      autocapture: true,
+      capture_pageleave: false,
+      autocapture: false,
+
       disable_session_recording: true,
+      disable_surveys: true,
+
+      advanced_disable_flags: true,
+
+      persistence: "localStorage",
+      person_profiles: "identified_only",
+
+      on_request_error: () => {
+        return;
+      },
     });
   }, []);
 

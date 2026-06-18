@@ -35,7 +35,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://api.fontshare.com",
               "font-src 'self' https://api.fontshare.com",
               "img-src 'self' data: https: blob:",
-              "connect-src 'self' https://*.supabase.co https://world.openfoodfacts.org https://in.openfoodfacts.org https://www.google-analytics.com https://*.elastic-cloud.com",
+              "connect-src 'self' https://*.supabase.co https://world.openfoodfacts.org https://in.openfoodfacts.org https://www.google-analytics.com https://*.elastic-cloud.com https://us.i.posthog.com",
               "frame-ancestors 'none'",
             ].join("; "),
           },
