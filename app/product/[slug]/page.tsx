@@ -201,7 +201,7 @@ const jsonLd = {
 };
 
   return (
-    <main className="min-h-screen bg-[#fff7ed] px-4 sm:px-6 py-10">
+    <main className="min-h-screen bg-[#fff7ed] px-4 sm:px-6 py-20">
      
       <script
   type="application/ld+json"
@@ -239,12 +239,12 @@ const jsonLd = {
           Back to PAUSTICA
         </Link>
 
-        <section className="rounded-[36px] bg-white border border-orange-100 shadow-xl overflow-hidden">
+        <section className="rounded-3xl bg-white border border-orange-100 shadow-sm overflow-hidden">
           <div className="h-2 bg-gradient-to-r from-orange-500 to-orange-600" />
 
           <div className="p-6 sm:p-10">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-              <div className="rounded-[32px] bg-orange-50 border border-orange-100 p-8 flex items-center justify-center">
+              <div className="rounded-3xl bg-orange-50 border border-orange-100 p-8 flex items-center justify-center">
                 {product?.image ? (
                   <Image
                     src={product.image}
@@ -309,8 +309,33 @@ const jsonLd = {
           </div>
         </section>
 
+        <section className="mt-8 rounded-3xl bg-white border border-orange-100 shadow-sm p-8">
+
+<p className="text-sm font-black text-orange-600 uppercase tracking-wide mb-3">
+Health Verdict
+</p>
+
+<h2 className="text-3xl font-black text-gray-900 mb-5">
+
+{Number(product?.nova) >= 4
+ ? "Limit consumption"
+ : Number(product?.nova) >= 3
+ ? "Consume in moderation"
+ : "Generally a better choice"}
+
+</h2>
+
+<p className="text-gray-600 leading-relaxed">
+
+This verdict is based on ingredients, processing level,
+and available nutrition information.
+
+</p>
+
+</section>
+
        {product && (
-  <section className="mt-8 rounded-[32px] bg-white border border-orange-100 shadow-xl p-6 sm:p-8">
+  <section className="mt-8 rounded-3xl bg-white border border-orange-100 shadow-sm p-6 sm:p-8">
     <p className="text-sm font-black text-orange-600 uppercase tracking-wide mb-3">
       Processing Analysis
     </p>
@@ -359,7 +384,7 @@ const jsonLd = {
 
 
 {product?.ingredients && (
-  <section className="mt-8 rounded-[32px] bg-white border border-orange-100 shadow-xl p-6 sm:p-8">
+  <section className="mt-8 rounded-3xl bg-white border border-orange-100 shadow-sm p-6 sm:p-8">
     <p className="text-sm font-black text-orange-600 uppercase tracking-wide mb-3">
       Ingredient Highlights
     </p>
@@ -392,7 +417,7 @@ const jsonLd = {
 )}
 
         <section className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 rounded-[32px] bg-white border border-orange-100 shadow-xl p-6 sm:p-8">
+          <div className="lg:col-span-2 rounded-3xl bg-white border border-orange-100 shadow-sm p-6 sm:p-8">
             <h2 className="text-2xl font-black text-gray-900 mb-4">
               Ingredients
             </h2>
@@ -402,17 +427,29 @@ const jsonLd = {
             </p>
           </div>
 
-          <div className="rounded-[32px] bg-gray-950 shadow-xl p-6 sm:p-8">
+          <div className="rounded-3xl bg-gray-950 shadow-sm p-6 sm:p-8">
             <h2 className="text-2xl font-black text-white mb-4">
               Better Alternatives
             </h2>
 
             <p className="text-gray-300 leading-relaxed mb-6">
-              Healthier product suggestions will appear here based on category,
-              ingredients, and nutrition profile.
+             PAUSTICA will recommend healthier alternatives based on
+processing level, ingredients, nutrition profile and
+similar products in the same category.
             </p> 
-            {relatedProducts.length > 0 && (
-  <section className="mt-8 rounded-[32px] bg-white border border-orange-100 shadow-xl p-6 sm:p-8">
+           
+
+            <Link
+              href="/"
+              className="inline-flex w-full justify-center rounded-2xl bg-orange-500 px-6 py-4 text-white font-black"
+            >
+              Scan Another Product
+            </Link>
+          </div>
+        </section>
+      </div>
+       {relatedProducts.length > 0 && (
+  <section className="mt-8 rounded-3xl bg-white border border-orange-100 shadow-sm p-6 sm:p-8">
     <h2 className="text-2xl font-black text-gray-900 mb-6">
       Related Products
     </h2>
@@ -453,16 +490,6 @@ const jsonLd = {
     </div>
   </section>
 )}
-
-            <Link
-              href="/"
-              className="inline-flex w-full justify-center rounded-2xl bg-orange-500 px-6 py-4 text-white font-black"
-            >
-              Scan Another Product
-            </Link>
-          </div>
-        </section>
-      </div>
     </main>
   );
 }

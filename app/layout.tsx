@@ -20,44 +20,50 @@ export const metadata: Metadata = {
     template: "%s | PAUSTICA",
   },
   description:
-    "Scan any packaged food and get instant AI health analysis — ingredients, additives, nutrition score, and personalized recommendations in seconds.",
+    "PAUSTICA helps you scan, search, compare and understand packaged foods using nutrition data, ingredient signals, processing levels and AI-powered food intelligence.",
   keywords: [
+    "PAUSTICA",
     "food scanner",
+    "barcode food scanner",
     "nutrition analysis",
-    "healthy eating",
-    "barcode scanner",
-    "food health score",
     "ingredient checker",
-    "AI nutrition",
+    "food health score",
+    "AI nutrition app",
+    "processed food checker",
     "food additives",
+    "healthy food choices",
   ],
   authors: [{ name: "PAUSTICA" }],
   creator: "PAUSTICA",
+  publisher: "PAUSTICA",
+  applicationName: "PAUSTICA",
   metadataBase: new URL("https://nutriscan-ai-orpin.vercel.app"),
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     type: "website",
     locale: "en_IN",
-    url: "https://nutriscan-ai-orpin.vercel.app",
-    title: "PAUSTICA — Scan food Smarter",
+    url: "/",
+    title: "PAUSTICA — Know What You're Eating",
     description:
-      "Scan any packaged food and get instant AI health analysis — ingredients, additives, nutrition score, and personalized recommendations in seconds.",
+      "Scan, search and compare packaged foods with AI-powered nutrition and ingredient intelligence.",
     siteName: "PAUSTICA",
     images: [
-  {
-    url: "/og-image.png",
-    width: 1200,
-    height: 630,
-    alt: "PAUSTICA food scanner app",
-  },
-],
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "PAUSTICA food scanner and nutrition intelligence app",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "PAUSTICA — Scan food Smarter",
+    title: "PAUSTICA — Know What You're Eating",
     description:
-      "Scan any packaged food and get instant AI health analysis in seconds.",
-    creator: "@PAUSTICA",
-     images: ["/og-image.png"],
+      "Scan, search and compare packaged foods with AI-powered food intelligence.",
+    images: ["/og-image.png"],
   },
   robots: {
     index: true,
@@ -65,6 +71,9 @@ export const metadata: Metadata = {
     googleBot: {
       index: true,
       follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
     },
   },
   verification: {
@@ -72,7 +81,6 @@ export const metadata: Metadata = {
   },
   manifest: "/manifest.json",
 };
-
 export const viewport = {
   themeColor: "#f97316",
 };

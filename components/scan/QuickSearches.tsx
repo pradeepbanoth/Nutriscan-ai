@@ -21,25 +21,41 @@ export default function QuickSearches({
       : ["Diet Coke", "Maggi", "Nutella", "Red Bull", "Lay's"];
 
   return (
-    <div className="mt-4 flex flex-wrap justify-center gap-2">
-      {items.map((item) => (
-        <button
-          key={item}
-          onClick={() => {
-            setSearchQuery(item);
+    <section className="mt-10 rounded-3xl border border-gray-100 bg-white p-8 shadow-sm">
+      <div className="mb-6">
+        <p className="text-sm font-black uppercase tracking-wider text-orange-600">
+          Quick searches
+        </p>
 
-            if (recentSearches.length > 0) {
+        <h3 className="mt-3 text-2xl font-black text-gray-900">
+          Popular foods
+        </h3>
+
+        <p className="mt-2 text-gray-500">
+          Start instantly with recent or commonly searched products.
+        </p>
+      </div>
+
+      <div className="flex flex-wrap gap-3">
+        {items.map((item) => (
+          <button
+            key={item}
+            type="button"
+            onClick={() => {
+              setSearchQuery(item);
+
               saveRecentSearch(item);
+
               setTimeout(() => {
                 searchProduct();
               }, 0);
-            }
-          }}
-          className="rounded-full border border-orange-100 bg-orange-50 px-4 py-2 text-sm font-bold text-orange-600 hover:bg-white"
-        >
-          {item}
-        </button>
-      ))}
-    </div>
+            }}
+            className="rounded-full border border-gray-100 bg-orange-50 px-5 py-3 text-sm font-black text-orange-600 transition hover:bg-orange-100"
+          >
+            {item}
+          </button>
+        ))}
+      </div>
+    </section>
   );
 }

@@ -3,10 +3,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import dynamic from "next/dynamic";
-import Link from "next/link";
 
-import ScannerSection from "@/components/scan/ScannerSection";
 import SearchSection from "@/components/scan/SearchSection";
 import QuickSearches from "@/components/scan/QuickSearches";
 import ProductAnalysisModal from "@/components/product/ProductAnalysisModal";
@@ -28,7 +25,6 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 import { useFoodLibrary } from "@/hooks/useFoodLibrary";
 import { useScanPermission } from "@/hooks/useScanPermission";
 import { useFoodAlternatives } from "@/hooks/useFoodAlternatives";
-import { useBarcodeProduct } from "@/hooks/useBarcodeProduct";
 import { useAnalyzeProduct } from "@/hooks/useAnalyzeProduct";
 import { useIngredientInsights } from "@/hooks/useIngredientInsights";
 import { useHealthMetrics } from "@/hooks/useHealthMetrics";
@@ -36,36 +32,19 @@ import { useScoreDisplay } from "@/hooks/useScoreDisplay";
 import { useScanStats } from "@/hooks/useScanStats";
 import { useDailyScans } from "@/hooks/useDailyScans";
 import { useScrollLock } from "@/hooks/useScrollLock";
+import { useSearchParams } from "next/navigation";
 
-const BarcodeScanner = dynamic(
-  () => import("@/components/BarcodeScanner"),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="flex h-[420px] items-center justify-center rounded-3xl bg-black font-bold text-white">
-        Loading scanner...
-      </div>
-    ),
-  }
-);
-
-export default function ScanPage() {
-  const [barcode, setBarcode] = useState("");
+export default function SearchPage() {
   const [loading, setLoading] = useState(false);
   const [product, setProduct] = useState<Product | null>(null);
-  const [scannerOpen, setScannerOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [realAlternatives, setRealAlternatives] = useState<any[]>([]);
-
+  const searchParams = useSearchParams();
   const suggestionAbortRef = useRef<AbortController | null>(null);
   const searchAbortRef = useRef<AbortController | null>(null);
-  const productAbortRef = useRef<AbortController | null>(null);
-
   const lastSearchClickRef = useRef(0);
-  const lastBarcodeClickRef = useRef(0);
-  const lastScannerScanRef = useRef(0);
 
   const MIN_LOADING_TIME = 700;
 
@@ -97,7 +76,6 @@ export default function ScanPage() {
   } = useFoodLibrary(userId);
 
   const { dailyScansUsed, FREE_DAILY_SCAN_LIMIT } = useDailyScans();
-
   const { checkScanPermission } = useScanPermission();
 
   const { loadingAlternatives, fetchAlternatives } = useFoodAlternatives({
@@ -137,12 +115,10 @@ export default function ScanPage() {
   useEffect(() => {
     const suggestionRef = suggestionAbortRef;
     const searchRef = searchAbortRef;
-    const productRef = productAbortRef;
 
     return () => {
       suggestionRef.current?.abort();
       searchRef.current?.abort();
-      productRef.current?.abort();
     };
   }, []);
 
@@ -215,6 +191,26 @@ export default function ScanPage() {
     return () => clearTimeout(timer);
   }, [searchQuery, fetchSuggestions]);
 
+  useEffect(() => {
+  const q = searchParams.get("q");
+
+  if (q && q !== searchQuery) {
+    setSearchQuery(q);
+  }
+}, [searchParams, searchQuery]);
+
+useEffect(() => {
+  const q = searchParams.get("q");
+
+  if (!q) return;
+
+  const timer = setTimeout(() => {
+    searchProduct();
+  }, 300);
+
+  return () => clearTimeout(timer);
+}, [searchQuery]);
+
   const {
     detectedHarmful,
     ingredientInsights,
@@ -224,18 +220,15 @@ export default function ScanPage() {
     ingredientQuality,
   } = useIngredientInsights(product);
 
-  const {
-    productCategory,
-    healthAnalysis,
-    personalizedWarnings,
-  } = useHealthMetrics(
-    product,
-    selectedGoal,
-    ingredientInsights,
-    userHeight,
-    userWeight,
-    userAge
-  );
+  const { productCategory, healthAnalysis, personalizedWarnings } =
+    useHealthMetrics(
+      product,
+      selectedGoal,
+      ingredientInsights,
+      userHeight,
+      userWeight,
+      userAge
+    );
 
   const {
     healthScore,
@@ -295,7 +288,7 @@ export default function ScanPage() {
     setProduct,
     setRealAlternatives,
     setSuggestions,
-    setScannerOpen,
+    setScannerOpen: () => {},
     setLoading,
     saveHistory,
     updateScanStats,
@@ -311,9 +304,8 @@ export default function ScanPage() {
     const cachedSearch = getCache<any>(searchCacheKey);
 
     if (cachedSearch?.[0]) {
-      setProduct(cachedSearch[0]);
+      setProduct(cachedSearch[0] as unknown as Product);
       setSuggestions([]);
-      setScannerOpen(false);
       return;
     }
 
@@ -352,7 +344,6 @@ export default function ScanPage() {
       setCache(searchCacheKey, [foundProduct], 12 * 60 * 60 * 1000);
 
       setSuggestions([]);
-      setScannerOpen(false);
       setProduct(foundProduct as unknown as Product);
       await saveHistory(foundProduct as unknown as Product);
       await updateScanStats();
@@ -370,25 +361,6 @@ export default function ScanPage() {
       }, remainingTime);
     }
   };
-
-  const { fetchProduct } = useBarcodeProduct({
-    barcode,
-    selectedGoal,
-    productAbortRef,
-    checkScanPermission,
-    setUpgradeOpen,
-    createCacheKey,
-    getCache,
-    setCache,
-    dedupeRequest,
-    fetchAlternatives,
-    setRealAlternatives,
-    setProduct,
-    setScannerOpen,
-    setLoading,
-    saveHistory,
-    minLoadingTime: MIN_LOADING_TIME,
-  });
 
   const logFood = async () => {
     if (!product) return;
@@ -428,34 +400,20 @@ export default function ScanPage() {
       <section className="max-w-6xl mx-auto px-6 py-20">
         <div className="mb-16 text-center">
           <p className="text-sm font-black uppercase tracking-wider text-orange-600">
-            Scan Food
+            Search Food
           </p>
 
           <h1 className="mt-4 text-4xl md:text-6xl font-black text-gray-900">
-            Analyze food in seconds
+            Search any packaged food
           </h1>
 
           <p className="mt-6 max-w-2xl mx-auto text-lg text-gray-500">
-            Scan a barcode or search a product to understand ingredients,
-            processing levels and healthier alternatives.
+            Find products by name and understand nutrition, ingredients,
+            processing level, and healthier alternatives.
           </p>
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-2">
-          <ScannerSection
-            barcode={barcode}
-            setBarcode={setBarcode}
-            loading={loading}
-            fetchProduct={fetchProduct}
-            scannerOpen={scannerOpen}
-            setScannerOpen={setScannerOpen}
-            setLoading={setLoading}
-            BarcodeScanner={BarcodeScanner}
-            canRunAction={canRunAction}
-            lastBarcodeClickRef={lastBarcodeClickRef}
-            lastScannerScanRef={lastScannerScanRef}
-          />
-
+        <div className="mx-auto max-w-3xl">
           <SearchSection
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
@@ -467,24 +425,45 @@ export default function ScanPage() {
             canRunAction={canRunAction}
             lastSearchClickRef={lastSearchClickRef}
           />
+
+          <QuickSearches
+            recentSearches={recentSearches}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            saveRecentSearch={saveRecentSearch}
+            searchProduct={searchProduct}
+          />
         </div>
 
-        <QuickSearches
-          recentSearches={recentSearches}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          saveRecentSearch={saveRecentSearch}
-          searchProduct={searchProduct}
-        />
+        <div className="mt-8">
 
-        <div className="mt-10 text-center">
-          <Link
-            href="/compare"
-            className="inline-flex items-center rounded-full bg-gray-900 px-8 py-4 text-sm font-black text-white transition hover:bg-black"
-          >
-            Compare Foods
-          </Link>
-        </div>
+<p className="text-sm font-black uppercase tracking-wider text-gray-500 mb-4">
+
+Trending Searches
+
+</p>
+
+<div className="flex flex-wrap gap-3">
+
+{["Maggi", "Nutella", "Diet Coke", "Red Bull", "Lay's"].map(
+(item) => (
+
+<button
+key={item}
+onClick={() => setSearchQuery(item)}
+className="rounded-full border border-orange-100 bg-white px-5 py-3 text-sm font-black text-gray-700 hover:bg-orange-50"
+>
+
+{item}
+
+</button>
+
+)
+)}
+
+</div>
+
+</div>
 
         {loading && (
           <div className="mt-10">
@@ -496,7 +475,6 @@ export default function ScanPage() {
           <ProductAnalysisModal
             onClose={() => {
               setProduct(null);
-              setBarcode("");
             }}
           >
             <ProductAnalysisContent
@@ -532,9 +510,7 @@ export default function ScanPage() {
               loadingAlternatives={loadingAlternatives}
               alternatives={alternatives}
               onScanAnother={() => {
-                setProduct(null);
-                setBarcode("");
-                setScannerOpen(true);
+                window.location.href = "/scan";
               }}
               ingredientInsights={ingredientInsights}
               ingredientQuality={ingredientQuality}

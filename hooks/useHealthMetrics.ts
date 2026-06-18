@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { analyzeHealth } from "@/lib/healthEngine";
 import { detectProductCategory } from "@/lib/categoryEngine";
 import { getConfidenceScore } from "@/lib/getConfidenceScore";

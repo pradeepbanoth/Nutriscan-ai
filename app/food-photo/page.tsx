@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import PremiumGate from "../../components/PremiumGateComponent";
 import { getUserPlan } from "../../lib/getUserPlan";
 import { supabase } from "../lib/supabase";
+import Image from "next/image";
 
 type FoodResult = {
   foodName: string;
@@ -93,11 +94,18 @@ export default function FoodPhotoPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#fff7ed] px-4 py-8">
-      <div className="max-w-5xl mx-auto">
+    <main className="min-h-screen bg-[#fff7ed] px-4 py-20">
+      <div className="max-w-6xl mx-auto">
         <nav className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="PAUSTICA" className="w-10 h-10 object-contain" />
+           <Image
+  src="/logo.png"
+  alt="PAUSTICA"
+  width={40}
+  height={40}
+  className="object-contain"
+  priority
+/>
             <h1 className="text-2xl font-black text-gray-900">PAUSTICA</h1>
           </div>
 
@@ -106,7 +114,7 @@ export default function FoodPhotoPage() {
           </a>
         </nav>
 
-        <div className="bg-white border border-orange-100 rounded-[32px] shadow-xl p-6 text-center mb-8">
+        <div className="bg-white border border-orange-100 rounded-3xl shadow-sm p-6 text-center mb-8">
           <p className="text-orange-600 font-bold mb-2">Food Photo AI</p>
 
           <h2 className="text-3xl md:text-4xl font-black text-gray-900 mb-4">
@@ -134,7 +142,7 @@ export default function FoodPhotoPage() {
         </div>
 
         {loading && (
-          <div className="bg-white rounded-3xl border border-orange-100 shadow-lg p-8 text-center">
+          <div className="bg-white rounded-3xl border border-orange-100 shadow-sm p-8 text-center">
             <div className="w-14 h-14 border-4 border-orange-200 border-t-orange-500 rounded-full animate-spin mx-auto mb-4" />
             <p className="text-gray-500 font-bold">AI analyzing food photo...</p>
           </div>
@@ -142,9 +150,16 @@ export default function FoodPhotoPage() {
 
         {image && !loading && result && (
           <div className="grid md:grid-cols-2 gap-6">
-            <div className="bg-white border border-orange-100 rounded-3xl p-5 shadow-lg">
+            <div className="bg-white border border-orange-100 rounded-3xl p-5 shadow-sm">
               <h3 className="text-xl font-black text-gray-900 mb-4">Uploaded Food</h3>
-              <img src={image} alt="Uploaded food" className="w-full rounded-2xl border border-orange-100" />
+             <Image
+  src={image}
+  alt="Uploaded food"
+  width={900}
+  height={700}
+  className="w-full rounded-2xl border border-orange-100 object-cover"
+  unoptimized
+/>
             </div>
 
             <div className="space-y-5">
@@ -170,7 +185,7 @@ export default function FoodPhotoPage() {
                 <p className="text-sm text-gray-500 mt-2">Confidence: {result.confidence}%</p>
               </div>
 
-              <div className="bg-white border border-orange-100 rounded-3xl p-5 shadow-lg">
+              <div className="bg-white border border-orange-100 rounded-3xl p-5 shadow-sm">
                 <h3 className="text-xl font-black text-gray-900 mb-3">
                   Detected Food
                 </h3>

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import Image from "next/image";
 
 export default function AuthPage() {
   const [email, setEmail] = useState("");
@@ -122,13 +123,16 @@ window.location.href = profile?.onboarded ? "/" : "/onboarding";
 
   return (
     <main className="min-h-screen bg-[#fff7ed] flex items-center justify-center px-6">
-      <div className="w-full max-w-md bg-white border border-orange-100 rounded-[32px] shadow-2xl p-8">
+      <div className="w-full max-w-md bg-white border border-orange-100 rounded-3xl shadow-sm p-8">
        <div className="flex flex-col items-center mb-4">
-  <img
-    src="/logo.png"
-    alt="PAUSTICA"
-    className="w-24 h-24 object-contain mb-3"
-  />
+ <Image
+  src="/logo.png"
+  alt="PAUSTICA"
+  width={96}
+  height={96}
+  className="mb-3 object-contain"
+  priority
+/>
 
   <h1 className="text-4xl font-black text-gray-900">
     PAUSTICA

@@ -119,16 +119,18 @@ const jsonLd = {
   },
 };
 
-<script
-  type="application/ld+json"
-  dangerouslySetInnerHTML={{
-    __html: JSON.stringify(jsonLd),
-  }}
-/>
+
 
   return (
-    <main className="min-h-screen bg-[#fff7ed] px-4 sm:px-6 py-10">
-      <div className="max-w-5xl mx-auto">
+   
+      <main className="min-h-screen bg-[#fff7ed] px-4 sm:px-6 py-20">
+  <script
+    type="application/ld+json"
+    dangerouslySetInnerHTML={{
+      __html: JSON.stringify(jsonLd),
+    }}
+  />
+      <div className="max-w-6xl mx-auto">
         <nav
           aria-label="Breadcrumb"
           className="mb-6 flex items-center gap-2 text-sm font-medium"
@@ -144,7 +146,7 @@ const jsonLd = {
           <span className="text-gray-900 font-bold">{ingredientName}</span>
         </nav>
 
-        <section className="rounded-[36px] bg-white border border-orange-100 shadow-xl overflow-hidden">
+        <section className="rounded-3xl bg-white border border-orange-100 shadow-sm overflow-hidden">
           <div className="h-2 bg-gradient-to-r from-orange-500 to-orange-600" />
 
           <div className="p-6 sm:p-10">
@@ -165,7 +167,7 @@ const jsonLd = {
         </section>
 
         <section className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="rounded-[28px] bg-white border border-orange-100 shadow-lg p-6">
+          <div className="rounded-3xl bg-white border border-orange-100 shadow-sm p-6">
             <h2 className="text-xl font-black text-gray-900 mb-3">
               Category
             </h2>
@@ -175,7 +177,7 @@ const jsonLd = {
             </p>
           </div>
 
-          <div className="rounded-[28px] bg-white border border-orange-100 shadow-lg p-6">
+          <div className="rounded-3xl bg-white border border-orange-100 shadow-sm p-6">
             <h2 className="text-xl font-black text-gray-900 mb-3">
               Risk Level
             </h2>
@@ -193,7 +195,7 @@ const jsonLd = {
             </p>
           </div>
 
-          <div className="rounded-[28px] bg-white border border-orange-100 shadow-lg p-6">
+          <div className="rounded-3xl bg-white border border-orange-100 shadow-sm p-6">
             <h2 className="text-xl font-black text-gray-900 mb-3">
               Common Uses
             </h2>
@@ -204,7 +206,7 @@ const jsonLd = {
             </p>
           </div>
 
-          <div className="rounded-[28px] bg-white border border-orange-100 shadow-lg p-6">
+          <div className="rounded-3xl bg-white border border-orange-100 shadow-sm p-6">
             <h2 className="text-xl font-black text-gray-900 mb-3">
               Purpose
             </h2>
@@ -216,7 +218,7 @@ const jsonLd = {
           </div>
         </section>
 
-        <section className="mt-8 rounded-[32px] bg-white border border-orange-100 shadow-xl p-6 sm:p-8">
+        <section className="mt-8 rounded-3xl bg-white border border-orange-100 shadow-sm p-6 sm:p-8">
           <p className="text-sm font-black text-orange-600 uppercase tracking-wide mb-3">
             PAUSTICA View
           </p>
@@ -232,7 +234,7 @@ const jsonLd = {
         </section>
 
         {relatedIngredients.length > 0 && (
-  <section className="mt-8 rounded-[32px] bg-white border border-orange-100 shadow-xl p-6 sm:p-8">
+  <section className="mt-8 rounded-3xl bg-white border border-orange-100 shadow-sm p-6 sm:p-8">
     <h2 className="text-2xl font-black text-gray-900 mb-6">
       Related Ingredients
     </h2>
@@ -261,7 +263,7 @@ const jsonLd = {
   </section>
 )}
 
-<section className="mt-8 rounded-[32px] bg-white border border-orange-100 shadow-xl p-6 sm:p-8">
+<section className="mt-8 rounded-3xl bg-white border border-orange-100 shadow-sm p-6 sm:p-8">
   <p className="text-sm font-black text-orange-600 uppercase tracking-wide mb-3">
     Important Note
   </p>
@@ -278,7 +280,7 @@ const jsonLd = {
   </p>
 </section>
 
-        <section className="mt-8 rounded-[32px] bg-gray-950 shadow-xl p-6 sm:p-8">
+        <section className="mt-8 rounded-3xl bg-gray-950 shadow-sm p-6 sm:p-8">
           <h2 className="text-2xl font-black text-white mb-4">
             Products containing {ingredient?.name || ingredientName}
           </h2>

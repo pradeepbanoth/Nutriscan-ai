@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { analyzeHealth } from "../../lib/healthEngine";
+import Image from "next/image";
 
 type ScanRow = {
   id: number;
@@ -146,6 +147,40 @@ const mostScannedBrand =
 
 const streak = uniqueDays.length;
 
+const today = new Date().toISOString().split("T")[0];
+
+const todaysScans = scans.filter(
+  (scan) =>
+    scan.created_at &&
+    new Date(scan.created_at).toISOString().split("T")[0] === today
+);
+
+const todaysAverage =
+  todaysScans.length > 0
+    ? Math.round(
+        todaysScans.reduce(
+          (sum, item) =>
+            sum +
+            analyzeHealth({
+              sugar: item.sugar || 0,
+              fat: item.fat || 0,
+              salt: item.salt || 0,
+              nova: item.nova || "N/A",
+              ingredients: "",
+              healthGoal: "General Wellness",
+            }).score,
+          0
+        ) / todaysScans.length
+      )
+    : 0;
+
+const nextAction =
+  highSugar > 3
+    ? "Reduce sugary drinks today"
+    : ultraProcessed > 3
+    ? "Choose less processed foods"
+    : "Keep building healthy habits";
+
   const insight =
     averageScore >= 75
       ? "Great progress. Your recent food choices look healthier overall."
@@ -162,21 +197,24 @@ const streak = uniqueDays.length;
   }
 
   return (
-    <main className="min-h-screen bg-[#fff7ed] px-6 py-10">
+    <main className="min-h-screen bg-[#fff7ed] px-6 py-20">
       <div className="max-w-6xl mx-auto">
         <nav className="flex items-center justify-between mb-12">
           <div className="flex items-center gap-3">
-            <img
-              src="/logo.png"
-              alt="PAUSTICA"
-              className="w-12 h-12 object-contain"
-            />
+           <Image
+  src="/logo.png"
+  alt="PAUSTICA"
+  width={48}
+  height={48}
+  className="object-contain"
+  priority
+/>
             <h1 className="text-3xl font-black text-gray-900">PAUSTICA</h1>
           </div>
 
          <div className="flex items-center gap-3">
   <a
-    href="/"
+    href="/scan"
     className="px-5 py-3 rounded-2xl bg-orange-500 text-white font-bold"
   >
     Home
@@ -186,7 +224,7 @@ const streak = uniqueDays.length;
 </div>
         </nav>
 
-        <section className="relative overflow-hidden bg-gray-900 rounded-[40px] shadow-2xl p-8 md:p-12 mb-8 text-white">
+        <section className="relative overflow-hidden bg-gray-900 rounded-3xl shadow-sm p-8 md:p-12 mb-8 text-white">
   <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-orange-500/20 blur-3xl" />
 
   <div className="relative">
@@ -203,14 +241,14 @@ const streak = uniqueDays.length;
 </section>
 
             <section className="grid sm:grid-cols-2 lg:grid-cols-5 gap-5 mb-8">
-              <div className="bg-white border border-orange-100 rounded-[32px] p-6 shadow-sm hover:shadow-xl transition-all">
+              <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-sm hover:shadow-xl transition-all">
             <p className="text-gray-500 font-semibold mb-2">Total Scans</p>
             <h3 className="text-5xl font-black text-orange-600">
               {scans.length}
             </h3>
           </div>
 
-         <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-lg">
+         <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-sm">
   <p className="text-gray-500 font-semibold mb-2">
     Most Scanned Brand
   </p>
@@ -220,20 +258,20 @@ const streak = uniqueDays.length;
   </h3>
 </div>
 
-          <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-lg">
+          <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-sm">
             <p className="text-gray-500 font-semibold mb-2">Average Score</p>
             <h3 className="text-5xl font-black text-orange-600">
               {averageScore}
             </h3>
           </div>
 
-          <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-lg">
+          <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-sm">
             <p className="text-gray-500 font-semibold mb-2">Risk Items</p>
             <h3 className="text-5xl font-black text-red-500">
               {highSugar + ultraProcessed}
             </h3>
           </div>
-          <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-lg">
+          <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-sm">
   <p className="text-gray-500 font-semibold mb-2">
   Health Trend
 </p>
@@ -245,8 +283,60 @@ const streak = uniqueDays.length;
 
         </section>
 
+        <section className="grid md:grid-cols-3 gap-6 mb-8">
+
+<div className="bg-white border border-orange-100 rounded-3xl p-8 shadow-sm">
+
+<p className="text-gray-500 font-semibold mb-2">
+Today's Scans
+</p>
+
+<h3 className="text-5xl font-black text-orange-600">
+{todaysScans.length}
+</h3>
+
+<p className="mt-3 text-sm text-gray-500">
+Stay consistent every day.
+</p>
+
+</div>
+
+<div className="bg-white border border-orange-100 rounded-3xl p-8 shadow-sm">
+
+<p className="text-gray-500 font-semibold mb-2">
+🔥 Current Streak
+</p>
+
+<h3 className="text-5xl font-black text-orange-600">
+{streak}
+</h3>
+
+<p className="mt-3 text-sm text-gray-500">
+Days you've been scanning.
+</p>
+
+</div>
+
+<div className="bg-white border border-orange-100 rounded-3xl p-8 shadow-sm">
+
+<p className="text-gray-500 font-semibold mb-2">
+Next Action
+</p>
+
+<h3 className="text-2xl font-black text-gray-900">
+{nextAction}
+</h3>
+
+<p className="mt-3 text-sm text-gray-500">
+Personalized recommendation.
+</p>
+
+</div>
+
+</section>
+
         <section className="grid md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-green-50 border border-green-200 rounded-[36px] p-8 shadow-sm">
+          <div className="bg-green-50 border border-green-200 rounded-3xl p-8 shadow-sm">
             <h3 className="heading-font text-2xl font-black text-green-700 mb-4">
               Best Product
             </h3>
@@ -264,7 +354,7 @@ const streak = uniqueDays.length;
             )}
           </div>
 
-          <div className="bg-red-50 border border-red-200 rounded-[36px] p-8 shadow-sm">
+          <div className="bg-red-50 border border-red-200 rounded-3xl p-8 shadow-sm">
             <h3 className="heading-font text-2xl font-black text-red-700 mb-4">
               Worst Product
             </h3>
@@ -283,14 +373,14 @@ const streak = uniqueDays.length;
           </div>
         </section>
 
-        <section className="bg-white border border-orange-100 rounded-[40px] shadow-sm p-8 md:p-10 mb-8">
+        <section className="bg-white border border-orange-100 rounded-3xl shadow-sm p-8 md:p-10 mb-8">
           <h3 className="heading-font text-3xl font-black text-gray-900 mb-4">
             AI Insight
           </h3>
           <p className="text-gray-700 text-lg leading-relaxed">{insight}</p>
         </section>
 
-        <section className="bg-white border border-orange-100 rounded-[40px] shadow-sm p-8 md:p-10">
+        <section className="bg-white border border-orange-100 rounded-3xl shadow-sm p-8 md:p-10">
           <h3 className="heading-font text-3xl font-black text-gray-900 mb-6">
             Recent Activity
           </h3>
@@ -300,7 +390,7 @@ const streak = uniqueDays.length;
               {scans.slice(0, 6).map((scan) => (
                 <div
                   key={scan.id}
-                  className="rounded-[28px] border border-orange-100 bg-orange-50/40 p-5 hover:bg-white hover:shadow-lg transition-all"
+                  className="rounded-3xl border border-orange-100 bg-orange-50/40 p-5 hover:bg-white hover:shadow-sm transition-all"
                 >
                   <p className="font-black text-gray-900 line-clamp-2">
                     {scan.product_name}
@@ -310,7 +400,7 @@ const streak = uniqueDays.length;
               ))}
             </div>
           ) : (
-            <div className="rounded-[32px] border border-orange-100 bg-orange-50/60 p-8 text-center">
+            <div className="rounded-3xl border border-orange-100 bg-orange-50/60 p-8 text-center">
   <h4 className="text-2xl font-black text-gray-900">
     No scans yet
   </h4>
@@ -328,6 +418,7 @@ const streak = uniqueDays.length;
 </div>
           )}
         </section>
+
       </div>
     </main>
   );

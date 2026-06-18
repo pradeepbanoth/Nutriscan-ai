@@ -1,108 +1,115 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import Image from "next/image";
+import type React from "react";
 
 type SearchSectionProps = {
   searchQuery: string;
   setSearchQuery: (value: string) => void;
-
   suggestions: any[];
   setSuggestions: (value: any[]) => void;
-
   loading: boolean;
-
   searchProduct: () => void;
-
   analyzeSelectedProduct: (item: Record<string, unknown>) => void;
-
   canRunAction: (
     ref: React.MutableRefObject<number>,
     delay: number
   ) => boolean;
-
   lastSearchClickRef: React.MutableRefObject<number>;
 };
-  
 
 export default function SearchSection({
   searchQuery,
   setSearchQuery,
-
   suggestions,
   setSuggestions,
-
   loading,
-
   searchProduct,
-
   analyzeSelectedProduct,
-
   canRunAction,
-
   lastSearchClickRef,
 }: SearchSectionProps) {
   return (
-    <div className="max-w-2xl mx-auto mt-4">
+    <section className="rounded-3xl border border-gray-100 bg-white p-8 shadow-sm">
+      <div className="mb-8">
+        <p className="text-sm font-black uppercase tracking-wider text-orange-600">
+          Product search
+        </p>
+
+        <h2 className="mt-3 text-3xl font-black text-gray-900">
+          Search food manually
+        </h2>
+
+        <p className="mt-3 text-gray-500">
+          Type a product name to find nutrition details, ingredients, scores and
+          smarter alternatives.
+        </p>
+      </div>
+
       <div className="relative">
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
           <input
             id="paustica-search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") {
-               setSuggestions([]);
+              if (e.key !== "Enter") return;
 
-if (!canRunAction(lastSearchClickRef, 1500)) return;
+              setSuggestions([]);
 
-searchProduct();
-              }
+              if (!canRunAction(lastSearchClickRef, 1500)) return;
+
+              searchProduct();
             }}
             placeholder="Search product name..."
-            className="flex-1 px-6 py-4 rounded-[20px] border border-orange-100 bg-white outline-none font-semibold shadow-sm"
+            className="w-full rounded-2xl border border-gray-100 bg-orange-50/50 px-5 py-4 font-bold text-gray-900 outline-none transition focus:border-orange-300 focus:bg-white"
           />
 
           <button
-            disabled={loading}
+            type="button"
+            disabled={loading || !searchQuery.trim()}
             onClick={() => {
               if (!canRunAction(lastSearchClickRef, 1500)) return;
               searchProduct();
             }}
-            className="px-6 py-4 rounded-[20px] bg-orange-500 text-white font-bold disabled:opacity-50"
+            className="rounded-2xl bg-orange-500 px-6 py-4 text-sm font-black text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? "Searching..." : "Search"}
           </button>
         </div>
 
         {suggestions.length > 0 && (
-          <div className="absolute left-0 right-0 top-full z-50 mt-3 overflow-hidden rounded-[32px] border border-orange-100 bg-white shadow-2xl">
+          <div className="absolute left-0 right-0 top-full z-50 mt-3 overflow-hidden rounded-3xl border border-gray-100 bg-white shadow-xl">
             {suggestions.slice(0, 5).map((item: any, index: number) => (
               <button
-                key={index}
+                key={`${item.product_name || "product"}-${index}`}
+                type="button"
                 onClick={() => {
                   setSearchQuery(item.product_name || "");
+                  setSuggestions([]);
                   analyzeSelectedProduct(item);
                 }}
-                className="flex w-full items-center gap-4 px-5 py-4 text-left hover:bg-orange-50"
+                className="flex w-full items-center gap-4 px-5 py-4 text-left transition hover:bg-orange-50"
               >
                 {item.image_front_url ? (
                   <Image
                     src={item.image_front_url}
-                    alt={item.product_name}
-                    width={48}
-                    height={48}
-                    className="rounded-[20px] object-cover border border-orange-100"
+                    alt={item.product_name || "Product image"}
+                    width={52}
+                    height={52}
+                    className="h-13 w-13 rounded-2xl border border-gray-100 object-cover"
                     unoptimized
                   />
                 ) : (
-                  <div className="h-12 w-12 rounded-[20px] bg-orange-50 border border-orange-100" />
+                  <div className="h-13 w-13 shrink-0 rounded-2xl border border-gray-100 bg-orange-50" />
                 )}
 
-                <div>
-                  <p className="font-bold text-gray-900">
+                <div className="min-w-0">
+                  <p className="truncate font-black text-gray-900">
                     {item.product_name || "Unknown Product"}
                   </p>
-                  <p className="text-sm text-gray-500">
+
+                  <p className="truncate text-sm font-semibold text-gray-500">
                     {item.brands || "Unknown Brand"}
                   </p>
                 </div>
@@ -111,6 +118,6 @@ searchProduct();
           </div>
         )}
       </div>
-    </div>
+    </section>
   );
 }

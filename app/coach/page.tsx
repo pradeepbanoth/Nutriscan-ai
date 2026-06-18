@@ -5,6 +5,7 @@ import { supabase } from "../lib/supabase";
 import { calculateGoalScore } from "../../lib/goalScoring";
 import { getUserPlan } from "../../lib/getUserPlan";
 import PremiumGate from "../../components/PremiumGateComponent";
+import Image from "next/image";
 
 type ScanRow = {
   id: number;
@@ -146,11 +147,14 @@ const askCoach = async () => {
       <div className="max-w-6xl mx-auto">
         <nav className="flex items-center justify-between mb-12">
           <div className="flex items-center gap-3">
-            <img
-              src="/logo.png"
-              alt="PAUSTICA"
-              className="w-12 h-12 object-contain"
-            />
+            <Image
+  src="/logo.png"
+  alt="PAUSTICA"
+  width={48}
+  height={48}
+  className="object-contain"
+  priority
+/>
 
             <h1 className="text-3xl font-black text-gray-900">PAUSTICA</h1>
           </div>
@@ -163,7 +167,7 @@ const askCoach = async () => {
           </a>
         </nav>
 
-        <div className="bg-white border border-orange-100 rounded-[36px] shadow-2xl p-8 mb-8">
+        <div className="bg-white border border-orange-100 rounded-3xl shadow-sm p-8 mb-8">
           <p className="text-orange-600 font-bold mb-2">AI Nutrition Coach</p>
 
           <h2 className="text-4xl font-black text-gray-900 mb-2">
@@ -174,26 +178,26 @@ const askCoach = async () => {
         </div>
 
         <div className="grid md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-lg">
+          <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-sm">
             <p className="text-gray-500 font-semibold mb-2">Total Scans</p>
             <h3 className="text-5xl font-black text-orange-600">
               {scans.length}
             </h3>
           </div>
 
-          <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-lg">
+          <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-sm">
             <p className="text-gray-500 font-semibold mb-2">Average Score</p>
             <h3 className="text-5xl font-black text-orange-600">
               {averageScore}
             </h3>
           </div>
 
-          <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-lg">
+          <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-sm">
             <p className="text-gray-500 font-semibold mb-2">High Sugar</p>
             <h3 className="text-5xl font-black text-red-500">{highSugar}</h3>
           </div>
 
-          <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-lg">
+          <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-">
             <p className="text-gray-500 font-semibold mb-2">
               Ultra Processed
             </p>
@@ -231,12 +235,12 @@ const askCoach = async () => {
           </div>
         </div>
 
-        <div className="bg-white border border-orange-100 rounded-[36px] shadow-xl p-8">
+        <div className="bg-white border border-orange-100 rounded-3xl shadow-sm p-8">
           <h3 className="text-3xl font-black text-gray-900 mb-6">
             AI Recommendations
           </h3>
 
-          <div className="bg-white border border-orange-100 rounded-[36px] shadow-xl p-8 mb-8">
+          <div className="bg-white border border-orange-100 rounded-3xl shadow-sm p-8 mb-8">
   <h3 className="text-3xl font-black text-gray-900 mb-4">
     Ask PAUSTICA AI Coach
   </h3>
@@ -256,7 +260,7 @@ const askCoach = async () => {
   <button
     onClick={askCoach}
     disabled={asking}
-    className="mt-5 rounded-full bg-orange-600 px-8 py-4 font-bold text-white shadow-lg hover:bg-orange-700 disabled:opacity-60"
+    className="mt-5 rounded-full bg-orange-600 px-8 py-4 font-bold text-white shadow-sm hover:bg-orange-700 disabled:opacity-60"
   >
     {asking ? "Thinking..." : "Ask Coach"}
   </button>

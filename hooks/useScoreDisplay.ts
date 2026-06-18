@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 export function useScoreDisplay(healthAnalysis: any, product: any) {
   const healthScore = healthAnalysis?.score ?? 0;
   const scoreLabel = healthAnalysis?.label ?? "Moderate Choice";

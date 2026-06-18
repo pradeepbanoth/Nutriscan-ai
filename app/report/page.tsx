@@ -5,6 +5,7 @@ import { supabase } from "../lib/supabase";
 import { calculateGoalScore } from "../../lib/goalScoring";
 import PremiumGate from "../../components/PremiumGateComponent";
 import { getUserPlan } from "../../lib/getUserPlan";
+import Image from "next/image";
 
 type ScanRow = {
   id: number;
@@ -146,15 +147,18 @@ setIsPremium(plan === "premium");
 }
 
   return (
-    <main className="min-h-screen bg-[#fff7ed] px-6 py-10">
+    <main className="min-h-screen bg-[#fff7ed] px-6 py-20">
       <div className="max-w-6xl mx-auto">
         <nav className="flex items-center justify-between mb-12">
          <div className="flex items-center gap-3">
-  <img
-    src="/logo.png"
-    alt="PAUSTICA"
-    className="w-12 h-12 object-contain"
-  />
+ <Image
+  src="/logo.png"
+  alt="PAUSTICA"
+  width={48}
+  height={48}
+  className="object-contain"
+  priority
+/>
 
   <h1 className="text-3xl font-black text-gray-900">
     PAUSTICA
@@ -162,14 +166,14 @@ setIsPremium(plan === "premium");
 </div>
 
           <a
-            href="/"
+            href="/scan"
             className="px-5 py-3 rounded-2xl bg-orange-500 text-white font-bold"
           >
-            Home
+            Scan Food
           </a>
         </nav>
 
-        <div className="bg-white border border-orange-100 rounded-[36px] shadow-2xl p-8 mb-8">
+        <div className="bg-white border border-orange-100 rounded-3xl shadow-sm p-8 mb-8">
           <h2 className="text-4xl font-black text-gray-900 mb-2">
             Weekly Health Report
           </h2>
@@ -178,7 +182,7 @@ setIsPremium(plan === "premium");
         </div>
 
         <div className="grid md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-lg">
+          <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-sm">
             <p className="text-gray-500 font-semibold mb-2">
               Total Scans
             </p>
@@ -187,7 +191,7 @@ setIsPremium(plan === "premium");
             </h3>
           </div>
 
-          <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-lg">
+          <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-sm">
             <p className="text-gray-500 font-semibold mb-2">
               Favorites
             </p>
@@ -196,7 +200,7 @@ setIsPremium(plan === "premium");
             </h3>
           </div>
 
-          <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-lg">
+          <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-sm">
             <p className="text-gray-500 font-semibold mb-2">
               Average Score
             </p>
@@ -205,7 +209,7 @@ setIsPremium(plan === "premium");
             </h3>
           </div>
 
-          <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-lg">
+          <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-sm">
             <p className="text-gray-500 font-semibold mb-2">
               Main Risk
             </p>
@@ -257,7 +261,7 @@ setIsPremium(plan === "premium");
           </div>
         </div>
 
-        <div className="bg-white border border-orange-100 rounded-[36px] shadow-xl p-8">
+        <div className="bg-white border border-orange-100 rounded-3xl shadow-sm p-8">
           <h3 className="text-3xl font-black text-gray-900 mb-4">
             AI Recommendation
           </h3>

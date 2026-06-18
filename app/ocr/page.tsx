@@ -6,6 +6,7 @@ import { ingredientIntelligence } from "../../lib/ingredientIntelligence";
 import { getUserPlan } from "../../lib/getUserPlan";
 import PremiumGate from "../../components/PremiumGateComponent";
 import { supabase } from "../lib/supabase";
+import Image from "next/image";
 
 export default function OCRPage() {
   const [image, setImage] = useState<string | null>(null);
@@ -75,11 +76,18 @@ export default function OCRPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#fff7ed] px-6 py-10">
-      <div className="max-w-5xl mx-auto">
+    <main className="min-h-screen bg-[#fff7ed] px-6 py-20">
+      <div className="max-w-6xl mx-auto">
         <nav className="flex items-center justify-between mb-12">
           <div className="flex items-center gap-3">
-            <img src="/logo.png" alt="PAUSTICA" className="w-12 h-12 object-contain" />
+            <Image
+  src="/logo.png"
+  alt="PAUSTICA"
+  width={48}
+  height={48}
+  className="object-contain"
+  priority
+/>
             <h1 className="text-3xl font-black text-gray-900">PAUSTICA</h1>
           </div>
 
@@ -88,7 +96,7 @@ export default function OCRPage() {
           </a>
         </nav>
 
-        <div className="bg-white border border-orange-100 rounded-[36px] shadow-2xl p-8 mb-8 text-center">
+        <div className="bg-white border border-orange-100 rounded-3xl shadow-sm p-8 mb-8 text-center">
           <p className="text-orange-600 font-bold mb-2">OCR Ingredient Scanner</p>
 
           <h2 className="text-4xl font-black text-gray-900 mb-4">
@@ -117,7 +125,7 @@ export default function OCRPage() {
         </div>
 
         {loading && (
-          <div className="bg-white rounded-3xl border border-orange-100 shadow-lg p-8 text-center">
+          <div className="bg-white rounded-3xl border border-orange-100 shadow-sm p-8 text-center">
             <div className="w-14 h-14 border-4 border-orange-200 border-t-orange-500 rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-500 font-bold">Reading ingredient label...</p>
           </div>
@@ -125,19 +133,22 @@ export default function OCRPage() {
 
         {image && !loading && (
           <div className="grid md:grid-cols-2 gap-8">
-            <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-lg">
+            <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-sm">
               <h3 className="text-2xl font-black text-gray-900 mb-4">
                 Uploaded Image
               </h3>
 
-              <img
-                src={image}
-                alt="Uploaded ingredient label"
-                className="w-full rounded-2xl border border-orange-100"
-              />
+              <Image
+  src={image}
+  alt="Uploaded ingredient label"
+  width={900}
+  height={700}
+  className="w-full rounded-2xl border border-orange-100 object-cover"
+  unoptimized
+/>
             </div>
 
-            <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-lg">
+            <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-sm">
               <h3 className="text-2xl font-black text-gray-900 mb-4">
                 OCR Result
               </h3>

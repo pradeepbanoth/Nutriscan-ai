@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 
@@ -41,12 +42,15 @@ window.location.href = profile.onboarded ? "/" : "/onboarding";
 
   return (
     <main className="min-h-screen bg-[#fff7ed] flex items-center justify-center px-6">
-      <div className="w-full max-w-md bg-white border border-orange-100 rounded-[32px] shadow-2xl p-8 text-center">
-        <img
-          src="/logo.png"
-          alt="PAUSTICA"
-          className="w-20 h-20 object-contain mx-auto mb-5"
-        />
+      <div className="w-full max-w-md bg-white border border-orange-100 rounded-3xl shadow-sm p-8 text-center">
+        <Image
+  src="/logo.png"
+  alt="PAUSTICA"
+  width={80}
+  height={80}
+  className="mx-auto mb-5 object-contain"
+  priority
+/>
 
         <h1 className="text-4xl font-black text-gray-900 mb-4">
           One moment

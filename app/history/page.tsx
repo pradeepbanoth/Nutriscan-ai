@@ -20,6 +20,26 @@ function getScoreStyle(score: number) {
   return { color: "#dc2626", bg: "#fef2f2", border: "#fecaca" };
 }
 
+function InsightCard({
+  title,
+  value,
+}: {
+  title: string;
+  value: string;
+}) {
+  return (
+    <div className="rounded-2xl bg-orange-50 p-6">
+      <p className="text-sm font-black uppercase tracking-wider text-orange-600">
+        {title}
+      </p>
+
+      <h3 className="mt-3 text-4xl font-black text-gray-900">
+        {value}
+      </h3>
+    </div>
+  );
+}
+
 function ScoreBadge({ score, verdict }: { score: number; verdict: string }) {
   const style = getScoreStyle(score);
   const radius = 20;
@@ -96,20 +116,24 @@ export default function HistoryPage() {
     <main className="min-h-screen pb-24" style={{ background: "#fff7ed" }}>
       {/* Navbar */}
       <nav className="bg-white border-b sticky top-0 z-40" style={{ borderColor: "#fed7aa" }}>
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
-          <a href="/" className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center shadow-sm" style={{ background: "linear-gradient(135deg, #f97316, #ea580c)" }}>
-              <span className="text-white font-black text-sm">D</span>
-            </div>
-            <span className="font-black text-gray-900 text-lg tracking-tight">DANTEY <span style={{ color: "#f97316" }}>AI</span></span>
-          </a>
-          <a href="/scan" className="text-sm font-bold px-4 py-2 rounded-full text-white shadow-sm" style={{ background: "#f97316" }}>
-            + New Scan
-          </a>
-        </div>
+        <div className="mb-16 flex items-center justify-between">
+  <a
+    href="/"
+    className="text-2xl font-black text-gray-900"
+  >
+    PAUSTICA
+  </a>
+
+  <a
+    href="/scan"
+    className="rounded-full bg-gray-900 px-6 py-3 text-sm font-black text-white"
+  >
+    New Scan
+  </a>
+</div>
       </nav>
 
-      <div className="max-w-2xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto px-4 py-20">
         <div className="mb-6">
           <h1 className="text-3xl font-black text-gray-900 tracking-tight">Scan History</h1>
           <p className="text-gray-400 text-sm mt-1">Every product you have analyzed</p>
@@ -138,6 +162,33 @@ export default function HistoryPage() {
             ))}
           </div>
         )}
+
+        <div className="mt-6 rounded-3xl border border-gray-100 bg-white p-8 shadow-sm">
+  <p className="text-sm font-black uppercase tracking-wider text-orange-600">
+    Insights
+  </p>
+
+  <h2 className="mt-3 text-3xl font-black text-gray-900">
+    Your food habits
+  </h2>
+
+  <div className="mt-6 grid gap-4 md:grid-cols-3">
+    <InsightCard
+      title="Healthy Choices"
+      value={`${excellent}`}
+    />
+
+    <InsightCard
+      title="Needs Improvement"
+      value={`${poor}`}
+    />
+
+    <InsightCard
+      title="Average Score"
+      value={`${avgScore}/100`}
+    />
+  </div>
+</div>
 
         {/* Diet summary */}
         {!loading && scans.length > 0 && (
@@ -248,23 +299,7 @@ export default function HistoryPage() {
         )}
       </div>
 
-      {/* Bottom nav */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t px-6 py-3 flex items-center justify-around md:hidden z-40" style={{ borderColor: "#fed7aa" }}>
-        <a href="/" className="flex flex-col items-center gap-1 text-gray-400">
-          <span className="text-xl"></span>
-          <span className="text-xs font-medium">Home</span>
-        </a>
-        <a href="/scan" className="flex flex-col items-center gap-1">
-          <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg -mt-6" style={{ background: "#f97316" }}>
-            <span className="text-xl"></span>
-          </div>
-          <span className="text-xs font-medium" style={{ color: "#f97316" }}>Scan</span>
-        </a>
-        <a href="/history" className="flex flex-col items-center gap-1" style={{ color: "#f97316" }}>
-          <span className="text-xl"></span>
-          <span className="text-xs font-medium">History</span>
-        </a>
-      </div>
+     
     </main>
   );
 }

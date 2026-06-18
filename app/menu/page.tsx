@@ -1,37 +1,45 @@
+import Image from "next/image";
+import Link from "next/link";
+
 const menuItems = [
-    {
-  title: "Dashboard",
-  description: "View scans, scores, insights, and recent activity.",
-  href: "/dashboard",
-},
   {
-    title: "Home Scanner",
-    description: "Scan barcodes and analyze packaged food.",
+    title: "Home",
+    description: "Understand what PAUSTICA does.",
     href: "/",
   },
   {
-    title: "OCR Ingredient Scanner",
-    description: "Upload ingredient labels and detect risky additives.",
-    href: "/ocr",
+    title: "Scan",
+    description: "Scan barcodes and analyze packaged food.",
+    href: "/scan",
   },
   {
-    title: "Food Photo AI",
-    description: "Analyze food images using AI vision.",
-    href: "/food-photo",
+    title: "Search",
+    description: "Find any packaged food by name.",
+    href: "/search",
   },
   {
-    title: "AI Nutrition Coach",
-    description: "Get personalized guidance from your scan history.",
-    href: "/coach",
+    title: "Compare",
+    description: "Compare two foods side by side.",
+    href: "/compare",
   },
   {
-    title: "Weekly Report",
-    description: "Track your health score, risks, and progress.",
-    href: "/report",
+    title: "Discover",
+    description: "Explore food categories and smarter choices.",
+    href: "/discover",
+  },
+  {
+    title: "Learn",
+    description: "Understand food labels and PAUSTICA scores.",
+    href: "/learn",
+  },
+  {
+    title: "History",
+    description: "Track your scans and food habits.",
+    href: "/history",
   },
   {
     title: "Profile",
-    description: "View your account, scans, and favorites.",
+    description: "Manage goals, preferences and account settings.",
     href: "/profile",
   },
   {
@@ -39,71 +47,73 @@ const menuItems = [
     description: "Compare free and premium PAUSTICA plans.",
     href: "/pricing",
   },
- {
-  title: "Got a Question?",
-  description: "View FAQs, privacy details, terms, and support information.",
-  href: "/trust",
-},
 ];
 
 export default function MenuPage() {
   return (
-    <main className="min-h-screen bg-[#fff7ed] px-6 py-10">
-      <div className="max-w-6xl mx-auto">
-        <nav className="flex items-center justify-between mb-12">
-          <div className="flex items-center gap-3">
-            <img
+    <main className="min-h-screen bg-[#fff7ed]">
+      <section className="mx-auto max-w-6xl px-6 py-20">
+        <div className="mb-16 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-3">
+            <Image
               src="/logo.png"
               alt="PAUSTICA"
-              className="w-12 h-12 object-contain"
+              width={48}
+              height={48}
+              className="object-contain"
+              priority
             />
 
-            <h1 className="text-3xl font-black text-gray-900">PAUSTICA</h1>
-          </div>
+            <span className="text-2xl font-black text-gray-900">
+              PAUSTICA
+            </span>
+          </Link>
 
-          <a
-            href="/"
-            className="px-5 py-3 rounded-2xl bg-orange-500 text-white font-bold"
+          <Link
+            href="/scan"
+            className="rounded-full bg-gray-900 px-6 py-3 text-sm font-black text-white"
           >
-            Home
-          </a>
-        </nav>
+            Scan Food
+          </Link>
+        </div>
 
-        <section className="text-center mb-14">
-         
-
-          <h2 className="heading-font text-5xl font-black text-gray-900 mb-5">
-            Explore PAUSTICA
-          </h2>
-
-          <p className="text-gray-500 max-w-2xl mx-auto text-lg">
-            Access all scanners, AI tools, reports, account pages, and legal
-            pages from one clean place.
+        <div className="mb-16 text-center">
+          <p className="text-sm font-black uppercase tracking-wider text-orange-600">
+            Menu
           </p>
-        </section>
 
-        <div className="grid md:grid-cols-3 gap-6">
+          <h1 className="mt-4 text-4xl font-black text-gray-900 md:text-6xl">
+            Explore PAUSTICA
+          </h1>
+
+          <p className="mx-auto mt-6 max-w-2xl text-lg text-gray-500">
+            One clean place to access scanning, search, comparison, learning,
+            profile, history and pricing.
+          </p>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {menuItems.map((item) => (
-            <a
+            <Link
               key={item.href}
               href={item.href}
-              className="bg-white border border-orange-100 rounded-[28px] shadow-lg p-6 hover:shadow-2xl hover:-translate-y-1 transition-all"
+              className="rounded-3xl border border-gray-100 bg-white p-8 shadow-sm transition hover:-translate-y-1 hover:shadow-md"
             >
-              <h3 className="text-2xl font-black text-gray-900 mb-3">
+              <h2 className="text-2xl font-black text-gray-900">
                 {item.title}
-              </h3>
+              </h2>
 
-              <p className="text-gray-500 leading-relaxed">
+              <p className="mt-4 leading-relaxed text-gray-500">
                 {item.description}
               </p>
 
-              <div className="mt-6 inline-flex px-4 py-2 rounded-full bg-orange-50 text-orange-600 font-bold text-sm">
-                Open
-              </div>
-            </a>
+              <p className="mt-6 text-sm font-black text-orange-600">
+                Open →
+              </p>
+            </Link>
           ))}
         </div>
-      </div>
+      </section>
     </main>
   );
 }

@@ -135,7 +135,7 @@ export default function OnboardingPage() {
   onboarded: true,
 });
 
-      window.location.href = "/";
+      window.location.href = "/scan";
     } catch (err) {
       console.error(err);
       setError("Something went wrong. Please try again.");
@@ -168,7 +168,7 @@ export default function OnboardingPage() {
               <span className="text-white font-black text-lg">P</span>
             </div>
             <span className="font-black text-gray-900 text-2xl tracking-tight">
-              PAUSTICA<span style={{ color: "#f97316" }}>AI</span>
+              PAUSTICA
             </span>
           </a>
         </div>
@@ -260,7 +260,7 @@ export default function OnboardingPage() {
 
           {/* Skip */}
           <button
-            onClick={() => window.location.href = "/"}
+            onClick={() => window.location.href = "/scan"}
             className="w-full text-center text-sm text-gray-400 hover:text-gray-600 mt-3 transition-colors"
           >
             Skip for now
