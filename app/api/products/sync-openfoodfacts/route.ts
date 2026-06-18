@@ -23,14 +23,24 @@ type OFFProduct = {
 const seedQueries = [
   "coke",
   "pepsi",
+  "sprite",
+  "fanta",
+  "red bull",
   "lays",
   "doritos",
   "kurkure",
+  "bingo",
   "maggi",
+  "yippee",
   "oreo",
+  "bourbon",
   "kitkat",
+  "dairy milk",
+  "nutella",
   "amul",
   "nestle",
+  "parle",
+  "britannia",
 ];
 
 async function fetchWithRetry(
@@ -85,6 +95,7 @@ async function fetchWithRetry(
   throw new Error("Fetch failed");
 }
 
+
 export async function POST(request: Request) {
   try {
     const secret = request.headers.get("x-sync-secret");
@@ -138,6 +149,7 @@ if (!elastic) {
             sugar: product.nutriments?.sugars_100g ?? null,
             fat: product.nutriments?.fat_100g ?? null,
             salt: product.nutriments?.salt_100g ?? null,
+            popularity: Math.max(1, 100 - indexed),
             source: "openfoodfacts",
             updatedAt: new Date().toISOString(),
           },
@@ -147,12 +159,7 @@ if (!elastic) {
       }
     }
 
-if (!elastic) {
-  return NextResponse.json(
-    { ok: false, error: "Elasticsearch client is not configured" },
-    { status: 500 }
-  );
-}
+
     return NextResponse.json({
       ok: true,
       indexed,

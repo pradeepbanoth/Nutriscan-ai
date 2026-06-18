@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Chelsea_Market, Livvic } from "next/font/google";
+import PostHogProvider from "@/components/analytics/PostHogProvider";
+
+
 
 const chelsea = Chelsea_Market({
   weight: "400",
@@ -95,9 +98,11 @@ export default function RootLayout({
     lang="en"
     className={`${chelsea.variable} ${livvic.variable} h-full antialiased`}
   >
-    <body className="min-h-screen font-body">
-      {children}
-    </body>
+   <body className="min-h-screen font-body">
+  <PostHogProvider>
+    {children}
+  </PostHogProvider>
+</body>
   </html>
 );
 }

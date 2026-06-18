@@ -183,6 +183,74 @@ export default function SearchPage() {
     [createCacheKey, dedupeRequest, getCache, setCache]
   );
 
+   const searchProduct = async () => {
+    if (!searchQuery.trim()) return;
+
+    saveRecentSearch(searchQuery);
+
+    const cleanQuery = searchQuery.trim().toLowerCase();
+    const searchCacheKey = createCacheKey("search_result", cleanQuery);
+    const cachedSearch = getCache<any>(searchCacheKey);
+
+    if (cachedSearch?.[0]) {
+      setProduct(cachedSearch[0] as unknown as Product);
+      setSuggestions([]);
+      return;
+    }
+
+    const permission = await checkScanPermission();
+
+    if (!permission.allowed) {
+      setUpgradeOpen(true);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+
+    const loadingStartedAt = Date.now();
+
+    searchAbortRef.current?.abort();
+
+    const controller = new AbortController();
+    searchAbortRef.current = controller;
+
+    try {
+      const foundProduct = await dedupeRequest(
+        createCacheKey("api_search", cleanQuery),
+        async () =>
+          searchProductByName({
+            query: cleanQuery,
+            signal: controller.signal,
+          })
+      );
+
+      if (!foundProduct) {
+        alert("No product found. Try a more specific name.");
+        return;
+      }
+
+      setCache(searchCacheKey, [foundProduct], 12 * 60 * 60 * 1000);
+
+      setSuggestions([]);
+      setProduct(foundProduct as unknown as Product);
+      await saveHistory(foundProduct as unknown as Product);
+      await updateScanStats();
+    } catch (error: any) {
+      if (error.name !== "AbortError") {
+        console.log(error);
+        alert("Search failed. Please try again.");
+      }
+    } finally {
+      const elapsed = Date.now() - loadingStartedAt;
+      const remainingTime = Math.max(0, MIN_LOADING_TIME - elapsed);
+
+      setTimeout(() => {
+        setLoading(false);
+      }, remainingTime);
+    }
+  };
+
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchSuggestions(searchQuery);
@@ -191,18 +259,19 @@ export default function SearchPage() {
     return () => clearTimeout(timer);
   }, [searchQuery, fetchSuggestions]);
 
-  useEffect(() => {
-  const q = searchParams.get("q");
-
-  if (q && q !== searchQuery) {
-    setSearchQuery(q);
-  }
-}, [searchParams, searchQuery]);
-
-useEffect(() => {
+ useEffect(() => {
   const q = searchParams.get("q");
 
   if (!q) return;
+
+  setSearchQuery((prev) => {
+    if (prev === q) return prev;
+    return q;
+  });
+}, [searchParams]);
+
+useEffect(() => {
+  if (!searchQuery.trim()) return;
 
   const timer = setTimeout(() => {
     searchProduct();
@@ -294,73 +363,7 @@ useEffect(() => {
     updateScanStats,
   });
 
-  const searchProduct = async () => {
-    if (!searchQuery.trim()) return;
-
-    saveRecentSearch(searchQuery);
-
-    const cleanQuery = searchQuery.trim().toLowerCase();
-    const searchCacheKey = createCacheKey("search_result", cleanQuery);
-    const cachedSearch = getCache<any>(searchCacheKey);
-
-    if (cachedSearch?.[0]) {
-      setProduct(cachedSearch[0] as unknown as Product);
-      setSuggestions([]);
-      return;
-    }
-
-    const permission = await checkScanPermission();
-
-    if (!permission.allowed) {
-      setUpgradeOpen(true);
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
-
-    const loadingStartedAt = Date.now();
-
-    searchAbortRef.current?.abort();
-
-    const controller = new AbortController();
-    searchAbortRef.current = controller;
-
-    try {
-      const foundProduct = await dedupeRequest(
-        createCacheKey("api_search", cleanQuery),
-        async () =>
-          searchProductByName({
-            query: cleanQuery,
-            signal: controller.signal,
-          })
-      );
-
-      if (!foundProduct) {
-        alert("No product found. Try a more specific name.");
-        return;
-      }
-
-      setCache(searchCacheKey, [foundProduct], 12 * 60 * 60 * 1000);
-
-      setSuggestions([]);
-      setProduct(foundProduct as unknown as Product);
-      await saveHistory(foundProduct as unknown as Product);
-      await updateScanStats();
-    } catch (error: any) {
-      if (error.name !== "AbortError") {
-        console.log(error);
-        alert("Search failed. Please try again.");
-      }
-    } finally {
-      const elapsed = Date.now() - loadingStartedAt;
-      const remainingTime = Math.max(0, MIN_LOADING_TIME - elapsed);
-
-      setTimeout(() => {
-        setLoading(false);
-      }, remainingTime);
-    }
-  };
+ 
 
   const logFood = async () => {
     if (!product) return;

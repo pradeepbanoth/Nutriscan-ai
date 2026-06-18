@@ -10,8 +10,17 @@ export const elastic =
   node && apiKey
     ? new Client({
         node,
+
         auth: {
           apiKey,
         },
+
+        maxRetries: 3,
+
+        requestTimeout: 5000,
+
+        pingTimeout: 3000,
+
+        sniffOnStart: false,
       })
     : null;
