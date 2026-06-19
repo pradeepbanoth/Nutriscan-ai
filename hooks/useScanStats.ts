@@ -24,7 +24,7 @@ export function useScanStats({
       .from("profiles")
       .select("current_streak, best_streak, total_scans, last_scan_date")
       .eq("id", userId)
-      .single();
+      .maybeSingle();
 
     const previousTotalScans = profile?.total_scans ?? 0;
     const previousCurrentStreak = profile?.current_streak ?? 0;

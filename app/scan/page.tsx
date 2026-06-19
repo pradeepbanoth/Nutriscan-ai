@@ -5,6 +5,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import posthog from "posthog-js";
 
 import ScannerSection from "@/components/scan/ScannerSection";
 import SearchSection from "@/components/scan/SearchSection";
@@ -58,7 +59,6 @@ export default function ScanPage() {
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [realAlternatives, setRealAlternatives] = useState<any[]>([]);
-
   const suggestionAbortRef = useRef<AbortController | null>(null);
   const searchAbortRef = useRef<AbortController | null>(null);
   const productAbortRef = useRef<AbortController | null>(null);
@@ -66,8 +66,9 @@ export default function ScanPage() {
   const lastSearchClickRef = useRef(0);
   const lastBarcodeClickRef = useRef(0);
   const lastScannerScanRef = useRef(0);
+  const scannedBarcodeHandledRef = useRef(false);
 
-  const MIN_LOADING_TIME = 700;
+  const MIN_LOADING_TIME = 400;
 
   const { recentSearches, saveRecentSearch } = useRecentSearches();
   const { canRunAction } = useCanRunAction();
@@ -120,6 +121,8 @@ export default function ScanPage() {
     loadLocalFoodLibrary();
   }, [loadLocalFoodLibrary]);
 
+  
+
   useEffect(() => {
     const getUser = async () => {
       await loadProfile();
@@ -150,7 +153,7 @@ export default function ScanPage() {
     async (query: string) => {
       const cleanQuery = query.trim().toLowerCase();
 
-      if (cleanQuery.length < 2) {
+      if (cleanQuery.length < 3) {
         suggestionAbortRef.current?.abort();
         setSuggestions([]);
         return;
@@ -210,7 +213,7 @@ export default function ScanPage() {
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchSuggestions(searchQuery);
-    }, 450);
+    }, 300);
 
     return () => clearTimeout(timer);
   }, [searchQuery, fetchSuggestions]);
@@ -302,6 +305,8 @@ export default function ScanPage() {
   });
 
   const searchProduct = async () => {
+    if (loading) return;
+
     if (!searchQuery.trim()) return;
 
     saveRecentSearch(searchQuery);
@@ -318,6 +323,7 @@ export default function ScanPage() {
     }
 
     const permission = await checkScanPermission();
+   
 
     if (!permission.allowed) {
       setUpgradeOpen(true);
@@ -326,6 +332,9 @@ export default function ScanPage() {
     }
 
     setLoading(true);
+    posthog.capture("product_searched", {
+  query: cleanQuery,
+});
 
     const loadingStartedAt = Date.now();
 
@@ -353,7 +362,9 @@ export default function ScanPage() {
 
       setSuggestions([]);
       setScannerOpen(false);
-      setProduct(foundProduct as unknown as Product);
+      setProduct(foundProduct as unknown as Product)
+      
+;
       await saveHistory(foundProduct as unknown as Product);
       await updateScanStats();
     } catch (error: any) {
@@ -389,6 +400,25 @@ export default function ScanPage() {
     saveHistory,
     minLoadingTime: MIN_LOADING_TIME,
   });
+
+  useEffect(() => {
+  if (scannedBarcodeHandledRef.current) return;
+
+  const scannedBarcode = localStorage.getItem("paustica_scanned_barcode");
+
+  if (!scannedBarcode) return;
+
+  scannedBarcodeHandledRef.current = true;
+
+  localStorage.removeItem("paustica_scanned_barcode");
+
+  const timer = setTimeout(() => {
+    setBarcode(scannedBarcode);
+    fetchProduct(scannedBarcode);
+  }, 300);
+
+  return () => clearTimeout(timer);
+}, [fetchProduct]);
 
   const logFood = async () => {
     if (!product) return;
@@ -480,6 +510,9 @@ export default function ScanPage() {
         <div className="mt-10 text-center">
           <Link
             href="/compare"
+            onClick={() =>
+  posthog.capture("compare_clicked")
+}
             className="inline-flex items-center rounded-full bg-gray-900 px-8 py-4 text-sm font-black text-white transition hover:bg-black"
           >
             Compare Foods

@@ -116,10 +116,7 @@ const healthTrend =
   return acc;
 }, {});
 
-const mostScannedBrand =
-  Object.entries(brandCounts)
-    .sort((a, b) => b[1] - a[1])[0]?.[0] ||
-  "Not enough data";
+
 
   const bestProduct =
     scoredScans.length > 0
@@ -248,15 +245,7 @@ const nextAction =
             </h3>
           </div>
 
-         <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-sm">
-  <p className="text-gray-500 font-semibold mb-2">
-    Most Scanned Brand
-  </p>
-
-  <h3 className="text-3xl font-black text-orange-600 line-clamp-2">
-    {mostScannedBrand}
-  </h3>
-</div>
+        
 
           <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-sm">
             <p className="text-gray-500 font-semibold mb-2">Average Score</p>

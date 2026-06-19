@@ -1,7 +1,5 @@
 "use client";
 
-
-
 import Image from "next/image";
 import { useState } from "react";
 import { searchProductByName } from "@/services/searchService";
@@ -10,24 +8,38 @@ type CompareProduct = {
   name?: string;
   brand?: string;
   image?: string;
-  sugar?: number;
-  fat?: number;
-  salt?: number;
-  nova?: number | string;
-  nutriscore?: string;
-  ingredients?: string;
+  sugar?: number | null;
+  fat?: number | null;
+  salt?: number | null;
+  nova?: number | string | null;
+  nutriscore?: string | null;
+  ingredients?: string | null;
 };
+
+function safeNumber(value: unknown) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : 0;
+}
 
 function scoreProduct(product: CompareProduct) {
   let score = 100;
 
-  if ((product.sugar ?? 0) > 10) score -= 25;
-  if ((product.fat ?? 0) > 15) score -= 20;
-  if ((product.salt ?? 0) > 1) score -= 20;
+  const sugar = safeNumber(product.sugar);
+  const fat = safeNumber(product.fat);
+  const salt = safeNumber(product.salt);
+  const nova = safeNumber(product.nova);
 
-  const nova = Number(product.nova);
+  if (sugar > 22.5) score -= 30;
+  else if (sugar > 10) score -= 18;
+
+  if (fat > 17.5) score -= 20;
+  else if (fat > 10) score -= 10;
+
+  if (salt > 1.5) score -= 25;
+  else if (salt > 0.75) score -= 12;
+
   if (nova >= 4) score -= 25;
-  if (nova === 3) score -= 15;
+  else if (nova === 3) score -= 12;
 
   return Math.max(0, Math.min(100, score));
 }
@@ -38,8 +50,17 @@ function getWinner(a: CompareProduct | null, b: CompareProduct | null) {
   const aScore = scoreProduct(a);
   const bScore = scoreProduct(b);
 
-  if (aScore === bScore) return "Both are similar";
-  return aScore > bScore ? a.name : b.name;
+  if (Math.abs(aScore - bScore) <= 3) return "Both are similar";
+  return aScore > bScore ? a.name || "Product A" : b.name || "Product B";
+}
+
+function getVerdict(product: CompareProduct) {
+  const score = scoreProduct(product);
+
+  if (score >= 80) return "Better choice";
+  if (score >= 60) return "Moderate choice";
+  if (score >= 40) return "Limit consumption";
+  return "Avoid often";
 }
 
 export default function ComparePage() {
@@ -50,40 +71,30 @@ export default function ComparePage() {
   const [loadingA, setLoadingA] = useState(false);
   const [loadingB, setLoadingB] = useState(false);
 
-  const search = async (
-    query: string,
-    side: "a" | "b"
-  ) => {
-    if (!query.trim()) return;
+  const search = async (query: string, side: "a" | "b") => {
+    const cleanQuery = query.trim();
 
-   if (side === "a") {
-  setLoadingA(true);
-} else {
-  setLoadingB(true);
-}
+    if (!cleanQuery) return;
+
+    if (side === "a") setLoadingA(true);
+    else setLoadingB(true);
 
     try {
-      const product = await searchProductByName({ query });
+      const product = await searchProductByName({ query: cleanQuery });
 
       if (!product) {
         alert("No product found. Try a more specific name.");
         return;
       }
 
-     if (side === "a") {
-  setProductA(product as unknown as CompareProduct);
-} else {
-  setProductB(product as unknown as CompareProduct);
-}
+      if (side === "a") setProductA(product as CompareProduct);
+      else setProductB(product as CompareProduct);
     } catch (error) {
       console.log(error);
       alert("Search failed. Please try again.");
     } finally {
-     if (side === "a") {
-  setLoadingA(false);
-} else {
-  setLoadingB(false);
-}
+      if (side === "a") setLoadingA(false);
+      else setLoadingB(false);
     }
   };
 
@@ -91,23 +102,23 @@ export default function ComparePage() {
 
   return (
     <main className="min-h-screen bg-[#fff7ed]">
-      <section className="max-w-6xl mx-auto px-6 py-20">
-        <div className="text-center mb-16">
+      <section className="mx-auto max-w-6xl px-6 py-20">
+        <div className="mb-16 text-center">
           <p className="text-sm font-black uppercase tracking-wider text-orange-600">
             Compare Foods
           </p>
 
-          <h1 className="mt-4 text-4xl md:text-6xl font-black text-gray-900">
+          <h1 className="mt-4 text-4xl font-black text-gray-900 md:text-6xl">
             Choose the better option
           </h1>
 
-          <p className="mt-6 max-w-2xl mx-auto text-lg text-gray-500">
-            Compare two packaged foods side by side using sugar, fat, salt,
-            processing level and PAUSTICA score.
+          <p className="mx-auto mt-6 max-w-2xl text-lg text-gray-500">
+            Compare two packaged foods using sugar, fat, salt, processing level,
+            and PAUSTICA score.
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-[1fr_auto_1fr] gap-8 items-start">
+        <div className="grid items-start gap-8 lg:grid-cols-[1fr_auto_1fr]">
           <CompareSearchCard
             title="Product A"
             query={queryA}
@@ -117,7 +128,7 @@ export default function ComparePage() {
             onSearch={() => search(queryA, "a")}
           />
 
-          <div className="hidden lg:flex h-full items-center justify-center">
+          <div className="hidden h-full items-center justify-center lg:flex">
             <div className="rounded-full bg-gray-900 px-5 py-3 text-sm font-black text-white">
               VS
             </div>
@@ -145,26 +156,37 @@ export default function ComparePage() {
                 a={`${scoreProduct(productA)}/100`}
                 b={`${scoreProduct(productB)}/100`}
               />
+
+              <CompareRow
+                label="Verdict"
+                a={getVerdict(productA)}
+                b={getVerdict(productB)}
+              />
+
               <CompareRow
                 label="Sugar"
-                a={`${productA.sugar ?? "N/A"} g`}
-                b={`${productB.sugar ?? "N/A"} g`}
+                a={`${safeNumber(productA.sugar)} g`}
+                b={`${safeNumber(productB.sugar)} g`}
               />
+
               <CompareRow
                 label="Fat"
-                a={`${productA.fat ?? "N/A"} g`}
-                b={`${productB.fat ?? "N/A"} g`}
+                a={`${safeNumber(productA.fat)} g`}
+                b={`${safeNumber(productB.fat)} g`}
               />
+
               <CompareRow
                 label="Salt"
-                a={`${productA.salt ?? "N/A"} g`}
-                b={`${productB.salt ?? "N/A"} g`}
+                a={`${safeNumber(productA.salt)} g`}
+                b={`${safeNumber(productB.salt)} g`}
               />
+
               <CompareRow
                 label="Processing"
                 a={`NOVA ${productA.nova ?? "N/A"}`}
                 b={`NOVA ${productB.nova ?? "N/A"}`}
               />
+
               <CompareRow
                 label="NutriScore"
                 a={String(productA.nutriscore ?? "N/A").toUpperCase()}
@@ -182,7 +204,7 @@ export default function ComparePage() {
               </h3>
 
               <p className="mt-3 text-gray-500">
-                PAUSTICA prefers the option with lower sugar, salt, fat and
+                PAUSTICA prefers the food with lower sugar, salt, fat, and a
                 lower processing level.
               </p>
             </div>
@@ -241,7 +263,7 @@ function CompareSearchCard({
                 alt={product.name || "Product"}
                 width={64}
                 height={64}
-                className="h-16 w-16 rounded-2xl object-cover bg-white"
+                className="h-16 w-16 rounded-2xl bg-white object-cover"
                 unoptimized
               />
             ) : (
@@ -252,8 +274,13 @@ function CompareSearchCard({
               <h3 className="font-black text-gray-900">
                 {product.name || "Unknown product"}
               </h3>
+
               <p className="text-sm font-semibold text-gray-500">
                 {product.brand || "Unknown brand"}
+              </p>
+
+              <p className="mt-1 text-sm font-black text-orange-600">
+                Score: {scoreProduct(product)}/100
               </p>
             </div>
           </div>
@@ -262,6 +289,24 @@ function CompareSearchCard({
     </div>
   );
 }
+
+<div className="mt-6 rounded-3xl bg-white border border-orange-100 p-6">
+
+  <h4 className="font-black text-gray-900">
+    Why?
+  </h4>
+
+  <ul className="mt-4 space-y-3 text-gray-600">
+
+    <li>✓ Lower sugar content</li>
+
+    <li>✓ Less processed</li>
+
+    <li>✓ Better nutrition profile</li>
+
+  </ul>
+
+</div>
 
 function CompareRow({
   label,
@@ -277,7 +322,9 @@ function CompareRow({
       <div className="bg-orange-50 px-4 py-4 font-black text-gray-900">
         {label}
       </div>
+
       <div className="px-4 py-4 font-bold text-gray-600">{a}</div>
+
       <div className="px-4 py-4 font-bold text-gray-600">{b}</div>
     </div>
   );

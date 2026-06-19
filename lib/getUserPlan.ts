@@ -1,20 +1,24 @@
-import { supabase } from "../app/lib/supabase";
+import { supabase } from "@/app/lib/supabase";
 
 export async function getUserPlan(userId: string) {
+  if (!userId) return "free";
+
   const { data, error } = await supabase
-    .from("user_plans")
-    .select("plan")
+    .from("subscriptions")
+    .select("plan, status")
     .eq("user_id", userId)
-    .single();
+    .maybeSingle();
 
   if (error || !data) {
-    await supabase.from("user_plans").insert({
-      user_id: userId,
-      plan: "free",
-    });
-
     return "free";
   }
 
-  return data.plan as "free" | "premium";
+  if (
+    data.status === "active" &&
+    data.plan === "premium"
+  ) {
+    return "premium";
+  }
+
+  return "free";
 }

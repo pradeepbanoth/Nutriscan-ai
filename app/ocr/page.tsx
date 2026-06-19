@@ -15,6 +15,16 @@ export default function OCRPage() {
   const [planLoading, setPlanLoading] = useState(true);
   const [isPremium, setIsPremium] = useState(false);
 
+
+function normalizeOCRText(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/\n/g, " ")
+    .replace(/[^a-z0-9,().% -]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
   useEffect(() => {
     const checkPlan = async () => {
       const {
@@ -37,18 +47,32 @@ export default function OCRPage() {
 
   const harmfulIngredients = Object.keys(ingredientIntelligence);
 
-  const detectedIngredients = harmfulIngredients.filter((item) =>
-    text.toLowerCase().includes(item)
-  );
+ const normalizedText = normalizeOCRText(text);
+
+const detectedIngredients = harmfulIngredients.filter((item) =>
+  normalizedText.includes(item.toLowerCase())
+);
 
   const scanImage = async (file: File) => {
+
+    if (!file.type.startsWith("image/")) {
+  alert("Please upload a valid image.");
+  return;
+}
+
+if (file.size > 6 * 1024 * 1024) {
+  alert("Image is too large. Please upload an image under 6MB.");
+  return;
+}
     setLoading(true);
     setText("");
 
     const imageUrl = URL.createObjectURL(file);
     setImage(imageUrl);
 
-    const result = await Tesseract.recognize(file, "eng");
+   const result = await Tesseract.recognize(file, "eng", {
+  logger: () => {},
+});
 
     setText(result.data.text);
     setLoading(false);

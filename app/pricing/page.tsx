@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { plans } from "../../lib/plans";
+import PremiumCheckoutButton from "@/components/pricing/PremiumCheckoutButton";
 
 const freeFeatures = [
   "Barcode scanning",
@@ -18,6 +19,8 @@ const premiumFeatures = [
   "Weekly health reports",
   "Product comparison",
   "Smart alternatives",
+  "Advanced ingredient intelligence",
+  "Smarter alternatives",
 ];
 
 export default function PricingPage() {
@@ -78,8 +81,8 @@ export default function PricingPage() {
             price={plans.premium.price}
             desc="For users who want full AI nutrition intelligence and smarter shopping decisions."
             features={premiumFeatures}
-            cta="Upgrade Coming Soon"
-            href="/pricing"
+            cta="Start Premium"
+            href="/auth"
             highlighted
           />
         </div>
@@ -150,16 +153,16 @@ function PlanCard({
         ))}
       </ul>
 
-      <Link
-        href={href}
-        className={
-          highlighted
-            ? "mt-8 block w-full rounded-2xl bg-white py-4 text-center font-black text-gray-900"
-            : "mt-8 block w-full rounded-2xl border border-gray-100 bg-orange-50 py-4 text-center font-black text-orange-600"
-        }
-      >
-        {cta}
-      </Link>
+      {highlighted ? (
+  <PremiumCheckoutButton />
+) : (
+  <Link
+    href={href}
+    className="mt-8 block w-full rounded-2xl border border-gray-100 bg-orange-50 py-4 text-center font-black text-orange-600"
+  >
+    {cta}
+  </Link>
+)}
     </div>
   );
 }
