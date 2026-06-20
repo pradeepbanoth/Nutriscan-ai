@@ -23,6 +23,13 @@ if (!idempotencyKey) {
   );
 }
 
+if (!planId || !(planId in razorpayPlans)) {
+  return NextResponse.json(
+    { error: "Invalid plan selected." },
+    { status: 400 }
+  );
+}
+
     if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
       return NextResponse.json(
         { error: "Razorpay is not configured." },
@@ -68,20 +75,54 @@ if (existingPayment) {
       },
     });
 
-    await supabase.from("payments").insert({
+    const { data: paymentRecord, error: paymentInsertError } =
+  await supabase
+    .from("payments")
+    .insert({
+      user_id: userId,
+
+      razorpay_order_id: order.id,
+
+      idempotency_key: idempotencyKey,
+
+      plan_id: plan.id,
+
+      amount: plan.price * 100,
+
+      currency: plan.currency,
+
+      status: "created",
+    })
+    .select("id")
+    .single();
+
+if (paymentInsertError || !paymentRecord) {
+  return NextResponse.json(
+    {
+      error: "Payment order created, but saving payment failed.",
+    },
+    { status: 500 }
+  );
+}
+
+await supabase.from("payment_events").insert({
+  payment_id: paymentRecord.id,
+
   user_id: userId,
 
-  razorpay_order_id: order.id,
-  
-  idempotency_key: idempotencyKey,
+  event_type: "order_created",
 
-  plan_id: plan.id,
+  event_data: {
+    razorpay_order_id: order.id,
 
-  amount: plan.price * 100,
+    plan_id: plan.id,
 
-  currency: plan.currency,
+    amount: plan.price * 100,
 
-  status: "created",
+    currency: plan.currency,
+
+    idempotency_key: idempotencyKey,
+  },
 });
 
     return NextResponse.json({

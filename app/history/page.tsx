@@ -84,7 +84,13 @@ export default function HistoryPage() {
   useEffect(() => {
     async function loadHistory() {
       const { data: { session } } = await supabase.auth.getSession();
-      const userId = session?.user?.id || "00000000-0000-0000-0000-000000000000";
+     if (!session?.user) {
+  window.location.href = "/auth";
+  return;
+}
+
+const userId = session.user.id;
+
       const { data } = await supabase
         .from("scans").select("*")
         .eq("user_id", userId)

@@ -91,6 +91,12 @@ export default function PremiumCheckoutButton() {
         window.location.href = "/profile";
       },
 
+      modal: {
+  ondismiss: function () {
+    setLoading(false);
+  },
+},
+
       theme: {
         color: "#f97316",
       },
@@ -102,6 +108,10 @@ export default function PremiumCheckoutButton() {
       alert("Payment failed. Please try again.");
       setLoading(false);
     });
+
+    razorpay.on("modal.closed", function () {
+  setLoading(false);
+});
 
     razorpay.open();
   };

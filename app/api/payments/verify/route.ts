@@ -109,11 +109,37 @@ export async function POST(request: Request) {
       .eq("user_id", userId);
 
     if (paymentUpdateError) {
-      return NextResponse.json(
-        { error: "Payment verified, but payment record update failed." },
-        { status: 500 }
-      );
-    }
+  await supabase.from("dead_letter_events").insert({
+    event_type: "payment_record_update_failed",
+    source: "razorpay_verify",
+    payload: {
+      userId,
+      planId: plan.id,
+      razorpay_order_id,
+      razorpay_payment_id,
+    },
+    error_message: paymentUpdateError.message,
+    status: "pending",
+  });
+
+  return NextResponse.json(
+    { error: "Payment verified, but payment record update failed. Our team can retry it safely." },
+    { status: 500 }
+  );
+}
+
+await supabase.from("payment_events").insert({
+  payment_id: paymentRecord.id,
+  user_id: userId,
+  event_type: "payment_verified",
+  event_data: {
+    razorpay_order_id,
+    razorpay_payment_id,
+    plan_id: plan.id,
+    amount: paymentRecord.amount,
+    currency: paymentRecord.currency,
+  },
+});
 
     const { error: subscriptionError } = await supabase.from("subscriptions").upsert({
       user_id: userId,
@@ -126,11 +152,40 @@ export async function POST(request: Request) {
     });
 
     if (subscriptionError) {
-      return NextResponse.json(
-        { error: "Payment verified, but premium activation failed." },
-        { status: 500 }
-      );
-    }
+  await supabase.from("dead_letter_events").insert({
+    event_type: "premium_activation_failed",
+    source: "razorpay_verify",
+    payload: {
+      userId,
+      planId: plan.id,
+      billingCycle: plan.billingCycle,
+      razorpay_order_id,
+      razorpay_payment_id,
+      paymentRecordId: paymentRecord.id,
+      startDate: now.toISOString(),
+      endDate: endDate.toISOString(),
+    },
+    error_message: subscriptionError.message,
+    status: "pending",
+  });
+
+  return NextResponse.json(
+    { error: "Payment verified, but premium activation failed. Our team can retry it safely." },
+    { status: 500 }
+  );
+}
+
+await supabase.from("payment_events").insert({
+  payment_id: paymentRecord.id,
+  user_id: userId,
+  event_type: "subscription_activated",
+  event_data: {
+    plan: "premium",
+    billing_cycle: plan.billingCycle,
+    start_date: now.toISOString(),
+    end_date: endDate.toISOString(),
+  },
+});
 
     return NextResponse.json({
       ok: true,
