@@ -18,14 +18,16 @@ export default function ResetPasswordPage() {
   return;
 }
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: `${window.location.origin}/update-password`,
-    });
+   const cleanEmail = email.trim().toLowerCase();
+
+const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
+  redirectTo: `${window.location.origin}/update-password`,
+});
 
     if (error) {
       setMessage(error.message);
     } else {
-      setMessage("Password reset link sent. Check your email.");
+      setMessage("If an account exists, a reset link has been sent.");
     }
 
     setLoading(false);

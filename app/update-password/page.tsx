@@ -13,9 +13,40 @@ export default function UpdatePasswordPage() {
     setLoading(true);
     setMessage("");
 
-    if (password.length < 8) {
-  setMessage("Password must be at least 8 characters.");
+    function validatePassword(password: string) {
+  const hasUppercase = /[A-Z]/.test(password);
+
+  const hasLowercase = /[a-z]/.test(password);
+
+  const hasNumber = /\d/.test(password);
+
+  const hasSpecial = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+  return (
+    password.length >= 12 &&
+    hasUppercase &&
+    hasLowercase &&
+    hasNumber &&
+    hasSpecial
+  );
+}
+
+    if (!validatePassword(password)) {
+  setMessage(
+    "Use at least 12 characters, including uppercase, lowercase, number and special character."
+  );
+
   setLoading(false);
+
+  return;
+}
+
+
+if (password.toLowerCase().includes("password")) {
+  setMessage("Choose a stronger password.");
+
+  setLoading(false);
+
   return;
 }
 

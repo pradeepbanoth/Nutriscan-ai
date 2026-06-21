@@ -80,8 +80,12 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: "oX05GxtLTymWRqGhzESU9-Nryc0XlfGSjmQQj2-4UPg",
+  google: "oX05GxtLTymWRqGhzESU9-Nryc0XlfGSjmQQj2-4UPg",
+
+  other: {
+    "msvalidate.01": "AFA404068465C164B50B656107461928 ",
   },
+},
   manifest: "/manifest.json",
 };
 export const viewport = {
