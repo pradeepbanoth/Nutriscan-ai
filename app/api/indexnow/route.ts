@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 
-const host = "nutriscan-ai-orpin.vercel.app";
+const host =
+  process.env.NEXT_PUBLIC_SITE_URL?.replace(/^https?:\/\//, "") ||
+  "nutriscan-ai-orpin.vercel.app";
 
 export async function GET() {
   return NextResponse.json({
@@ -40,8 +42,21 @@ export async function POST(request: Request) {
     );
   }
 
-  const response = await fetch("https://api.indexnow.org/indexnow", {
+  
+
+ try {
+  const controller = new AbortController();
+
+const timeout = setTimeout(
+  () => controller.abort(),
+  10000
+);
+
+const response = await fetch(
+  "https://api.indexnow.org/indexnow",
+  {
     method: "POST",
+    signal: controller.signal,
     headers: {
       "Content-Type": "application/json",
     },
@@ -51,10 +66,21 @@ export async function POST(request: Request) {
       keyLocation: `https://${host}/${key}.txt`,
       urlList: validUrls,
     }),
-  });
+  }
+);
+
+clearTimeout(timeout);
 
   return NextResponse.json({
     success: response.ok,
     submitted: validUrls.length,
   });
+} catch (error) {
+  console.error("IndexNow failed:", error);
+
+  return NextResponse.json(
+    { error: "IndexNow submission failed." },
+    { status: 500 }
+  );
+}
 }
