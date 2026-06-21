@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/app/lib/supabase";
-import { resend } from "@/lib/resend";
+import { getResend } from "@/lib/resend";
 import { generateWeeklyDigest } from "@/lib/weeklyDigest";
 import { buildWeeklyDigestEmail } from "@/lib/weeklyDigestEmail";
 
@@ -13,6 +13,7 @@ export async function GET(request: Request) {
     }
 
     const since = new Date();
+    const resend = getResend();
     since.setDate(since.getDate() - 7);
 
     const { data: profiles, error: profileError } = await supabase
