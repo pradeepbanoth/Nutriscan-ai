@@ -83,7 +83,7 @@ export const metadata: Metadata = {
   google: "oX05GxtLTymWRqGhzESU9-Nryc0XlfGSjmQQj2-4UPg",
 
   other: {
-    "msvalidate.01": "AFA404068465C164B50B656107461928 ",
+    "msvalidate.01": "AFA404068465C164B50B656107461928",
   },
 },
   manifest: "/manifest.json",
