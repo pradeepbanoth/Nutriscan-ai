@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import PremiumGate from "../../components/PremiumGateComponent";
-import { getUserPlan } from "../../lib/getUserPlan";
-import { supabase } from "../lib/supabase";
+import { usePremium } from "@/hooks/usePremium";
 import Image from "next/image";
+import posthog from "posthog-js";
+import { AnalyticsEvents } from "@/lib/analyticsEvents";
 
 type FoodResult = {
   foodName: string;
@@ -22,29 +23,18 @@ export default function FoodPhotoPage() {
   const [image, setImage] = useState<string | null>(null);
   const [result, setResult] = useState<FoodResult | null>(null);
   const [loading, setLoading] = useState(false);
-  const [checkingPlan, setCheckingPlan] = useState(true);
-  const [isPremium, setIsPremium] = useState(false);
+  const { loading: checkingPlan, isPremium } = usePremium();
 
-  useEffect(() => {
-    const checkPlan = async () => {
-      const { data } = await supabase.auth.getUser();
-
-      if (!data.user) {
-        setCheckingPlan(false);
-        window.location.href = "/auth";
-        return;
-      }
-
-      const plan = await getUserPlan(data.user.id);
-      setIsPremium(plan === "premium");
-      setCheckingPlan(false);
-    };
-
-    checkPlan();
-  }, []);
+ 
 
   const analyzeFood = async (file: File) => {
     try {
+
+      posthog.capture(AnalyticsEvents.FOOD_PHOTO_STARTED, {
+  file_size_mb: Number((file.size / (1024 * 1024)).toFixed(2)),
+  file_type: file.type,
+});
+
       setLoading(true);
       setResult(null);
 
@@ -66,8 +56,18 @@ export default function FoodPhotoPage() {
       }
 
       setResult(data);
+
+      posthog.capture(AnalyticsEvents.FOOD_PHOTO_COMPLETED, {
+  success: true,
+  food_name: data.foodName,
+  confidence: data.confidence,
+  health_score: data.healthScore,
+});
     } catch (error) {
       console.error("Food analysis error:", error);
+      posthog.capture(AnalyticsEvents.FOOD_PHOTO_COMPLETED, {
+  success: false,
+});
       alert("Food photo analysis failed. Please try another image.");
     } finally {
       setLoading(false);

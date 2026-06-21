@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import type React from "react";
+import posthog from "posthog-js";
+import { AnalyticsEvents } from "@/lib/analyticsEvents";
 
 type SearchSectionProps = {
   searchQuery: string;
@@ -55,11 +57,17 @@ export default function SearchSection({
             onKeyDown={(e) => {
               if (e.key !== "Enter") return;
 
-              setSuggestions([]);
+setSuggestions([]);
 
-              if (!canRunAction(lastSearchClickRef, 1500)) return;
+if (!canRunAction(lastSearchClickRef, 1500)) return;
 
-              searchProduct();
+posthog.capture(AnalyticsEvents.SEARCH_STARTED, {
+  source: "enter_key",
+
+  query_length: searchQuery.trim().length,
+});
+
+searchProduct();
             }}
             placeholder="Search product name..."
             className="w-full rounded-2xl border border-gray-100 bg-orange-50/50 px-5 py-4 font-bold text-gray-900 outline-none transition focus:border-orange-300 focus:bg-white"
@@ -68,10 +76,17 @@ export default function SearchSection({
           <button
             type="button"
             disabled={loading || !searchQuery.trim()}
-            onClick={() => {
-              if (!canRunAction(lastSearchClickRef, 1500)) return;
-              searchProduct();
-            }}
+           onClick={() => {
+  if (!canRunAction(lastSearchClickRef, 1500)) return;
+
+  posthog.capture(AnalyticsEvents.SEARCH_STARTED, {
+    source: "search_button",
+
+    query_length: searchQuery.trim().length,
+  });
+
+  searchProduct();
+}}
             className="rounded-2xl bg-orange-500 px-6 py-4 text-sm font-black text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? "Searching..." : "Search"}
@@ -84,11 +99,21 @@ export default function SearchSection({
               <button
                 key={`${item.product_name || "product"}-${index}`}
                 type="button"
-                onClick={() => {
-                  setSearchQuery(item.product_name || "");
-                  setSuggestions([]);
-                  analyzeSelectedProduct(item);
-                }}
+               onClick={() => {
+  posthog.capture(AnalyticsEvents.SEARCH_COMPLETED, {
+    source: "suggestion",
+
+    product_name: item.product_name,
+
+    brand: item.brands,
+  });
+
+  setSearchQuery(item.product_name || "");
+
+  setSuggestions([]);
+
+  analyzeSelectedProduct(item);
+}}
                 className="flex w-full items-center gap-4 px-5 py-4 text-left transition hover:bg-orange-50"
               >
                 {item.image_front_url ? (

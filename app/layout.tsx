@@ -41,9 +41,7 @@ export const metadata: Metadata = {
   publisher: "PAUSTICA",
   applicationName: "PAUSTICA",
   metadataBase: new URL("https://nutriscan-ai-orpin.vercel.app"),
-  alternates: {
-    canonical: "/",
-  },
+  
   openGraph: {
     type: "website",
     locale: "en_IN",
@@ -104,7 +102,70 @@ export default function RootLayout({
   >
    <body className="min-h-screen font-body">
   <PostHogProvider>
-    {children}
+   <script
+    type="application/ld+json"
+    dangerouslySetInnerHTML={{
+      __html: JSON.stringify({
+        "@context": "https://schema.org",
+
+        "@type": "Organization",
+
+        name: "PAUSTICA",
+
+        url: "https://nutriscan-ai-orpin.vercel.app",
+
+        logo:
+          "https://nutriscan-ai-orpin.vercel.app/logo.png",
+
+        description:
+          "PAUSTICA is an AI-powered food intelligence platform that helps users scan packaged foods, understand ingredients, compare products and choose healthier alternatives.",
+
+        sameAs: [],
+      }),
+    }}
+  />
+
+  {children}
+
+  <script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{
+    __html: JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: "PAUSTICA",
+      url: "https://nutriscan-ai-orpin.vercel.app",
+      potentialAction: {
+        "@type": "SearchAction",
+        target:
+          "https://nutriscan-ai-orpin.vercel.app/search?q={search_term_string}",
+        "query-input": "required name=search_term_string",
+      },
+    }),
+  }}
+/>
+
+<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{
+    __html: JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "MobileApplication",
+      name: "PAUSTICA",
+      operatingSystem: "Web, Android, iOS",
+      applicationCategory: "HealthApplication",
+      description:
+        "PAUSTICA helps users scan packaged foods, understand ingredients, compare products and choose healthier alternatives.",
+      url: "https://nutriscan-ai-orpin.vercel.app",
+      offers: {
+        "@type": "Offer",
+        price: "0",
+        priceCurrency: "INR",
+      },
+    }),
+  }}
+/>
+
   </PostHogProvider>
 </body>
   </html>

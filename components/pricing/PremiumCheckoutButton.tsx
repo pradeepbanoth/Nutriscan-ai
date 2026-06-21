@@ -6,6 +6,7 @@ import Script from "next/script";
 import posthog from "posthog-js";
 import { useState } from "react";
 import { supabase } from "@/app/lib/supabase";
+import { AnalyticsEvents } from "@/lib/analyticsEvents";
 
 export default function PremiumCheckoutButton() {
   const [razorpayReady, setRazorpayReady] = useState(false);
@@ -25,25 +26,48 @@ export default function PremiumCheckoutButton() {
       window.location.href = "/auth";
       return;
     }
+
+    const {
+  data: { session },
+} = await supabase.auth.getSession();
+
+if (!session) {
+  window.location.href = "/auth";
+  return;
+}
     
 
-    posthog.capture("premium_clicked", {
+    posthog.capture(AnalyticsEvents.PREMIUM_CLICKED, {
       planId: "premiumMonthly",
     });
 
-    const idempotencyKey = crypto.randomUUID();
+    let idempotencyKey =
+  sessionStorage.getItem("premium_checkout_key");
 
-    const res = await fetch("/api/payments/create-order", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    body: JSON.stringify({
-  planId: "premiumMonthly",
-  userId: userData.user.id,
-  idempotencyKey,
-}),
-    });
+if (!idempotencyKey) {
+  idempotencyKey = crypto.randomUUID();
+
+  sessionStorage.setItem(
+    "premium_checkout_key",
+    idempotencyKey
+  );
+}
+
+   const res = await fetch("/api/payments/create-order", {
+  method: "POST",
+
+  headers: {
+    "Content-Type": "application/json",
+
+    Authorization: `Bearer ${session.access_token}`,
+  },
+
+  body: JSON.stringify({
+    planId: "premiumMonthly",
+
+    idempotencyKey,
+  }),
+});
 
     const data = await res.json();
 
@@ -64,16 +88,16 @@ export default function PremiumCheckoutButton() {
 
       handler: async function (response: any) {
         const verifyRes = await fetch("/api/payments/verify", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            ...response,
-            planId: data.plan.id,
-            userId: userData.user.id,
-          }),
-        });
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${session.access_token}`,
+  },
+  body: JSON.stringify({
+    ...response,
+    planId: data.plan.id,
+  }),
+});
 
         const verifyData = await verifyRes.json();
 
@@ -83,16 +107,22 @@ export default function PremiumCheckoutButton() {
           return;
         }
 
-        posthog.capture("premium_activated", {
+        posthog.capture(AnalyticsEvents.PREMIUM_ACTIVATED, {
           planId: data.plan.id,
         });
 
+        sessionStorage.removeItem(
+         "premium_checkout_key"
+         );
         alert("Premium activated successfully.");
         window.location.href = "/profile";
       },
 
       modal: {
   ondismiss: function () {
+    sessionStorage.removeItem(
+  "premium_checkout_key"
+);
     setLoading(false);
   },
 },
@@ -105,6 +135,10 @@ export default function PremiumCheckoutButton() {
     const razorpay = new (window as any).Razorpay(options);
 
     razorpay.on("payment.failed", function () {
+      sessionStorage.removeItem(
+  "premium_checkout_key"
+);
+
       alert("Payment failed. Please try again.");
       setLoading(false);
     });

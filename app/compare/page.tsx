@@ -1,8 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { searchProductByName } from "@/services/searchService";
+import PremiumGate from "@/components/PremiumGateComponent";
+import { usePremium } from "@/hooks/usePremium";
+import posthog from "posthog-js";
+import { AnalyticsEvents } from "@/lib/analyticsEvents";
 
 type CompareProduct = {
   name?: string;
@@ -70,6 +74,7 @@ export default function ComparePage() {
   const [productB, setProductB] = useState<CompareProduct | null>(null);
   const [loadingA, setLoadingA] = useState(false);
   const [loadingB, setLoadingB] = useState(false);
+  const { loading: premiumLoading, isPremium } = usePremium();
 
   const search = async (query: string, side: "a" | "b") => {
     const cleanQuery = query.trim();
@@ -99,6 +104,37 @@ export default function ComparePage() {
   };
 
   const winner = getWinner(productA, productB);
+
+  useEffect(() => {
+  if (!productA || !productB) return;
+
+  posthog.capture(AnalyticsEvents.COMPARE_USED, {
+    product_a: productA.name,
+
+    product_b: productB.name,
+
+    winner,
+  });
+}, [productA, productB, winner]);
+
+  if (premiumLoading) {
+  return (
+    <main className="min-h-screen bg-[#fff7ed] flex items-center justify-center">
+      <p className="text-gray-500 font-bold">Checking premium access...</p>
+    </main>
+  );
+}
+
+if (!isPremium) {
+  return (
+    <main className="min-h-screen bg-[#fff7ed] flex items-center justify-center px-6">
+      <PremiumGate
+        title="Product Comparison is Premium"
+        description="Upgrade to compare foods side by side and choose healthier options."
+      />
+    </main>
+  );
+}
 
   return (
     <main className="min-h-screen bg-[#fff7ed]">
@@ -290,23 +326,7 @@ function CompareSearchCard({
   );
 }
 
-<div className="mt-6 rounded-3xl bg-white border border-orange-100 p-6">
 
-  <h4 className="font-black text-gray-900">
-    Why?
-  </h4>
-
-  <ul className="mt-4 space-y-3 text-gray-600">
-
-    <li>✓ Lower sugar content</li>
-
-    <li>✓ Less processed</li>
-
-    <li>✓ Better nutrition profile</li>
-
-  </ul>
-
-</div>
 
 function CompareRow({
   label,
@@ -317,6 +337,8 @@ function CompareRow({
   a: string;
   b: string;
 }) {
+
+  
   return (
     <div className="grid grid-cols-3 border-b border-gray-100 last:border-b-0">
       <div className="bg-orange-50 px-4 py-4 font-black text-gray-900">

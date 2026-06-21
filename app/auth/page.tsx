@@ -3,6 +3,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import Image from "next/image";
+import {
+  clearReferralCode,
+  getReferralCode,
+  saveReferralCode,
+} from "@/lib/referralStorage";
 
 export default function AuthPage() {
   const [email, setEmail] = useState("");
@@ -11,8 +16,13 @@ export default function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-
+  
 useEffect(() => {
+  const ref = new URLSearchParams(window.location.search).get("ref");
+
+if (ref) {
+  saveReferralCode(ref);
+}
   const checkUser = async () => {
     const { data } = await supabase.auth.getUser();
 
@@ -30,6 +40,29 @@ useEffect(() => {
 
   checkUser();
 }, []);
+
+const completeReferral = async () => {
+  const referralCode = getReferralCode();
+
+  if (!referralCode) return;
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session) return;
+
+  await fetch("/api/referrals/complete", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({ referralCode }),
+  });
+
+  clearReferralCode();
+};
 
   const signUp = async () => {
     setLoading(true);
@@ -91,6 +124,7 @@ if (password.length < 8) {
       setMessage("Please verify your email before logging in.");
     } else {
      setMessage("Login successful.");
+     await completeReferral();
 
 const { data: profile } = await supabase
   .from("profiles")

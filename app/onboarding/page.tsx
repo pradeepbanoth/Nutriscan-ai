@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
+import posthog from "posthog-js";
+import { AnalyticsEvents } from "@/lib/analyticsEvents";
 
 const steps = [
   {
@@ -135,6 +137,15 @@ export default function OnboardingPage() {
   onboarded: true,
 });
 
+posthog.capture(AnalyticsEvents.ONBOARDING_COMPLETED, {
+  skipped: false,
+  diet_type: selections.diet_type,
+  health_goal: selections.health_goal,
+  allergies_count: Array.isArray(selections.allergies)
+    ? selections.allergies.length
+    : 0,
+});
+
       window.location.href = "/scan";
     } catch (err) {
       console.error(err);
@@ -260,7 +271,24 @@ export default function OnboardingPage() {
 
           {/* Skip */}
           <button
-            onClick={() => window.location.href = "/scan"}
+            onClick={async () => {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (session?.user) {
+    await supabase.from("profiles").upsert({
+      id: session.user.id,
+      onboarded: true,
+    });
+  }
+
+  posthog.capture(AnalyticsEvents.ONBOARDING_COMPLETED, {
+  skipped: true,
+});
+
+  window.location.href = "/scan";
+}}
             className="w-full text-center text-sm text-gray-400 hover:text-gray-600 mt-3 transition-colors"
           >
             Skip for now

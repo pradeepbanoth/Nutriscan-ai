@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import posthog from "posthog-js";
+import { supabase } from "@/app/lib/supabase";
 
 let posthogInitialized = false;
 
@@ -38,6 +39,43 @@ export default function PostHogProvider({
         return;
       },
     });
+    const identifyUser = async () => {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return;
+
+  posthog.identify(user.id, {
+    email: user.email,
+
+    created_at: user.created_at,
+  });
+};
+
+identifyUser();
+
+const {
+  data: { subscription },
+} = supabase.auth.onAuthStateChange(
+  (_event, session) => {
+    if (session?.user) {
+      posthog.identify(
+        session.user.id,
+
+        {
+          email: session.user.email,
+        }
+      );
+    } else {
+      posthog.reset();
+    }
+  }
+);
+
+return () => {
+  subscription.unsubscribe();
+};
   }, []);
 
   return <>{children}</>;

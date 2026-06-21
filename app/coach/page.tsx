@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { calculateGoalScore } from "../../lib/goalScoring";
-import { getUserPlan } from "../../lib/getUserPlan";
+import { usePremium } from "@/hooks/usePremium";
 import PremiumGate from "../../components/PremiumGateComponent";
 import Image from "next/image";
+import posthog from "posthog-js";
+import { AnalyticsEvents } from "@/lib/analyticsEvents";
 
 type ScanRow = {
   id: number;
@@ -21,10 +23,10 @@ export default function CoachPage() {
   const [email, setEmail] = useState("");
   const [scans, setScans] = useState<ScanRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isPremium, setIsPremium] = useState(false);
   const [question, setQuestion] = useState("");
   const [coachAnswer, setCoachAnswer] = useState("");
   const [asking, setAsking] = useState(false);
+  const { loading: premiumLoading, isPremium } = usePremium();
 
   useEffect(() => {
     const loadCoach = async () => {
@@ -37,8 +39,7 @@ export default function CoachPage() {
 
       setEmail(data.user.email || "");
 
-      const plan = await getUserPlan(data.user.id);
-      setIsPremium(plan === "premium");
+      
 
       const { data: scanData } = await supabase
         .from("scan_history")
@@ -87,6 +88,20 @@ export default function CoachPage() {
 const askCoach = async () => {
   if (!question.trim()) return;
 
+  posthog.capture(AnalyticsEvents.COACH_USED, {
+  question_length: question.trim().length,
+
+  scans_available: scans.length,
+
+  average_score: averageScore,
+
+  high_sugar: highSugar,
+
+  high_salt: highSalt,
+
+  ultra_processed: ultraProcessed,
+});
+
   setAsking(true);
   setCoachAnswer("");
 
@@ -119,11 +134,25 @@ const askCoach = async () => {
 
   const data = await res.json();
 
-  setCoachAnswer(data.answer || data.error || "No answer received.");
-  setAsking(false);
-};
+if (data.error) {
+  posthog.capture(AnalyticsEvents.COACH_USED, {
+    success: false,
+  });
+} else {
+  posthog.capture(AnalyticsEvents.COACH_USED, {
+    success: true,
 
-  if (loading) {
+    response_length: data.answer?.length || 0,
+  });
+}
+
+setCoachAnswer(
+  data.answer || data.error || "No answer received."
+);
+
+setAsking(false);
+
+  if (loading || premiumLoading) {
     return (
       <main className="min-h-screen bg-[#fff7ed] flex items-center justify-center">
         <p className="text-gray-500 font-bold">Loading AI Coach...</p>
@@ -309,4 +338,5 @@ const askCoach = async () => {
       </div>
     </main>
   );
+}
 }

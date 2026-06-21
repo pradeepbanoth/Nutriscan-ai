@@ -6,6 +6,8 @@ import { fetchProductByBarcode } from "@/services/productService";
 import { fetchRealAlternatives } from "@/services/alternativeService";
 import { analyzeHealth } from "@/lib/healthEngine";
 import { HealthGoal } from "@/lib/goalScoring";
+import posthog from "posthog-js";
+import { AnalyticsEvents } from "@/lib/analyticsEvents";
 
 type Params = {
   barcode: string;
@@ -96,6 +98,13 @@ export function useBarcodeProduct({
         setScannerOpen(false);
         setProduct(fetchedProduct);
 
+        posthog.capture(AnalyticsEvents.SCAN_COMPLETED, {
+  source: code ? "camera" : "manual_barcode",
+  barcode_length: finalBarcode.length,
+  product_name: fetchedProduct.name,
+  brand: fetchedProduct.brand,
+});
+
         const analysis = analyzeHealth({
           sugar: fetchedProduct.sugar,
           fat: fetchedProduct.fat,
@@ -141,6 +150,13 @@ export function useBarcodeProduct({
         await saveHistory(fetchedProduct);
       } else {
         setProduct(null);
+
+        posthog.capture(AnalyticsEvents.SCAN_COMPLETED, {
+  source: code ? "camera" : "manual_barcode",
+  barcode_length: finalBarcode.length,
+  success: false,
+});
+
         alert(
           "Product not found in database. Try another barcode or enter product details manually."
         );

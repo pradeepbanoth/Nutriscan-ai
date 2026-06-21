@@ -16,6 +16,8 @@ const navItems = [
   { label: "Search", href: "/search" },
   { label: "Compare", href: "/compare" },
   { label: "Discover", href: "/discover" },
+    { label: "Referrals", href: "/referrals" },
+
 ];
 
 export default function Navbar({

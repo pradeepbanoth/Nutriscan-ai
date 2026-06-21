@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { calculateGoalScore } from "../../lib/goalScoring";
 import PremiumGate from "../../components/PremiumGateComponent";
-import { getUserPlan } from "../../lib/getUserPlan";
 import Image from "next/image";
+import { usePremium } from "@/hooks/usePremium";
+import posthog from "posthog-js";
+import { AnalyticsEvents } from "@/lib/analyticsEvents";
 
 type ScanRow = {
   id: number;
@@ -25,8 +27,7 @@ export default function ReportPage() {
   const [scans, setScans] = useState<ScanRow[]>([]);
   const [favoritesCount, setFavoritesCount] = useState(0);
 const [loading, setLoading] = useState(true);
-const [isPremium, setIsPremium] = useState(false);
-
+const { loading: premiumLoading, isPremium } = usePremium();
  
 
   useEffect(() => {
@@ -40,8 +41,7 @@ const [isPremium, setIsPremium] = useState(false);
 
 setEmail(data.user.email || "");
 
-const plan = await getUserPlan(data.user.id);
-setIsPremium(plan === "premium");
+
 
       const { data: scanData } = await supabase
         .from("scan_history")
@@ -128,7 +128,26 @@ setIsPremium(plan === "premium");
       ? "Moderate week. Try reducing sugary snacks, salty foods, and ultra-processed products."
       : "Your scans show frequent high-risk products. Focus on whole foods, lower sugar, and fewer packaged snacks.";
 
-  if (loading) {
+useEffect(() => {
+  if (loading || premiumLoading || !isPremium) return;
+
+  posthog.capture(AnalyticsEvents.REPORT_VIEWED, {
+    total_scans: scans.length,
+    favorites_count: favoritesCount,
+    average_score: averageScore,
+    main_risk: mostCommonRisk,
+  });
+}, [
+  loading,
+  premiumLoading,
+  isPremium,
+  scans.length,
+  favoritesCount,
+  averageScore,
+  mostCommonRisk,
+]);
+
+  if (loading || premiumLoading) {
     return (
       <main className="min-h-screen bg-[#fff7ed] flex items-center justify-center">
         <p className="text-gray-500 font-bold">Loading report...</p>

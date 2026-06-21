@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import type React from "react";
+import posthog from "posthog-js";
+import { AnalyticsEvents } from "@/lib/analyticsEvents";
 
 type ScannerSectionProps = {
   barcode: string;
@@ -73,10 +75,21 @@ export default function ScannerSection({
           <button
             type="button"
             disabled={loading || !barcode.trim()}
-            onClick={() => {
-              if (!canRunAction(lastBarcodeClickRef, 1500)) return;
-              fetchProduct();
-            }}
+           onClick={() => {
+  if (!canRunAction(lastBarcodeClickRef, 1500)) return;
+
+  posthog.capture(
+    AnalyticsEvents.SCAN_STARTED,
+    {
+      source: "manual_barcode",
+
+      barcode_length:
+        barcode.trim().length,
+    }
+  );
+
+  fetchProduct();
+}}
             className="rounded-2xl bg-gray-900 px-6 py-4 text-sm font-black text-white transition hover:bg-black disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? "Analyzing..." : "Analyze"}
@@ -107,16 +120,31 @@ export default function ScannerSection({
 
           <div className="flex h-full items-center justify-center px-5">
             <div className="relative w-full max-w-xl overflow-hidden rounded-3xl border border-white/10 bg-black">
-              <BarcodeScanner
-                onScan={(code: string) => {
-                  if (!canRunAction(lastScannerScanRef, 2000)) return;
+              
+                <BarcodeScanner
+  onScan={(code: string) => {
+    if (!canRunAction(lastScannerScanRef, 2000))
+      return;
 
-                  setBarcode(code);
-                  setScannerOpen(false);
-                  setLoading(true);
-                  fetchProduct(code);
-                }}
-              />
+    posthog.capture(
+      AnalyticsEvents.SCAN_STARTED,
+      {
+        source: "camera",
+
+        barcode_length:
+          code.length,
+      }
+    );
+
+    setBarcode(code);
+
+    setScannerOpen(false);
+
+    setLoading(true);
+
+    fetchProduct(code);
+  }}
+/>
 
               <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
                 <div className="h-44 w-[82%] rounded-3xl border-4 border-orange-400 shadow-[0_0_0_9999px_rgba(0,0,0,0.45)]" />

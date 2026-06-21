@@ -2,6 +2,74 @@
 
 import { useEffect, useState } from "react";
 
+const faqSchema = {
+  "@context": "https://schema.org",
+
+  "@type": "FAQPage",
+
+  mainEntity: [
+    {
+      "@type": "Question",
+
+      name: "How is PAUSTICA different from a normal nutrition label?",
+
+      acceptedAnswer: {
+        "@type": "Answer",
+
+        text: "A nutrition label only shows numbers. PAUSTICA explains what those numbers mean using sugar, salt, fat, processing level, ingredients, additives, and your personal health goal.",
+      },
+    },
+
+    {
+      "@type": "Question",
+
+      name: "How is the health score calculated?",
+
+      acceptedAnswer: {
+        "@type": "Answer",
+
+        text: "The score is based on nutrition quality, ingredient risk, processing level, and goal-based personalization.",
+      },
+    },
+
+    {
+      "@type": "Question",
+
+      name: "Does PAUSTICA provide medical advice?",
+
+      acceptedAnswer: {
+        "@type": "Answer",
+
+        text: "No. PAUSTICA provides educational food insights only and should not replace advice from healthcare professionals.",
+      },
+    },
+
+    {
+      "@type": "Question",
+
+      name: "Does PAUSTICA store my scans?",
+
+      acceptedAnswer: {
+        "@type": "Answer",
+
+        text: "PAUSTICA may save scan history to improve your experience.",
+      },
+    },
+
+    {
+      "@type": "Question",
+
+      name: "Is PAUSTICA free?",
+
+      acceptedAnswer: {
+        "@type": "Answer",
+
+        text: "Basic scans and food analysis are available for free. Premium features unlock deeper intelligence.",
+      },
+    },
+  ],
+};
+
 export default function TrustPage() {
 
 const [activeSection, setActiveSection] = useState<"faq" | "privacy" | "terms" | null>(null);
@@ -20,6 +88,14 @@ useEffect(() => {
 
   return (
     <main className="min-h-screen" style={{ background: "#fff7ed" }}>
+
+      <script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{
+    __html: JSON.stringify(faqSchema),
+  }}
+/>
+
       <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
   <div
     className="bubble-float absolute top-24 left-16 h-96 w-96 rounded-full bg-orange-300/10 blur-[120px]"

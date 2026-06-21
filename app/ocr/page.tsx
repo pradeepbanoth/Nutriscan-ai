@@ -1,19 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Tesseract from "tesseract.js";
 import { ingredientIntelligence } from "../../lib/ingredientIntelligence";
-import { getUserPlan } from "../../lib/getUserPlan";
 import PremiumGate from "../../components/PremiumGateComponent";
-import { supabase } from "../lib/supabase";
+import { usePremium } from "@/hooks/usePremium";
 import Image from "next/image";
+import posthog from "posthog-js";
+import { AnalyticsEvents } from "@/lib/analyticsEvents";
 
 export default function OCRPage() {
   const [image, setImage] = useState<string | null>(null);
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
-  const [planLoading, setPlanLoading] = useState(true);
-  const [isPremium, setIsPremium] = useState(false);
+  const { loading: planLoading, isPremium } = usePremium();
 
 
 function normalizeOCRText(value: string) {
@@ -25,25 +25,7 @@ function normalizeOCRText(value: string) {
     .trim();
 }
 
-  useEffect(() => {
-    const checkPlan = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        setIsPremium(false);
-        setPlanLoading(false);
-        return;
-      }
-
-      const plan = await getUserPlan(user.id);
-      setIsPremium(plan === "premium");
-      setPlanLoading(false);
-    };
-
-    checkPlan();
-  }, []);
+  
 
   const harmfulIngredients = Object.keys(ingredientIntelligence);
 
@@ -64,18 +46,74 @@ if (file.size > 6 * 1024 * 1024) {
   alert("Image is too large. Please upload an image under 6MB.");
   return;
 }
-    setLoading(true);
-    setText("");
 
-    const imageUrl = URL.createObjectURL(file);
-    setImage(imageUrl);
+posthog.capture(AnalyticsEvents.OCR_STARTED, {
+  file_size_mb: Number(
+    (file.size / (1024 * 1024)).toFixed(2)
+  ),
 
-   const result = await Tesseract.recognize(file, "eng", {
-  logger: () => {},
+  file_type: file.type,
 });
 
-    setText(result.data.text);
-    setLoading(false);
+   setLoading(true);
+
+setText("");
+
+const imageUrl = URL.createObjectURL(file);
+
+setImage(imageUrl);
+
+try {
+  const result = await Tesseract.recognize(
+    file,
+    "eng",
+    {
+      logger: () => {},
+    }
+  );
+
+  setText(result.data.text);
+
+  const normalizedResult =
+    normalizeOCRText(result.data.text);
+
+  const matchedIngredients =
+    harmfulIngredients.filter((item) =>
+      normalizedResult.includes(
+        item.toLowerCase()
+      )
+    );
+
+  posthog.capture(
+    AnalyticsEvents.OCR_COMPLETED,
+
+    {
+      success: true,
+
+      detected_ingredients:
+        matchedIngredients.length,
+
+      extracted_text_length:
+        result.data.text.length,
+    }
+  );
+} catch (error) {
+  console.log(error);
+
+  posthog.capture(
+    AnalyticsEvents.OCR_COMPLETED,
+
+    {
+      success: false,
+    }
+  );
+
+  alert(
+    "OCR analysis failed. Please try another image."
+  );
+} finally {
+  setLoading(false);
+}
   };
 
   const healthScore = Math.max(0, 100 - detectedIngredients.length * 12);
