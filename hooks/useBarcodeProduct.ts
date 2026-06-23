@@ -8,6 +8,7 @@ import { analyzeHealth } from "@/lib/healthEngine";
 import { HealthGoal } from "@/lib/goalScoring";
 import posthog from "posthog-js";
 import { AnalyticsEvents } from "@/lib/analyticsEvents";
+import { supabase } from "@/app/lib/supabase";
 
 type Params = {
   barcode: string;
@@ -148,6 +149,22 @@ export function useBarcodeProduct({
         }
 
         await saveHistory(fetchedProduct);
+        const {
+  data: { session },
+} = await supabase.auth.getSession();
+
+if (session) {
+  await fetch("/api/referrals/qualify", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({
+      event: "first_scan",
+    }),
+  });
+}
       } else {
         setProduct(null);
 

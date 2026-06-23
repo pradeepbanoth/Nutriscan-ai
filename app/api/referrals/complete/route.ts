@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/app/lib/supabase";
+import { securityGuard } from "@/lib/securityEngine";
 
 export async function POST(request: Request) {
   try {
@@ -19,6 +20,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid session." }, { status: 401 });
     }
 
+    
+
     const ipAddress =
   request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
   request.headers.get("x-real-ip") ||
@@ -26,12 +29,35 @@ export async function POST(request: Request) {
 
     const { referralCode } = await request.json();
 
-    if (!referralCode) {
-      return NextResponse.json(
-        { error: "Missing referral code." },
-        { status: 400 }
-      );
-    }
+if (!referralCode) {
+  return NextResponse.json(
+    { error: "Missing referral code." },
+    { status: 400 }
+  );
+}
+
+const security = await securityGuard({
+  userId: user.id,
+  eventName: "referral",
+  request,
+  metadata: {
+    action: "complete_referral",
+    referral_code: referralCode,
+  },
+});
+
+if (!security.allowed) {
+  return NextResponse.json(
+    {
+      error:
+        "Referral actions are temporarily limited. Please try again later.",
+      cooldownSeconds: security.cooldownSeconds,
+    },
+    { status: 429 }
+  );
+}
+
+    
 
     const { data: campaign } = await supabase
       .from("referral_campaigns")
@@ -73,9 +99,9 @@ if (existingSecurityRecord) {
       referred_user_id: user.id,
       referred_email: user.email,
       referral_code: campaign.referral_code,
-      status: "completed",
-      reward_days: 7,
-      completed_at: new Date().toISOString(),
+      status: "pending",
+      reward_days: 0,
+      qualification_event: "signup",
     });
 
     if (error) {
@@ -87,15 +113,22 @@ if (existingSecurityRecord) {
   ip_address: ipAddress,
 });
 
-    await supabase.rpc("add_referral_reward_days", {
-  p_user_id: campaign.user_id,
-  p_reward_days: 7,
+await supabase.from("referral_events").insert({
+  user_id: user.id,
+  referrer_id: campaign.user_id,
+  event_name: "referral_completed",
+  referral_code: campaign.referral_code,
+  event_data: {
+    status: "pending",
+    ip_address: ipAddress,
+  },
+});   
+
+   return NextResponse.json({
+  ok: true,
+  status: "pending",
 });
 
-    return NextResponse.json({
-      ok: true,
-      rewardDays: 7,
-    });
   } catch (error) {
     console.error("Referral completion failed:", error);
 

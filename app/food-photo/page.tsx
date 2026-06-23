@@ -24,11 +24,22 @@ export default function FoodPhotoPage() {
   const [result, setResult] = useState<FoodResult | null>(null);
   const [loading, setLoading] = useState(false);
   const { loading: checkingPlan, isPremium } = usePremium();
-
+  const [lastAnalysisAt, setLastAnalysisAt] = useState(0);
  
 
   const analyzeFood = async (file: File) => {
+    if (loading) return;
     try {
+
+      if (!file.type.startsWith("image/")) {
+  alert("Please upload a valid image.");
+  return;
+}
+
+if (file.size > 8 * 1024 * 1024) {
+  alert("Image is too large. Please upload an image under 8MB.");
+  return;
+}
 
       posthog.capture(AnalyticsEvents.FOOD_PHOTO_STARTED, {
   file_size_mb: Number((file.size / (1024 * 1024)).toFixed(2)),
@@ -56,6 +67,18 @@ export default function FoodPhotoPage() {
       }
 
       setResult(data);
+
+      const now = Date.now();
+
+if (now - lastAnalysisAt < 60_000) {
+  alert(
+    "Please wait a minute before analyzing another food photo."
+  );
+
+  return;
+}
+
+setLastAnalysisAt(now);
 
       posthog.capture(AnalyticsEvents.FOOD_PHOTO_COMPLETED, {
   success: true,

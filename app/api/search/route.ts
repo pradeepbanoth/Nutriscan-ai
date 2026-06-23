@@ -3,6 +3,8 @@ import type { SearchHit } from "@elastic/elasticsearch/lib/api/types";
 import { elastic, PRODUCT_INDEX } from "@/lib/elasticsearch";
 import { searchRateLimit } from "@/lib/rateLimit";
 import { cacheHeaders } from "@/lib/cacheHeaders";
+import { supabase } from "@/app/lib/supabase";
+import { securityGuard } from "@/lib/securityEngine";
 
 type ProductSource = {
   barcode?: string;
@@ -40,6 +42,77 @@ function mapProduct(hit: SearchHit<ProductSource>) {
     source: p.source || "elasticsearch",
     updatedAt: p.updatedAt || "",
   };
+}
+
+function addAllergyWarnings(
+  products: ReturnType<typeof mapProduct>[],
+  profile: {
+    allergies?: string[] | null;
+  } | null
+) {
+  return products.map((product) => {
+    const ingredients = product.ingredients.toLowerCase();
+
+    const matchedAllergies =
+      profile?.allergies?.filter((allergy) =>
+        ingredients.includes(allergy.toLowerCase())
+      ) || [];
+
+    return {
+      ...product,
+      allergyMatched: matchedAllergies.length > 0,
+      matchedAllergies,
+    };
+  });
+}
+
+function personalizeProducts(
+  products: ReturnType<typeof mapProduct>[],
+  profile: {
+    health_goal?: string | null;
+    diet_type?: string | null;
+    allergies?: string[] | null;
+  } | null
+) {
+  if (!profile) return products;
+
+  return [...products].sort((a, b) => {
+    const scoreA = getPersonalScore(a, profile);
+    const scoreB = getPersonalScore(b, profile);
+
+    return scoreB - scoreA;
+  });
+}
+
+function getPersonalScore(
+  product: ReturnType<typeof mapProduct>,
+  profile: {
+    health_goal?: string | null;
+    diet_type?: string | null;
+    allergies?: string[] | null;
+  }
+) {
+  let score = Number(product.score || 0);
+
+  const ingredients = product.ingredients.toLowerCase();
+
+  if (profile.health_goal === "lose_weight" && product.sugar > 10) {
+    score -= 10;
+  }
+
+  if (profile.health_goal === "manage_condition" && product.sugar > 5) {
+    score -= 15;
+  }
+
+  if (profile.diet_type === "keto" && product.sugar > 5) {
+    score -= 12;
+  }
+
+  if (profile.allergies?.some((allergy) => ingredients.includes(allergy))) {
+    score -= 30;
+  }
+
+  return score;
 }
 
 export async function GET(request: Request) {
@@ -101,6 +174,51 @@ export async function GET(request: Request) {
       { status: 200 }
     );
   }
+
+  let profile = null;
+let userId: string | null = null;
+
+const authHeader = request.headers.get("authorization");
+const token = authHeader?.replace("Bearer ", "");
+
+if (token) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser(token);
+
+  if (user) {
+    userId = user.id;
+
+    const { data } = await supabase
+      .from("profiles")
+      .select("health_goal,diet_type,allergies")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    profile = data;
+  }
+}
+
+const security = await securityGuard({
+  userId: token ? undefined : null,
+  eventName: "search",
+  request,
+  metadata: {
+    query_length: queryText.length,
+    category: Boolean(category),
+    personalized: Boolean(profile),
+  },
+});
+
+if (!security.allowed) {
+  return NextResponse.json(
+    {
+      error: "Search temporarily limited. Please try again later.",
+      cooldownSeconds: security.cooldownSeconds,
+    },
+    { status: 429 }
+  );
+}
 
   try {
     const result = await elastic.search<ProductSource>(
@@ -167,16 +285,22 @@ export async function GET(request: Request) {
       }
     );
 
-    const products = result.hits.hits.map(mapProduct);
+    const products = addAllergyWarnings(
+  personalizeProducts(result.hits.hits.map(mapProduct), profile),
+  profile
+);
 
     if (process.env.NODE_ENV === "development") {
       console.log("Search API completed in", Date.now() - startedAt, "ms");
     }
 
     return NextResponse.json(
-      { products },
-      { headers: cacheHeaders.search }
-    );
+  {
+    products,
+    personalized: Boolean(profile),
+  },
+  { headers: cacheHeaders.search }
+);
   } catch (error) {
     console.error("Search API error:", error);
 

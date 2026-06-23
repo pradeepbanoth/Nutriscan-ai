@@ -1,3 +1,5 @@
+import { supabase } from "@/app/lib/supabase";
+
 export type SearchProduct = {
   barcode?: string;
   name: string;
@@ -48,9 +50,18 @@ export async function searchProductByName({
   query: string;
   signal?: AbortSignal;
 }): Promise<SearchProduct | null> {
-  const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`, {
-    signal,
-  });
+  const {
+  data: { session },
+} = await supabase.auth.getSession();
+
+const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`, {
+  signal,
+  headers: session
+    ? {
+        Authorization: `Bearer ${session.access_token}`,
+      }
+    : {},
+});
 
   if (!res.ok) return null;
 

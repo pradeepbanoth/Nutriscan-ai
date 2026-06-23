@@ -14,6 +14,7 @@ export default function OCRPage() {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const { loading: planLoading, isPremium } = usePremium();
+  const [lastOcrAt, setLastOcrAt] = useState(0);
 
 
 function normalizeOCRText(value: string) {
@@ -54,6 +55,15 @@ posthog.capture(AnalyticsEvents.OCR_STARTED, {
 
   file_type: file.type,
 });
+
+const now = Date.now();
+
+if (now - lastOcrAt < 30_000) {
+  alert("Please wait a few seconds before scanning another image.");
+  return;
+}
+
+setLastOcrAt(now);
 
    setLoading(true);
 

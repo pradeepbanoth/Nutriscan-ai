@@ -12,7 +12,7 @@ import VisualShowcase from "@/components/home/VisualShowcase";
 import Footer from "@/components/layout/Footer";
 import Navbar from "@/components/layout/Navbar";
 import BackgroundEffects from "@/components/layout/BackgroundEffects";
-
+import DraggableOrb from "@/components/DraggableOrb";
 import ProfileModal from "@/components/profile/ProfileModal";
 import UpgradeModal from "@/components/pricing/UpgradeModal";
 import Reviews from "@/components/home/Reviews";
@@ -161,6 +161,7 @@ export default function Home() {
         currentStreak={currentStreak}
         achievements={achievements}
       />
+      <DraggableOrb />
     </main>
   );
 }

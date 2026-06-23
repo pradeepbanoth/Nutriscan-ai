@@ -137,6 +137,12 @@ searchProduct();
                   <p className="truncate text-sm font-semibold text-gray-500">
                     {item.brands || "Unknown Brand"}
                   </p>
+
+                  {item.allergyMatched && item.matchedAllergies?.length > 0 && (
+                   <p className="mt-1 text-xs font-black text-red-600">
+                           Contains: {item.matchedAllergies.join(", ")}
+                        </p>
+                   )}
                 </div>
               </button>
             ))}

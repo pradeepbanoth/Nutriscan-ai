@@ -1,12 +1,15 @@
 "use client";
 
+
+
 import Image from "next/image";
-import { useEffect, useState } from "react";
-import { searchProductByName } from "@/services/searchService";
+import { useEffect, useMemo, useRef, useState } from "react";
+import posthog from "posthog-js";
+
 import PremiumGate from "@/components/PremiumGateComponent";
 import { usePremium } from "@/hooks/usePremium";
-import posthog from "posthog-js";
 import { AnalyticsEvents } from "@/lib/analyticsEvents";
+import { searchProductByName } from "@/services/searchService";
 
 type CompareProduct = {
   name?: string;
@@ -18,6 +21,8 @@ type CompareProduct = {
   nova?: number | string | null;
   nutriscore?: string | null;
   ingredients?: string | null;
+  allergyMatched?: boolean;
+  matchedAllergies?: string[];
 };
 
 function safeNumber(value: unknown) {
@@ -48,23 +53,30 @@ function scoreProduct(product: CompareProduct) {
   return Math.max(0, Math.min(100, score));
 }
 
-function getWinner(a: CompareProduct | null, b: CompareProduct | null) {
-  if (!a || !b) return null;
-
-  const aScore = scoreProduct(a);
-  const bScore = scoreProduct(b);
-
-  if (Math.abs(aScore - bScore) <= 3) return "Both are similar";
-  return aScore > bScore ? a.name || "Product A" : b.name || "Product B";
-}
-
-function getVerdict(product: CompareProduct) {
-  const score = scoreProduct(product);
-
+function getVerdict(score: number) {
   if (score >= 80) return "Better choice";
   if (score >= 60) return "Moderate choice";
   if (score >= 40) return "Limit consumption";
   return "Avoid often";
+}
+
+function getWinner(productA: CompareProduct, productB: CompareProduct) {
+  const scoreA = scoreProduct(productA);
+  const scoreB = scoreProduct(productB);
+
+  if (Math.abs(scoreA - scoreB) <= 3) {
+    return {
+      label: "Both are similar",
+      reason: "Their PAUSTICA scores are close, so check ingredients and personal goals before choosing.",
+    };
+  }
+
+  const winner = scoreA > scoreB ? productA : productB;
+
+  return {
+    label: winner.name || "Better product",
+    reason: "PAUSTICA prefers the option with better nutrition balance and lower processing risk.",
+  };
 }
 
 export default function ComparePage() {
@@ -72,74 +84,99 @@ export default function ComparePage() {
   const [queryB, setQueryB] = useState("");
   const [productA, setProductA] = useState<CompareProduct | null>(null);
   const [productB, setProductB] = useState<CompareProduct | null>(null);
-  const [loadingA, setLoadingA] = useState(false);
-  const [loadingB, setLoadingB] = useState(false);
+  const [loadingSide, setLoadingSide] = useState<"a" | "b" | null>(null);
+  const [error, setError] = useState("");
+
+  const trackedComparisonRef = useRef("");
+
   const { loading: premiumLoading, isPremium } = usePremium();
+
+  const comparison = useMemo(() => {
+    if (!productA || !productB) return null;
+
+    const scoreA = scoreProduct(productA);
+    const scoreB = scoreProduct(productB);
+    const winner = getWinner(productA, productB);
+
+    return {
+      scoreA,
+      scoreB,
+      verdictA: getVerdict(scoreA),
+      verdictB: getVerdict(scoreB),
+      winner,
+    };
+  }, [productA, productB]);
+
+  useEffect(() => {
+    if (!productA || !productB || !comparison) return;
+
+    const key = `${productA.name}-${productB.name}-${comparison.winner.label}`;
+
+    if (trackedComparisonRef.current === key) return;
+
+    trackedComparisonRef.current = key;
+
+    posthog.capture(AnalyticsEvents.COMPARE_USED, {
+      product_a: productA.name,
+      product_b: productB.name,
+      score_a: comparison.scoreA,
+      score_b: comparison.scoreB,
+      winner: comparison.winner.label,
+    });
+  }, [productA, productB, comparison]);
 
   const search = async (query: string, side: "a" | "b") => {
     const cleanQuery = query.trim();
 
-    if (!cleanQuery) return;
+    if (!cleanQuery || loadingSide) return;
 
-    if (side === "a") setLoadingA(true);
-    else setLoadingB(true);
+    setError("");
+    setLoadingSide(side);
 
     try {
       const product = await searchProductByName({ query: cleanQuery });
 
       if (!product) {
-        alert("No product found. Try a more specific name.");
+        setError("No product found. Try a more specific product name.");
         return;
       }
 
-      if (side === "a") setProductA(product as CompareProduct);
-      else setProductB(product as CompareProduct);
-    } catch (error) {
-      console.log(error);
-      alert("Search failed. Please try again.");
+      if (side === "a") {
+        setProductA(product as CompareProduct);
+      } else {
+        setProductB(product as CompareProduct);
+      }
+    } catch (err) {
+      console.error("Compare search failed:", err);
+      setError("Search failed. Please try again.");
     } finally {
-      if (side === "a") setLoadingA(false);
-      else setLoadingB(false);
+      setLoadingSide(null);
     }
   };
 
-  const winner = getWinner(productA, productB);
-
-  useEffect(() => {
-  if (!productA || !productB) return;
-
-  posthog.capture(AnalyticsEvents.COMPARE_USED, {
-    product_a: productA.name,
-
-    product_b: productB.name,
-
-    winner,
-  });
-}, [productA, productB, winner]);
-
   if (premiumLoading) {
-  return (
-    <main className="min-h-screen bg-[#fff7ed] flex items-center justify-center">
-      <p className="text-gray-500 font-bold">Checking premium access...</p>
-    </main>
-  );
-}
+    return (
+      <main className="min-h-screen bg-[#fff7ed] flex items-center justify-center">
+        <p className="text-gray-500 font-bold">Checking premium access...</p>
+      </main>
+    );
+  }
 
-if (!isPremium) {
-  return (
-    <main className="min-h-screen bg-[#fff7ed] flex items-center justify-center px-6">
-      <PremiumGate
-        title="Product Comparison is Premium"
-        description="Upgrade to compare foods side by side and choose healthier options."
-      />
-    </main>
-  );
-}
+  if (!isPremium) {
+    return (
+      <main className="min-h-screen bg-[#fff7ed] flex items-center justify-center px-6">
+        <PremiumGate
+          title="Product Comparison is Premium"
+          description="Upgrade to compare foods side by side and choose healthier options."
+        />
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[#fff7ed]">
       <section className="mx-auto max-w-6xl px-6 py-20">
-        <div className="mb-16 text-center">
+        <div className="mb-14 text-center">
           <p className="text-sm font-black uppercase tracking-wider text-orange-600">
             Compare Foods
           </p>
@@ -148,18 +185,24 @@ if (!isPremium) {
             Choose the better option
           </h1>
 
-          <p className="mx-auto mt-6 max-w-2xl text-lg text-gray-500">
-            Compare two packaged foods using sugar, fat, salt, processing level,
-            and PAUSTICA score.
+          <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-gray-500">
+            Compare packaged foods using sugar, fat, salt, processing level,
+            allergy signals, and PAUSTICA scores.
           </p>
         </div>
+
+        {error && (
+          <div className="mb-8 rounded-3xl border border-red-200 bg-red-50 p-5 text-center font-bold text-red-600">
+            {error}
+          </div>
+        )}
 
         <div className="grid items-start gap-8 lg:grid-cols-[1fr_auto_1fr]">
           <CompareSearchCard
             title="Product A"
             query={queryA}
             setQuery={setQueryA}
-            loading={loadingA}
+            loading={loadingSide === "a"}
             product={productA}
             onSearch={() => search(queryA, "a")}
           />
@@ -174,77 +217,22 @@ if (!isPremium) {
             title="Product B"
             query={queryB}
             setQuery={setQueryB}
-            loading={loadingB}
+            loading={loadingSide === "b"}
             product={productB}
             onSearch={() => search(queryB, "b")}
           />
         </div>
 
-        {productA && productB && (
-          <div className="mt-12 rounded-3xl border border-gray-100 bg-white p-8 shadow-sm">
-            <h2 className="text-3xl font-black text-gray-900">
-              Comparison Result
-            </h2>
-
-            <div className="mt-8 overflow-hidden rounded-3xl border border-gray-100">
-              <CompareRow
-                label="PAUSTICA Score"
-                a={`${scoreProduct(productA)}/100`}
-                b={`${scoreProduct(productB)}/100`}
-              />
-
-              <CompareRow
-                label="Verdict"
-                a={getVerdict(productA)}
-                b={getVerdict(productB)}
-              />
-
-              <CompareRow
-                label="Sugar"
-                a={`${safeNumber(productA.sugar)} g`}
-                b={`${safeNumber(productB.sugar)} g`}
-              />
-
-              <CompareRow
-                label="Fat"
-                a={`${safeNumber(productA.fat)} g`}
-                b={`${safeNumber(productB.fat)} g`}
-              />
-
-              <CompareRow
-                label="Salt"
-                a={`${safeNumber(productA.salt)} g`}
-                b={`${safeNumber(productB.salt)} g`}
-              />
-
-              <CompareRow
-                label="Processing"
-                a={`NOVA ${productA.nova ?? "N/A"}`}
-                b={`NOVA ${productB.nova ?? "N/A"}`}
-              />
-
-              <CompareRow
-                label="NutriScore"
-                a={String(productA.nutriscore ?? "N/A").toUpperCase()}
-                b={String(productB.nutriscore ?? "N/A").toUpperCase()}
-              />
-            </div>
-
-            <div className="mt-8 rounded-3xl bg-orange-50 p-8">
-              <p className="text-sm font-black uppercase tracking-wider text-orange-600">
-                Better choice
-              </p>
-
-              <h3 className="mt-3 text-3xl font-black text-gray-900">
-                {winner}
-              </h3>
-
-              <p className="mt-3 text-gray-500">
-                PAUSTICA prefers the food with lower sugar, salt, fat, and a
-                lower processing level.
-              </p>
-            </div>
-          </div>
+        {productA && productB && comparison && (
+          <ComparisonResult
+            productA={productA}
+            productB={productB}
+            scoreA={comparison.scoreA}
+            scoreB={comparison.scoreB}
+            verdictA={comparison.verdictA}
+            verdictB={comparison.verdictB}
+            winner={comparison.winner}
+          />
         )}
       </section>
     </main>
@@ -284,49 +272,130 @@ function CompareSearchCard({
         <button
           onClick={onSearch}
           disabled={loading || !query.trim()}
-          className="rounded-2xl bg-orange-500 px-6 py-4 text-sm font-black text-white disabled:opacity-50"
+          className="rounded-2xl bg-orange-500 px-6 py-4 text-sm font-black text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading ? "Searching..." : "Search"}
         </button>
       </div>
 
-      {product && (
-        <div className="mt-8 rounded-3xl border border-gray-100 bg-orange-50/50 p-5">
-          <div className="flex items-center gap-4">
-            {product.image ? (
-              <Image
-                src={product.image}
-                alt={product.name || "Product"}
-                width={64}
-                height={64}
-                className="h-16 w-16 rounded-2xl bg-white object-cover"
-                unoptimized
-              />
-            ) : (
-              <div className="h-16 w-16 rounded-2xl bg-white" />
-            )}
-
-            <div>
-              <h3 className="font-black text-gray-900">
-                {product.name || "Unknown product"}
-              </h3>
-
-              <p className="text-sm font-semibold text-gray-500">
-                {product.brand || "Unknown brand"}
-              </p>
-
-              <p className="mt-1 text-sm font-black text-orange-600">
-                Score: {scoreProduct(product)}/100
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+      {product && <ProductPreview product={product} />}
     </div>
   );
 }
 
+function ProductPreview({ product }: { product: CompareProduct }) {
+  const score = scoreProduct(product);
 
+  return (
+    <div className="mt-8 rounded-3xl border border-gray-100 bg-orange-50/50 p-5">
+      <div className="flex items-center gap-4">
+        {product.image ? (
+          <Image
+            src={product.image}
+            alt={product.name || "Product"}
+            width={72}
+            height={72}
+            className="h-18 w-18 rounded-2xl bg-white object-cover"
+            unoptimized
+          />
+        ) : (
+          <div className="h-18 w-18 rounded-2xl bg-white" />
+        )}
+
+        <div className="min-w-0">
+          <h3 className="truncate font-black text-gray-900">
+            {product.name || "Unknown product"}
+          </h3>
+
+          <p className="truncate text-sm font-semibold text-gray-500">
+            {product.brand || "Unknown brand"}
+          </p>
+
+          <p className="mt-1 text-sm font-black text-orange-600">
+            Score: {score}/100
+          </p>
+
+          {product.allergyMatched && product.matchedAllergies?.length ? (
+            <p className="mt-1 text-xs font-black text-red-600">
+              Contains: {product.matchedAllergies.join(", ")}
+            </p>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ComparisonResult({
+  productA,
+  productB,
+  scoreA,
+  scoreB,
+  verdictA,
+  verdictB,
+  winner,
+}: {
+  productA: CompareProduct;
+  productB: CompareProduct;
+  scoreA: number;
+  scoreB: number;
+  verdictA: string;
+  verdictB: string;
+  winner: {
+    label: string;
+    reason: string;
+  };
+}) {
+  return (
+    <div className="mt-12 rounded-3xl border border-gray-100 bg-white p-8 shadow-sm">
+      <h2 className="text-3xl font-black text-gray-900">
+        Comparison Result
+      </h2>
+
+      <div className="mt-8 overflow-hidden rounded-3xl border border-gray-100">
+        <CompareRow label="PAUSTICA Score" a={`${scoreA}/100`} b={`${scoreB}/100`} />
+        <CompareRow label="Verdict" a={verdictA} b={verdictB} />
+        <CompareRow
+          label="Sugar"
+          a={`${safeNumber(productA.sugar)} g`}
+          b={`${safeNumber(productB.sugar)} g`}
+        />
+        <CompareRow
+          label="Fat"
+          a={`${safeNumber(productA.fat)} g`}
+          b={`${safeNumber(productB.fat)} g`}
+        />
+        <CompareRow
+          label="Salt"
+          a={`${safeNumber(productA.salt)} g`}
+          b={`${safeNumber(productB.salt)} g`}
+        />
+        <CompareRow
+          label="Processing"
+          a={`NOVA ${productA.nova ?? "N/A"}`}
+          b={`NOVA ${productB.nova ?? "N/A"}`}
+        />
+        <CompareRow
+          label="NutriScore"
+          a={String(productA.nutriscore ?? "N/A").toUpperCase()}
+          b={String(productB.nutriscore ?? "N/A").toUpperCase()}
+        />
+      </div>
+
+      <div className="mt-8 rounded-3xl bg-orange-50 p-8">
+        <p className="text-sm font-black uppercase tracking-wider text-orange-600">
+          Better choice
+        </p>
+
+        <h3 className="mt-3 text-3xl font-black text-gray-900">
+          {winner.label}
+        </h3>
+
+        <p className="mt-3 text-gray-500">{winner.reason}</p>
+      </div>
+    </div>
+  );
+}
 
 function CompareRow({
   label,
@@ -337,8 +406,6 @@ function CompareRow({
   a: string;
   b: string;
 }) {
-
-  
   return (
     <div className="grid grid-cols-3 border-b border-gray-100 last:border-b-0">
       <div className="bg-orange-50 px-4 py-4 font-black text-gray-900">

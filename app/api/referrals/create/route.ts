@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/app/lib/supabase";
 import { generateReferralCode } from "@/lib/generateReferralCode";
+import { securityGuard } from "@/lib/securityEngine";
 
 export async function POST(request: Request) {
   try {
@@ -20,6 +21,25 @@ export async function POST(request: Request) {
     if (userError || !user) {
       return NextResponse.json({ error: "User not found." }, { status: 401 });
     }
+
+    const security = await securityGuard({
+  userId: user.id,
+  eventName: "referral",
+  request,
+  metadata: {
+    action: "create_referral_code",
+  },
+});
+
+if (!security.allowed) {
+  return NextResponse.json(
+    {
+      error: "Referral actions are temporarily limited. Please try again later.",
+      cooldownSeconds: security.cooldownSeconds,
+    },
+    { status: 429 }
+  );
+}
 
     const { data: existingCampaign } = await supabase
       .from("referral_campaigns")

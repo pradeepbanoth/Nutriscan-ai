@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/app/lib/supabase";
+import posthog from "posthog-js";
+import { AnalyticsEvents } from "@/lib/analyticsEvents";
 
 export default function ReferralsPage() {
   const [referralCode, setReferralCode] = useState("");
@@ -31,6 +33,12 @@ const [premiumDaysEarned, setPremiumDaysEarned] = useState(0);
 
       if (data.referralCode) {
         setReferralCode(data.referralCode);
+
+        if (data.referralCode) {
+  posthog.capture(AnalyticsEvents.REFERRAL_LINK_CREATED, {
+    referral_code: data.referralCode,
+  });
+}
 
         const { data: userData } = await supabase.auth.getUser();
 

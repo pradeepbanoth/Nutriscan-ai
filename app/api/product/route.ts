@@ -3,7 +3,7 @@ import { barcodeRateLimit } from "@/lib/rateLimit";
 import {findFatSecretFoodIdByBarcode,getFatSecretFood,} from "@/lib/fatsecret";
 import { parseFatSecretNutrition } from "@/lib/parseFatSecretNutrition";
 import { cacheHeaders } from "@/lib/cacheHeaders";
-
+import { securityGuard } from "@/lib/securityEngine";
 
 export async function GET(req: Request) {
   const startedAt = Date.now();
@@ -39,6 +39,24 @@ if (!rate.success) {
         { status: 400 }
       );
     }
+    const security = await securityGuard({
+  eventName: "barcode_scan",
+  request: req,
+  metadata: {
+    barcode_length: barcode.length,
+  },
+});
+
+if (!security.allowed) {
+  return NextResponse.json(
+    {
+      success: false,
+      message: "Barcode scanning is temporarily limited. Please try again later.",
+      cooldownSeconds: security.cooldownSeconds,
+    },
+    { status: 429 }
+  );
+}
 
    const response = await fetch(
   `https://world.openfoodfacts.org/api/v0/product/${barcode}.json`,

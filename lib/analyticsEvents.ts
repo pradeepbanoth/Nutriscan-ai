@@ -19,4 +19,8 @@ export const AnalyticsEvents = {
   REPORT_VIEWED: "report_viewed",
 
   ONBOARDING_COMPLETED: "onboarding_completed",
+
+  REFERRAL_LINK_CREATED: "referral_link_created",
+  REFERRAL_COMPLETED: "referral_completed",
+  REFERRAL_QUALIFIED: "referral_qualified",
 } as const;

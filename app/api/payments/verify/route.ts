@@ -4,6 +4,7 @@ import Razorpay from "razorpay";
 import { supabase } from "@/app/lib/supabase";
 import { razorpayPlans } from "@/lib/razorpayPlans";
 import { paymentRateLimit } from "@/lib/paymentRateLimiter";
+import { securityGuard } from "@/lib/securityEngine";
 
 type PlanId = keyof typeof razorpayPlans;
 
@@ -50,6 +51,26 @@ export async function POST(request: Request) {
 if (!rate.success) {
   return NextResponse.json(
     { error: "Too many verification attempts. Please try again shortly." },
+    { status: 429 }
+  );
+}
+const security = await securityGuard({
+  userId,
+  eventName: "payment",
+  request,
+  metadata: {
+    action: "verify_payment",
+    plan_id: planId,
+    razorpay_order_id,
+  },
+});
+
+if (!security.allowed) {
+  return NextResponse.json(
+    {
+      error: "Payment verification is temporarily limited. Please try again later.",
+      cooldownSeconds: security.cooldownSeconds,
+    },
     { status: 429 }
   );
 }

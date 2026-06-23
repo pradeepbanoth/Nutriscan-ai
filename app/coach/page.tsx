@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+
+import Image from "next/image";
+import { useEffect, useMemo, useState } from "react";
+import posthog from "posthog-js";
+
 import { supabase } from "../lib/supabase";
 import { calculateGoalScore } from "../../lib/goalScoring";
 import { usePremium } from "@/hooks/usePremium";
 import PremiumGate from "../../components/PremiumGateComponent";
-import Image from "next/image";
-import posthog from "posthog-js";
 import { AnalyticsEvents } from "@/lib/analyticsEvents";
 
 type ScanRow = {
@@ -26,45 +28,60 @@ export default function CoachPage() {
   const [question, setQuestion] = useState("");
   const [coachAnswer, setCoachAnswer] = useState("");
   const [asking, setAsking] = useState(false);
+  const [error, setError] = useState("");
+
   const { loading: premiumLoading, isPremium } = usePremium();
 
   useEffect(() => {
     const loadCoach = async () => {
-      const { data } = await supabase.auth.getUser();
+      try {
+        const { data } = await supabase.auth.getUser();
 
-      if (!data.user) {
-        window.location.href = "/auth";
-        return;
+        if (!data.user) {
+          window.location.href = "/auth";
+          return;
+        }
+
+        setEmail(data.user.email || "");
+
+        const { data: scanData, error: scanError } = await supabase
+          .from("scan_history")
+          .select("*")
+          .eq("user_id", data.user.id)
+          .order("created_at", { ascending: false })
+          .limit(50);
+
+        if (scanError) {
+          throw scanError;
+        }
+
+        setScans((scanData || []) as ScanRow[]);
+      } catch (err) {
+        console.error("Coach load failed:", err);
+        setError("Could not load your coach data. Please refresh.");
+      } finally {
+        setLoading(false);
       }
-
-      setEmail(data.user.email || "");
-
-      
-
-      const { data: scanData } = await supabase
-        .from("scan_history")
-        .select("*")
-        .eq("user_id", data.user.id)
-        .order("created_at", { ascending: false });
-
-      setScans((scanData || []) as ScanRow[]);
-      setLoading(false);
     };
 
     loadCoach();
   }, []);
 
-  const scoredScans = scans.map((scan) => ({
-    ...scan,
-    score: calculateGoalScore(
-      "General Wellness",
-      scan.sugar || 0,
-      scan.fat || 0,
-      scan.salt || 0,
-      Number(scan.nova),
-      0
-    ),
-  }));
+  const scoredScans = useMemo(
+    () =>
+      scans.map((scan) => ({
+        ...scan,
+        score: calculateGoalScore(
+          "General Wellness",
+          scan.sugar || 0,
+          scan.fat || 0,
+          scan.salt || 0,
+          Number(scan.nova),
+          0
+        ),
+      })),
+    [scans]
+  );
 
   const averageScore =
     scoredScans.length > 0
@@ -85,72 +102,86 @@ export default function CoachPage() {
       ? "Your recent scans are mixed. Try reducing high-sugar snacks, salty packaged foods, and ultra-processed products."
       : "Your recent scans show higher risk patterns. Focus on whole foods, fresh snacks, home-cooked meals, and lower-sugar alternatives.";
 
-const askCoach = async () => {
-  if (!question.trim()) return;
+  const askCoach = async () => {
+    const cleanQuestion = question.trim();
 
-  posthog.capture(AnalyticsEvents.COACH_USED, {
-  question_length: question.trim().length,
+    if (!cleanQuestion || asking) return;
 
-  scans_available: scans.length,
+    if (cleanQuestion.length > 500) {
+      setError("Please keep your question under 500 characters.");
+      return;
+    }
 
-  average_score: averageScore,
+    setAsking(true);
+    setCoachAnswer("");
+    setError("");
 
-  high_sugar: highSugar,
+    posthog.capture(AnalyticsEvents.COACH_USED, {
+      question_length: cleanQuestion.length,
+      scans_available: scans.length,
+      average_score: averageScore,
+      high_sugar: highSugar,
+      high_salt: highSalt,
+      ultra_processed: ultraProcessed,
+    });
 
-  high_salt: highSalt,
+    try {
+      const recentScans = scoredScans.slice(0, 8).map((item) => ({
+        name: item.product_name,
+        brand: item.brand,
+        score: item.score,
+        sugar: item.sugar,
+        fat: item.fat,
+        salt: item.salt,
+        nova: item.nova,
+      }));
 
-  ultra_processed: ultraProcessed,
-});
+      const res = await fetch("/api/coach", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: cleanQuestion,
+          context: {
+            averageScore,
+            highSugar,
+            highSalt,
+            ultraProcessed,
+            recentScans,
+          },
+        }),
+      });
 
-  setAsking(true);
-  setCoachAnswer("");
+      const data = await res.json();
 
-  const recentScans = scoredScans.slice(0, 8).map((item) => ({
-    name: item.product_name,
-    brand: item.brand,
-    score: item.score,
-    sugar: item.sugar,
-    fat: item.fat,
-    salt: item.salt,
-    nova: item.nova,
-  }));
+      if (!res.ok || data.error) {
+        posthog.capture(AnalyticsEvents.COACH_USED, {
+          success: false,
+        });
 
-  const res = await fetch("/api/coach", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      message: question,
-      context: {
-        averageScore,
-        highSugar,
-        highSalt,
-        ultraProcessed,
-        recentScans,
-      },
-    }),
-  });
+        setCoachAnswer(data.error || "Coach could not answer right now.");
+        return;
+      }
 
-  const data = await res.json();
+      posthog.capture(AnalyticsEvents.COACH_USED, {
+        success: true,
+        response_length: data.answer?.length || 0,
+      });
 
-if (data.error) {
-  posthog.capture(AnalyticsEvents.COACH_USED, {
-    success: false,
-  });
-} else {
-  posthog.capture(AnalyticsEvents.COACH_USED, {
-    success: true,
+      setCoachAnswer(data.answer || "No answer received.");
+    } catch (err) {
+      console.error("Coach request failed:", err);
 
-    response_length: data.answer?.length || 0,
-  });
-}
+      posthog.capture(AnalyticsEvents.COACH_USED, {
+        success: false,
+      });
 
-setCoachAnswer(
-  data.answer || data.error || "No answer received."
-);
-
-setAsking(false);
+      setCoachAnswer("Something went wrong. Please try again.");
+    } finally {
+      setAsking(false);
+    }
+  };
 
   if (loading || premiumLoading) {
     return (
@@ -177,13 +208,13 @@ setAsking(false);
         <nav className="flex items-center justify-between mb-12">
           <div className="flex items-center gap-3">
             <Image
-  src="/logo.png"
-  alt="PAUSTICA"
-  width={48}
-  height={48}
-  className="object-contain"
-  priority
-/>
+              src="/logo.png"
+              alt="PAUSTICA"
+              width={48}
+              height={48}
+              className="object-contain"
+              priority
+            />
 
             <h1 className="text-3xl font-black text-gray-900">PAUSTICA</h1>
           </div>
@@ -206,34 +237,17 @@ setAsking(false);
           <p className="text-gray-500">{email}</p>
         </div>
 
+        {error && (
+          <div className="mb-6 rounded-3xl border border-red-200 bg-red-50 p-5 font-bold text-red-600">
+            {error}
+          </div>
+        )}
+
         <div className="grid md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-sm">
-            <p className="text-gray-500 font-semibold mb-2">Total Scans</p>
-            <h3 className="text-5xl font-black text-orange-600">
-              {scans.length}
-            </h3>
-          </div>
-
-          <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-sm">
-            <p className="text-gray-500 font-semibold mb-2">Average Score</p>
-            <h3 className="text-5xl font-black text-orange-600">
-              {averageScore}
-            </h3>
-          </div>
-
-          <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-sm">
-            <p className="text-gray-500 font-semibold mb-2">High Sugar</p>
-            <h3 className="text-5xl font-black text-red-500">{highSugar}</h3>
-          </div>
-
-          <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-">
-            <p className="text-gray-500 font-semibold mb-2">
-              Ultra Processed
-            </p>
-            <h3 className="text-5xl font-black text-red-500">
-              {ultraProcessed}
-            </h3>
-          </div>
+          <StatCard label="Total Scans" value={scans.length} />
+          <StatCard label="Average Score" value={averageScore} />
+          <StatCard label="High Sugar" value={highSugar} danger />
+          <StatCard label="Ultra Processed" value={ultraProcessed} danger />
         </div>
 
         <div className="grid md:grid-cols-2 gap-6 mb-8">
@@ -266,77 +280,111 @@ setAsking(false);
 
         <div className="bg-white border border-orange-100 rounded-3xl shadow-sm p-8">
           <h3 className="text-3xl font-black text-gray-900 mb-6">
-            AI Recommendations
+            Ask PAUSTICA AI Coach
           </h3>
 
-          <div className="bg-white border border-orange-100 rounded-3xl shadow-sm p-8 mb-8">
-  <h3 className="text-3xl font-black text-gray-900 mb-4">
-    Ask PAUSTICA AI Coach
-  </h3>
+          <p className="text-gray-500 mb-6">
+            Ask anything about your recent scans, sugar, salt, processing level,
+            or healthier food choices.
+          </p>
 
-  <p className="text-gray-500 mb-6">
-    Ask anything about your recent scans, sugar, salt, processing level, or
-    healthier food choices.
-  </p>
+          <textarea
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            maxLength={500}
+            placeholder="Example: Based on my recent scans, what should I reduce this week?"
+            className="w-full min-h-[140px] rounded-3xl border border-orange-200 bg-orange-50 p-5 text-gray-900 outline-none focus:border-orange-500 resize-none"
+          />
 
-  <textarea
-    value={question}
-    onChange={(e) => setQuestion(e.target.value)}
-    placeholder="Example: Based on my recent scans, what should I reduce this week?"
-    className="w-full min-h-[140px] rounded-3xl border border-orange-200 bg-orange-50 p-5 text-gray-900 outline-none focus:border-orange-500 resize-none"
-  />
+          <div className="mt-2 text-right text-xs font-bold text-gray-400">
+            {question.length}/500
+          </div>
 
-  <button
-    onClick={askCoach}
-    disabled={asking}
-    className="mt-5 rounded-full bg-orange-600 px-8 py-4 font-bold text-white shadow-sm hover:bg-orange-700 disabled:opacity-60"
-  >
-    {asking ? "Thinking..." : "Ask Coach"}
-  </button>
+          <button
+            onClick={askCoach}
+            disabled={asking || !question.trim()}
+            className="mt-5 rounded-full bg-orange-600 px-8 py-4 font-bold text-white shadow-sm hover:bg-orange-700 disabled:opacity-60"
+          >
+            {asking ? "Thinking..." : "Ask Coach"}
+          </button>
 
-  {coachAnswer && (
-    <div className="mt-8 rounded-3xl border border-orange-100 bg-orange-50 p-6">
-      <h4 className="text-xl font-black text-gray-900 mb-3">
-        Coach Answer
-      </h4>
-
-      <p className="whitespace-pre-line text-gray-700 leading-relaxed">
-        {coachAnswer}
-      </p>
-    </div>
-  )}
-</div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="bg-green-50 border border-green-200 rounded-3xl p-6">
-              <h4 className="font-black text-green-700 mb-3">
-                Better Snacks
+          {coachAnswer && (
+            <div className="mt-8 rounded-3xl border border-orange-100 bg-orange-50 p-6">
+              <h4 className="text-xl font-black text-gray-900 mb-3">
+                Coach Answer
               </h4>
-              <p className="text-gray-700">
-                Try fruits, roasted makhana, nuts, curd, or homemade snacks.
-              </p>
-            </div>
 
-            <div className="bg-yellow-50 border border-yellow-200 rounded-3xl p-6">
-              <h4 className="font-black text-yellow-700 mb-3">
-                Reduce Often
-              </h4>
-              <p className="text-gray-700">
-                Limit sugary drinks, fried chips, instant noodles, and candy.
+              <p className="whitespace-pre-line text-gray-700 leading-relaxed">
+                {coachAnswer}
               </p>
             </div>
+          )}
 
-            <div className="bg-blue-50 border border-blue-200 rounded-3xl p-6">
-              <h4 className="font-black text-blue-700 mb-3">Build Habit</h4>
-              <p className="text-gray-700">
-                Scan before buying. Choose products with lower sugar, salt, and
-                NOVA score.
-              </p>
-            </div>
+          <div className="mt-8 grid md:grid-cols-3 gap-6">
+            <CoachTip
+              title="Better Snacks"
+              body="Try fruits, roasted makhana, nuts, curd, or homemade snacks."
+              color="green"
+            />
+            <CoachTip
+              title="Reduce Often"
+              body="Limit sugary drinks, fried chips, instant noodles, and candy."
+              color="yellow"
+            />
+            <CoachTip
+              title="Build Habit"
+              body="Scan before buying. Choose products with lower sugar, salt, and NOVA score."
+              color="blue"
+            />
           </div>
         </div>
       </div>
     </main>
   );
 }
+
+function StatCard({
+  label,
+  value,
+  danger = false,
+}: {
+  label: string;
+  value: number;
+  danger?: boolean;
+}) {
+  return (
+    <div className="bg-white border border-orange-100 rounded-3xl p-6 shadow-sm">
+      <p className="text-gray-500 font-semibold mb-2">{label}</p>
+      <h3
+        className={`text-5xl font-black ${
+          danger ? "text-red-500" : "text-orange-600"
+        }`}
+      >
+        {value}
+      </h3>
+    </div>
+  );
+}
+
+function CoachTip({
+  title,
+  body,
+  color,
+}: {
+  title: string;
+  body: string;
+  color: "green" | "yellow" | "blue";
+}) {
+  const styles = {
+    green: "bg-green-50 border-green-200 text-green-700",
+    yellow: "bg-yellow-50 border-yellow-200 text-yellow-700",
+    blue: "bg-blue-50 border-blue-200 text-blue-700",
+  };
+
+  return (
+    <div className={`rounded-3xl border p-6 ${styles[color]}`}>
+      <h4 className="font-black mb-3">{title}</h4>
+      <p className="text-gray-700">{body}</p>
+    </div>
+  );
 }
